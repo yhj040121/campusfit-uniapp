@@ -2,12 +2,12 @@
   <view class="page-shell">
     <view class="page-header">
       <view class="page-title">搜索与筛选</view>
-      <view class="page-desc">通过关键词结合场景、风格与预算筛选，快速找到想看的校园穿搭内容。</view>
+      <view class="page-desc">通过关键词结合场景、风格与预算，快速找到想看的校园穿搭内容。</view>
     </view>
 
     <view class="search-bar">
       <view class="search-icon">S</view>
-      <input style="flex:1; font-size:26rpx;" v-model="keyword" placeholder="搜索场景、博主、单品或风格" />
+      <input style="flex:1; font-size:26rpx;" v-model="keyword" placeholder="搜索场景、单品、博主或风格" />
     </view>
     <button class="btn-primary" style="margin-top:18rpx;" @click="submitSearch">立即搜索</button>
 
@@ -42,7 +42,7 @@
 
     <view class="panel-card">
       <view class="text-main">当前筛选</view>
-      <view class="text-copy">关键词：{{ keyword || '未设置' }} | 场景：{{ filters.scene || '不限' }} | 风格：{{ filters.style || '不限' }} | 预算：{{ filters.budget || '不限' }}</view>
+      <view class="text-copy">关键词?{{ keyword || '未设置' }} | 场景?{{ filters.scene || '不限' }} | 风格?{{ filters.style || '不限' }} | 预算?{{ filters.budget || '不限' }}</view>
     </view>
   </view>
 </template>
@@ -53,7 +53,7 @@ var api = require('../../common/api.js')
 var SEARCH_HISTORY_KEY = 'campusfit_search_history'
 
 function defaultHistory() {
-  return ['图书馆', '早八', '社团风格']
+  return ['图书馆', '早八', '社团活动']
 }
 
 function defaultHot() {
@@ -63,17 +63,17 @@ function defaultHot() {
 export default {
   data: function() {
     return {
-      keyword: '图书馆',
+      keyword: '',
       history: defaultHistory(),
       hot: defaultHot(),
       sceneTags: ['早八', '图书馆', '社团活动', '约会'],
       styleTags: ['学院风', '极简', '运动休闲', '甜酷'],
-      budgetTags: ['0-50', '50-100', '100-150', '150+'],
-      statusText: '正在同步后端筛选项...',
+      budgetTags: ['50-100', '100-150', '150-200', '200+'],
+      statusText: '正在同步后端标签选项...',
       filters: {
-        scene: '图书馆',
-        style: '学院风',
-        budget: '100-150'
+        scene: '',
+        style: '',
+        budget: ''
       }
     }
   },
@@ -108,10 +108,10 @@ export default {
           self.sceneTags = data.sceneTags || self.sceneTags
           self.styleTags = data.styleTags || self.styleTags
           self.budgetTags = data.budgetTags || self.budgetTags
-          self.statusText = '已同步后端标签：' + (api.getActiveBaseUrl() || '后端服务')
+          self.statusText = '筛选项已同步：' + (api.getActiveBaseUrl() || '后端服务')
         })
         .catch(function() {
-          self.statusText = '后端标签暂时不可用，已显示本地筛选项。'
+          self.statusText = '后端标签暂时不可用，当前显示本地筛选项。'
         })
     },
     useKeyword: function(word) {

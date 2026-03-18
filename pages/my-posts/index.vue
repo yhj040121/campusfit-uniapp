@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <view class="page-shell">
     <view v-if="!loggedIn" class="hero-card">
       <view class="hero-badge">需要登录</view>
@@ -18,8 +18,8 @@
       </view>
 
       <view v-if="posts.length">
-        <view class="look-card" v-for="item in posts" :key="item.id" @click="goDetail(item.id)">
-          <view class="look-cover">
+        <view class="look-card" v-for="item in posts" :key="item.id">
+          <view class="look-cover" @click="goDetail(item.id)">
             <view class="cover-tag">{{ item.coverTag }}</view>
             <view class="cover-title">{{ item.title }}</view>
             <view class="cover-copy">{{ item.subtitle }}</view>
@@ -32,6 +32,10 @@
               <view class="stat-text">收藏 {{ item.saves }}</view>
             </view>
             <view class="side-pill">已发布</view>
+          </view>
+          <view class="btn-row" style="margin-top:18rpx;">
+            <button class="btn-secondary btn-half" @click.stop="goDetail(item.id)">查看详情</button>
+            <button class="btn-ghost btn-half" @click.stop="confirmDelete(item)">删除内容</button>
           </view>
         </view>
       </view>
@@ -50,7 +54,8 @@ var api = require('../../common/api.js')
 var session = require('../../common/session.js')
 
 function isAuthError(error) {
-  return ((error && error.message) || '').toLowerCase().indexOf('login') > -1
+  var message = ((error && error.message) || '').toLowerCase()
+  return message.indexOf('login') > -1 || message.indexOf('401') > -1 || message.indexOf('登录') > -1
 }
 
 export default {
@@ -98,6 +103,41 @@ export default {
     },
     goLogin: function() {
       uni.navigateTo({ url: '/pages/login/index' })
+    },
+    confirmDelete: function(item) {
+      var self = this
+      uni.showModal({
+        title: '删除确认',
+        content: '确认删除《' + item.title + '》吗？删除后将不再展示。',
+        confirmText: '确认删除',
+        cancelText: '取消',
+        success: function(result) {
+          if (result.confirm) {
+            self.deletePost(item)
+          }
+        }
+      })
+    },
+    deletePost: function(item) {
+      var self = this
+      api.deletePost(item.id)
+        .then(function() {
+          self.posts = self.posts.filter(function(post) {
+            return post.id !== item.id
+          })
+          self.statusText = '已删除《' + item.title + '》'
+          uni.showToast({ title: '删除成功', icon: 'none' })
+        })
+        .catch(function(error) {
+          if (isAuthError(error)) {
+            session.clearSession()
+            self.loggedIn = false
+            self.posts = []
+            self.statusText = '登录已过期，请重新登录。'
+            return
+          }
+          uni.showToast({ title: error.message || '删除失败', icon: 'none' })
+        })
     }
   }
 }

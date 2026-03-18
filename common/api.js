@@ -44,6 +44,13 @@ function listMyPosts() {
   })
 }
 
+function deletePost(postId) {
+  return http.request({
+    url: '/api/posts/' + postId + '/delete',
+    method: 'POST'
+  })
+}
+
 function listFavoritePosts() {
   return http.request({
     url: '/api/posts/favorites',
@@ -51,9 +58,16 @@ function listFavoritePosts() {
   })
 }
 
-function searchPosts(keyword) {
+function searchPosts(keyword, filters) {
+  var safeFilters = filters || {}
+  var query = [
+    'keyword=' + encodeURIComponent(keyword || ''),
+    'scene=' + encodeURIComponent(safeFilters.scene || ''),
+    'style=' + encodeURIComponent(safeFilters.style || ''),
+    'budget=' + encodeURIComponent(safeFilters.budget || '')
+  ].join('&')
   return http.request({
-    url: '/api/posts/search?keyword=' + encodeURIComponent(keyword || ''),
+    url: '/api/posts/search?' + query,
     method: 'GET'
   })
 }
@@ -159,6 +173,20 @@ function listMessages() {
   })
 }
 
+function markMessageRead(messageId) {
+  return http.request({
+    url: '/api/messages/' + messageId + '/read',
+    method: 'POST'
+  })
+}
+
+function markAllMessagesRead() {
+  return http.request({
+    url: '/api/messages/read-all',
+    method: 'POST'
+  })
+}
+
 module.exports = {
   loginUser: loginUser,
   registerUser: registerUser,
@@ -166,6 +194,7 @@ module.exports = {
   logoutUser: logoutUser,
   listRecommendations: listRecommendations,
   listMyPosts: listMyPosts,
+  deletePost: deletePost,
   listFavoritePosts: listFavoritePosts,
   searchPosts: searchPosts,
   getPostDetail: getPostDetail,
@@ -182,6 +211,8 @@ module.exports = {
   toggleFollow: toggleFollow,
   getTagOptions: getTagOptions,
   listMessages: listMessages,
+  markMessageRead: markMessageRead,
+  markAllMessagesRead: markAllMessagesRead,
   getActiveBaseUrl: http.getActiveBaseUrl,
   resolveBaseUrl: http.resolveBaseUrl
 }
