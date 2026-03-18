@@ -34,7 +34,7 @@
             <view class="side-pill">已发布</view>
           </view>
           <view class="btn-row" style="margin-top:18rpx;">
-            <button class="btn-secondary btn-half" @click.stop="goDetail(item.id)">查看详情</button>
+            <button class="btn-secondary btn-half" @click.stop="startEdit(item)">编辑内容</button>
             <button class="btn-ghost btn-half" @click.stop="confirmDelete(item)">删除内容</button>
           </view>
         </view>
@@ -52,6 +52,8 @@
 <script>
 var api = require('../../common/api.js')
 var session = require('../../common/session.js')
+
+var EDIT_POST_KEY = 'campusfit_edit_post_id'
 
 function isAuthError(error) {
   var message = ((error && error.message) || '').toLowerCase()
@@ -103,6 +105,10 @@ export default {
     },
     goLogin: function() {
       uni.navigateTo({ url: '/pages/login/index' })
+    },
+    startEdit: function(item) {
+      uni.setStorageSync(EDIT_POST_KEY, item.id)
+      uni.switchTab({ url: '/pages/publish/index' })
     },
     confirmDelete: function(item) {
       var self = this

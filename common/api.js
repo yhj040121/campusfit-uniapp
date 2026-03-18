@@ -44,6 +44,21 @@ function listMyPosts() {
   })
 }
 
+function getPostForEdit(postId) {
+  return http.request({
+    url: '/api/posts/' + postId + '/edit',
+    method: 'GET'
+  })
+}
+
+function updatePost(postId, payload) {
+  return http.request({
+    url: '/api/posts/' + postId,
+    method: 'PUT',
+    data: payload
+  })
+}
+
 function deletePost(postId) {
   return http.request({
     url: '/api/posts/' + postId + '/delete',
@@ -194,6 +209,8 @@ module.exports = {
   logoutUser: logoutUser,
   listRecommendations: listRecommendations,
   listMyPosts: listMyPosts,
+  getPostForEdit: getPostForEdit,
+  updatePost: updatePost,
   deletePost: deletePost,
   listFavoritePosts: listFavoritePosts,
   searchPosts: searchPosts,
