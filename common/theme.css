@@ -436,6 +436,54 @@ button::after {
 .bottom-gap {
   height: 24rpx;
 }
+.header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+.header-main {
+  flex: 1;
+  min-width: 0;
+}
+.icon-action {
+  position: relative;
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 12rpx 24rpx rgba(58, 115, 155, 0.08);
+  color: #2d95c9;
+  text-align: center;
+  line-height: 84rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+.badge-dot,
+.badge-count {
+  position: absolute;
+  top: -8rpx;
+  right: -8rpx;
+  min-width: 22rpx;
+  height: 22rpx;
+  border-radius: 999rpx;
+  background: #ff5f76;
+  box-shadow: 0 6rpx 12rpx rgba(255, 95, 118, 0.24);
+}
+.badge-count {
+  min-width: 34rpx;
+  height: 34rpx;
+  padding: 0 10rpx;
+  color: #ffffff;
+  line-height: 34rpx;
+  text-align: center;
+  font-size: 20rpx;
+  font-weight: 700;
+  box-sizing: border-box;
+}
+.grid-item-badge {
+  position: relative;
+}
 .setting-item {
   display: flex;
   align-items: center;

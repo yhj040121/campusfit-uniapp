@@ -19,7 +19,7 @@
             <view class="text-main" style="margin-top:0;">未读消息 {{ unreadCount }} 条</view>
             <view class="text-copy">{{ statusText }}</view>
           </view>
-          <view v-if="unreadCount" class="float-link" @click="markAllRead">全部设为已读</view>
+          <view class="float-link" @click="markAllRead">{{ markAllLabel }}</view>
         </view>
       </view>
 
@@ -86,6 +86,9 @@ export default {
       return this.messages.filter(function(item) {
         return !item.read
       }).length
+    },
+    markAllLabel: function() {
+      return this.unreadCount > 0 ? '全部设为已读' : '全部已读'
     }
   },
   onShow: function() {
@@ -156,13 +159,17 @@ export default {
     },
     markAllRead: function() {
       var self = this
+      if (!self.unreadCount) {
+        uni.showToast({ title: '当前没有未读消息', icon: 'none' })
+        return
+      }
       api.markAllMessagesRead()
         .then(function(count) {
           self.messages = self.messages.map(function(item) {
             item.read = true
             return item
           })
-          self.statusText = '已将 ' + (count || 0) + '条' + ' 消息标记为已读'
+          self.statusText = '已将 ' + (count || 0) + ' 条消息标记为已读'
           uni.showToast({ title: '操作成功', icon: 'none' })
         })
         .catch(function(error) {

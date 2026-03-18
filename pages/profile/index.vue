@@ -25,6 +25,7 @@
 
       <view class="panel-card">
         <view class="text-copy" style="margin-top:0;">{{ statusText }}</view>
+        <view class="text-copy" style="margin-top:8rpx;">{{ unreadHint }}</view>
       </view>
 
       <view class="metric-row">
@@ -50,7 +51,8 @@
 
       <view class="section-title">内容与社交管理</view>
       <view class="grid-menu">
-        <view class="grid-item" v-for="item in menus" :key="item.path" @click="go(item.path)">
+        <view class="grid-item grid-item-badge" v-for="item in menus" :key="item.path" @click="go(item.path)">
+          <view v-if="item.key === 'messages' && unreadCount > 0" class="badge-count">{{ unreadBadgeText }}</view>
           <view class="grid-title">{{ item.title }}</view>
           <view class="grid-copy">{{ item.copy }}</view>
         </view>
@@ -83,14 +85,14 @@ function buildDefaultProfile() {
 
 function buildMenus() {
   return [
-    { title: '我的发布', copy: '查看已发布的穿搭内容', path: '/pages/my-posts/index' },
-    { title: '我的收藏', copy: '管理已收藏的穿搭与商品', path: '/pages/favorites/index' },
-    { title: '关注 / 粉丝', copy: '查看你的社交关系与创作者连接', path: '/pages/follows/index' },
-    { title: '消息通知', copy: '互动、收益与合作提醒', path: '/pages/messages/index' },
-    { title: '草稿箱', copy: '继续编辑未完成的穿搭草稿', path: '/pages/drafts/index' },
-    { title: '设置', copy: '账号、隐私与推送设置', path: '/pages/settings/index' },
-    { title: '编辑资料', copy: '修改昵称、学校与个性签名', path: '/pages/edit-profile/index' },
-    { title: '启动页', copy: '再次查看品牌启动页', path: '/pages/splash/index' }
+    { key: 'posts', title: '我的发布', copy: '查看已发布的穿搭内容', path: '/pages/my-posts/index' },
+    { key: 'favorites', title: '我的收藏', copy: '管理已收藏的穿搭与商品', path: '/pages/favorites/index' },
+    { key: 'follows', title: '关注 / 粉丝', copy: '查看你的社交关系与创作者连接', path: '/pages/follows/index' },
+    { key: 'messages', title: '消息通知', copy: '互动、收益与合作提醒', path: '/pages/messages/index' },
+    { key: 'drafts', title: '草稿箱', copy: '继续编辑未完成的穿搭草稿', path: '/pages/drafts/index' },
+    { key: 'settings', title: '设置', copy: '账号、隐私与推送设置', path: '/pages/settings/index' },
+    { key: 'profile', title: '编辑资料', copy: '修改昵称、学校与个性签名', path: '/pages/edit-profile/index' },
+    { key: 'splash', title: '启动页', copy: '再次查看品牌启动页', path: '/pages/splash/index' }
   ]
 }
 
@@ -99,8 +101,20 @@ export default {
     return {
       loggedIn: session.isLoggedIn(),
       profile: buildDefaultProfile(),
+      unreadCount: 0,
       statusText: '正在同步个人资料...',
       menus: buildMenus()
+    }
+  },
+  computed: {
+    unreadBadgeText: function() {
+      return this.unreadCount > 99 ? '99+' : String(this.unreadCount)
+    },
+    unreadHint: function() {
+      if (this.unreadCount > 0) {
+        return '未读消息 ' + this.unreadCount + ' 条，记得查看「消息通知」。'
+      }
+      return '暂无未读消息。'
     }
   },
   onShow: function() {
@@ -108,10 +122,12 @@ export default {
     this.menus = buildMenus()
     if (!this.loggedIn) {
       this.statusText = '当前以游客身份浏览。'
+      this.unreadCount = 0
       this.profile = buildDefaultProfile()
       return
     }
     this.loadProfile()
+    this.loadUnreadCount()
   },
   methods: {
     loadProfile: function() {
@@ -133,6 +149,16 @@ export default {
           self.statusText = '后端暂时不可用，已显示本地演示数据。'
         })
     },
+    loadUnreadCount: function() {
+      var self = this
+      api.getUnreadMessageCount()
+        .then(function(count) {
+          self.unreadCount = Number(count || 0)
+        })
+        .catch(function() {
+          self.unreadCount = 0
+        })
+    },
     go: function(path) {
       uni.navigateTo({ url: path })
     },
@@ -148,6 +174,7 @@ export default {
         .finally(function() {
           session.clearSession()
           self.loggedIn = false
+          self.unreadCount = 0
           self.profile = buildDefaultProfile()
           self.statusText = '已退出登录。'
           uni.showToast({ title: '已退出登录', icon: 'none' })

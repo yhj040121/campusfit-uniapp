@@ -14,9 +14,14 @@
         <view class="meta-left" style="align-items:flex-start;">
           <view :class="['avatar', item.avatarClass]">{{ item.avatar }}</view>
           <view style="flex:1;">
-            <view class="meta-name">{{ item.name }}</view>
+            <view class="meta-line" style="margin-top:0; align-items:flex-start;">
+              <view>
+                <view class="meta-name">{{ item.name }}</view>
+                <view class="list-meta">{{ item.time }} | {{ item.likes }} 赞</view>
+              </view>
+              <view v-if="item.mine" class="float-link" @click.stop="confirmDelete(item)">删除</view>
+            </view>
             <view class="list-copy">{{ item.text }}</view>
-            <view class="list-meta">{{ item.time }} | {{ item.likes }} 赞</view>
           </view>
         </view>
       </view>
@@ -29,7 +34,7 @@
 
     <view class="fixed-input">
       <view class="form-label">添加评论</view>
-      <textarea class="form-textarea" v-model="draft" maxlength="80" placeholder="写下你的穿搭反馈"></textarea>
+      <textarea class="form-textarea" v-model="draft" maxlength="80" :placeholder="draftPlaceholder"></textarea>
       <button class="btn-primary" style="margin-top:18rpx;" @click="submit">发送评论</button>
     </view>
   </view>
@@ -40,7 +45,8 @@ var api = require('../../common/api.js')
 var session = require('../../common/session.js')
 
 function isAuthError(error) {
-  return ((error && error.message) || '').toLowerCase().indexOf('login') > -1
+  var message = ((error && error.message) || '').toLowerCase()
+  return message.indexOf('login') > -1 || message.indexOf('401') > -1 || message.indexOf('登录') > -1
 }
 
 export default {
@@ -52,9 +58,19 @@ export default {
       statusText: '正在加载评论...'
     }
   },
+  computed: {
+    draftPlaceholder: function() {
+      return '写下你的穿搭反馈'
+    }
+  },
   onLoad: function(options) {
     this.postId = (options && options.id) || 'look1'
     this.loadComments()
+  },
+  onShow: function() {
+    if (this.postId) {
+      this.loadComments()
+    }
   },
   methods: {
     loadComments: function() {
@@ -92,6 +108,39 @@ export default {
             return
           }
           uni.showToast({ title: error.message || '评论发送失败', icon: 'none' })
+        })
+    },
+    confirmDelete: function(item) {
+      var self = this
+      uni.showModal({
+        title: '删除评论',
+        content: '确认删除这条评论吗？删除后将不可恢复。',
+        confirmText: '确认删除',
+        cancelText: '取消',
+        success: function(result) {
+          if (result.confirm) {
+            self.deleteComment(item)
+          }
+        }
+      })
+    },
+    deleteComment: function(item) {
+      var self = this
+      api.deleteComment(self.postId, item.id)
+        .then(function() {
+          self.comments = self.comments.filter(function(comment) {
+            return comment.id !== item.id
+          })
+          self.statusText = '评论已删除'
+          uni.showToast({ title: '删除成功', icon: 'none' })
+        })
+        .catch(function(error) {
+          if (isAuthError(error)) {
+            session.clearSession()
+            self.promptLogin('登录已过期，请重新登录')
+            return
+          }
+          uni.showToast({ title: error.message || '删除失败', icon: 'none' })
         })
     },
     promptLogin: function(message) {

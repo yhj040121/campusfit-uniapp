@@ -117,6 +117,13 @@ function createComment(postId, content) {
   })
 }
 
+function deleteComment(postId, commentId) {
+  return http.request({
+    url: '/api/posts/' + postId + '/comments/' + commentId + '/delete',
+    method: 'POST'
+  })
+}
+
 function listLikeUsers(postId) {
   return http.request({
     url: '/api/posts/' + postId + '/likes',
@@ -188,6 +195,13 @@ function listMessages() {
   })
 }
 
+function getUnreadMessageCount() {
+  return http.request({
+    url: '/api/messages/unread-count',
+    method: 'GET'
+  })
+}
+
 function markMessageRead(messageId) {
   return http.request({
     url: '/api/messages/' + messageId + '/read',
@@ -218,6 +232,7 @@ module.exports = {
   createPost: createPost,
   listComments: listComments,
   createComment: createComment,
+  deleteComment: deleteComment,
   listLikeUsers: listLikeUsers,
   toggleLike: toggleLike,
   toggleFavorite: toggleFavorite,
@@ -228,6 +243,7 @@ module.exports = {
   toggleFollow: toggleFollow,
   getTagOptions: getTagOptions,
   listMessages: listMessages,
+  getUnreadMessageCount: getUnreadMessageCount,
   markMessageRead: markMessageRead,
   markAllMessagesRead: markAllMessagesRead,
   getActiveBaseUrl: http.getActiveBaseUrl,

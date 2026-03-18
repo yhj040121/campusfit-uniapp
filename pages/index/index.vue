@@ -1,8 +1,14 @@
 <template>
   <view class="page-shell">
-    <view class="page-header">
-      <view class="page-title">CampusFit 校园首页</view>
-      <view class="page-desc">面向大学生的校园穿搭社交导购应用，结合真实穿搭灵感、标签发现与电商导购转化。</view>
+    <view class="page-header header-row">
+      <view class="header-main">
+        <view class="page-title">校园首页</view>
+        <view class="page-desc">面向大学生的校园穿搭社交导购应用，结合真实穿搭灵感、标签发现与电商导购转化。</view>
+      </view>
+      <view class="icon-action" @click="goMessages">
+        信
+        <view v-if="unreadCount > 0" :class="unreadCount > 9 ? 'badge-count' : 'badge-dot'">{{ unreadBadgeText }}</view>
+      </view>
     </view>
 
     <view class="search-bar" @click="goSearch">
@@ -13,6 +19,7 @@
     <view class="panel-card" style="margin-top:18rpx;">
       <view class="text-main">后端连接状态</view>
       <view class="text-copy">{{ statusText }}</view>
+      <view class="text-copy" style="margin-top:8rpx;">{{ unreadHint }}</view>
     </view>
 
     <view class="section-title">内容频道</view>
@@ -64,7 +71,7 @@
       <view class="text-copy">后端接口连通后，推荐穿搭内容将在这里展示。</view>
     </view>
 
-    <view class="section-title">原型快捷入口</view>
+    <view class="section-title">快捷入口</view>
     <view class="grid-menu">
       <view class="grid-item" v-for="item in demos" :key="item.path" @click="goPage(item.path)">
         <view class="grid-title">{{ item.title }}</view>
@@ -78,6 +85,7 @@
 
 <script>
 var api = require('../../common/api.js')
+var session = require('../../common/session.js')
 
 function fallbackRecommendations() {
   return [
@@ -103,7 +111,7 @@ function fallbackRecommendations() {
       coverTag: '社团活力',
       title: '社团活动和下午校园散步穿搭',
       subtitle: '宽松版型搭配青春色彩，舒适又有活力。',
-      desc: '薄荷连帽卫衣搭配乳白色工装裤，很适合社团招新和校园散步。',
+      desc: '薄荷绿连帽卫衣搭配乳白色工装裤，很适合社团招新和校园散步。',
       user: '安宁',
       avatar: 'A',
       avatarClass: 'alt',
@@ -118,25 +126,45 @@ function fallbackRecommendations() {
   ]
 }
 
+function buildDemos() {
+  return [
+    { title: '启动页', copy: '查看品牌入口与启动体验', path: '/pages/splash/index' },
+    { title: '登录', copy: '手机号验证码登录', path: '/pages/login/index' },
+    { title: '注册', copy: '完善校园身份信息', path: '/pages/register/index' },
+    { title: '搜索结果', copy: '查看筛选后的穿搭结果', path: '/pages/results/index?keyword=%E5%9B%BE%E4%B9%A6%E9%A6%86' },
+    { title: '我的发布', copy: '管理已发布的穿搭内容', path: '/pages/my-posts/index' },
+    { title: '消息通知', copy: '查看互动与收益提醒', path: '/pages/messages/index' }
+  ]
+}
+
 export default {
   data: function() {
     return {
       tabs: ['推荐', '热门', '校园', '场景'],
       activeTab: '推荐',
       outfits: [],
+      unreadCount: 0,
       statusText: '正在连接后端服务...',
-      demos: [
-        { title: '启动页', copy: '查看品牌入口与启动体验', path: '/pages/splash/index' },
-        { title: '登录', copy: '手机号验证码登录', path: '/pages/login/index' },
-        { title: '注册', copy: '完善校园身份信息', path: '/pages/register/index' },
-        { title: '搜索结果', copy: '查看筛选后的穿搭结果', path: '/pages/results/index?keyword=%E5%9B%BE%E4%B9%A6%E9%A6%86' },
-        { title: '我的发布', copy: '管理已发布的穿搭内容', path: '/pages/my-posts/index' },
-        { title: '消息通知', copy: '查看互动与收益提醒', path: '/pages/messages/index' }
-      ]
+      demos: buildDemos()
+    }
+  },
+  computed: {
+    unreadBadgeText: function() {
+      return this.unreadCount > 99 ? '99+' : String(this.unreadCount)
+    },
+    unreadHint: function() {
+      if (!session.isLoggedIn()) {
+        return '登录后可查看个人消息通知。'
+      }
+      if (this.unreadCount > 0) {
+        return '当前有 ' + this.unreadCount + ' 条未读消息，点击右上角即可查看。'
+      }
+      return '暂无未读消息，可以安心逛逛推荐内容。'
     }
   },
   onShow: function() {
     this.loadRecommendations()
+    this.loadUnreadCount()
   },
   methods: {
     loadRecommendations: function() {
@@ -151,6 +179,20 @@ export default {
           self.statusText = '后端暂时不可用，已显示本地演示推荐内容。'
         })
     },
+    loadUnreadCount: function() {
+      var self = this
+      if (!session.isLoggedIn()) {
+        self.unreadCount = 0
+        return
+      }
+      api.getUnreadMessageCount()
+        .then(function(count) {
+          self.unreadCount = Number(count || 0)
+        })
+        .catch(function() {
+          self.unreadCount = 0
+        })
+    },
     goSearch: function() {
       uni.switchTab({ url: '/pages/search/index' })
     },
@@ -159,6 +201,13 @@ export default {
     },
     goPage: function(path) {
       uni.navigateTo({ url: path })
+    },
+    goMessages: function() {
+      if (!session.isLoggedIn()) {
+        uni.navigateTo({ url: '/pages/login/index' })
+        return
+      }
+      uni.navigateTo({ url: '/pages/messages/index' })
     }
   }
 }
