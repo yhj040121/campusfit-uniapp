@@ -1,22 +1,50 @@
-<template>
-  <view class="page-shell">
-    <view class="hero-card">
-      <view class="hero-badge">手机号验证码登录</view>
+﻿<template>
+  <view class="page-shell auth-shell">
+    <view class="hero-card auth-hero">
+      <view class="hero-badge">校园身份登录</view>
       <view class="hero-title">欢迎回到 CampusFit</view>
-      <view class="hero-copy">使用演示验证码 <text style="font-weight:700;">2468</text> 即可登录，并同步你的个人资料。</view>
+      <view class="hero-copy">使用手机号验证码快速登录。当前演示验证码为 <text class="auth-emphasis">2468</text>，登录后可继续发布、收藏、评论和参与活动。</view>
+      <view class="hero-metrics">
+        <view class="hero-metric">
+          <text class="hero-metric-value">1 步</text>
+          <text class="hero-metric-label">快速登录</text>
+        </view>
+        <view class="hero-metric">
+          <text class="hero-metric-value">同步</text>
+          <text class="hero-metric-label">账号状态</text>
+        </view>
+      </view>
     </view>
 
-    <view class="panel-card">
+    <view class="panel-card auth-panel">
+      <view class="section-head" style="margin-top:0;">
+        <view>
+          <view class="text-main">验证码登录</view>
+          <view class="section-subtitle">登录后会同步你的个人资料、消息和互动记录</view>
+        </view>
+        <view class="note-stamp">AUTH</view>
+      </view>
+
       <view class="form-label">手机号</view>
       <input class="form-input" v-model="phone" maxlength="11" placeholder="请输入手机号" />
+
       <view class="form-label" style="margin-top:18rpx;">验证码</view>
-      <view class="btn-row" style="align-items:flex-end;">
+      <view class="btn-row auth-code-row" style="align-items:flex-end;">
         <input class="form-input btn-half" v-model="code" maxlength="6" placeholder="请输入验证码" />
         <button class="btn-secondary btn-half" @click="sendCode">{{ codeText }}</button>
       </view>
-      <button class="btn-primary" style="margin-top:24rpx;" :loading="loading" @click="submit">登录</button>
-      <button class="btn-ghost" style="margin-top:16rpx;" @click="goRegister">去注册</button>
-      <view class="float-link" style="margin-top:18rpx; text-align:center;" @click="goHome">继续浏览首页</view>
+
+      <view class="note-box">演示环境无需真实短信，直接输入验证码 2468 即可完成登录。</view>
+
+      <button class="btn-primary" style="margin-top:24rpx;" :loading="loading" @click="submit">登录并进入</button>
+      <button class="btn-ghost" style="margin-top:16rpx;" @click="goRegister">还没有账号？先完善资料</button>
+      <view class="float-link auth-entry-link" @click="goHome">暂时先逛首页</view>
+    </view>
+
+    <view class="panel-card auth-tips">
+      <view class="summary-kicker">登录后可用</view>
+      <view class="summary-line">发布穿搭、收藏商品、查看消息通知与我的活动。</view>
+      <view class="summary-line">如果账号不存在，系统会引导你去完善资料并完成注册。</view>
     </view>
   </view>
 </template>
@@ -37,7 +65,7 @@ export default {
   },
   computed: {
     codeText: function() {
-      return this.countdown > 0 ? this.countdown + '秒' : '发送验证码'
+      return this.countdown > 0 ? this.countdown + ' 秒后重发' : '获取验证码'
     }
   },
   onUnload: function() {
@@ -65,7 +93,7 @@ export default {
     submit: function() {
       var self = this
       if (!/^1\d{10}$/.test(self.phone)) {
-        uni.showToast({ title: '请输入正确的 11 位手机号', icon: 'none' })
+        uni.showToast({ title: '请输入 11 位手机号', icon: 'none' })
         return
       }
       if (!self.code) {
@@ -84,9 +112,9 @@ export default {
         .catch(function(error) {
           uni.showModal({
             title: '登录失败',
-            content: error.message || '当前无法登录',
+            content: error.message || '当前账号尚未注册',
             confirmText: '去注册',
-            cancelText: '关闭',
+            cancelText: '稍后',
             success: function(result) {
               if (result.confirm) {
                 self.goRegister()
@@ -109,4 +137,21 @@ export default {
 </script>
 
 <style>
+.auth-shell {
+  padding-top: 36rpx;
+}
+
+.auth-emphasis {
+  font-weight: 700;
+}
+
+.auth-panel,
+.auth-tips {
+  margin-top: 18rpx;
+}
+
+.auth-entry-link {
+  margin-top: 20rpx;
+  text-align: center;
+}
 </style>

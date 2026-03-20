@@ -1,8 +1,25 @@
-<template>
-  <view class="page-shell">
+﻿<template>
+  <view class="page-shell register-shell">
     <view class="page-header">
-      <view class="page-title">完善你的校园资料</view>
-      <view class="page-desc">填写基础信息后，CampusFit 将为你关联账号、内容管理和创作者收益中心。</view>
+      <view class="campus-ribbon">校园资料卡</view>
+      <view class="page-title">先完善你的校园身份，再开启内容互动</view>
+      <view class="page-desc">注册只需要填写昵称、学校、年级和一句个性签名，后续这些内容会直接同步到个人主页和社区互动场景。</view>
+    </view>
+
+    <view class="hero-card register-hero">
+      <view class="hero-badge">新用户注册</view>
+      <view class="hero-title">把你的校园标签先填完整</view>
+      <view class="hero-copy">这些信息会影响个人主页展示、内容发布身份以及校园场景推荐，让你的内容更容易被同校同风格用户看到。</view>
+      <view class="hero-card-row">
+        <view class="hero-card-pill">
+          <text class="hero-card-pill-value">1</text>
+          <text class="hero-card-pill-label">创建账号</text>
+        </view>
+        <view class="hero-card-pill">
+          <text class="hero-card-pill-value">3</text>
+          <text class="hero-card-pill-label">基础字段</text>
+        </view>
+      </view>
     </view>
 
     <view class="panel-card">
@@ -12,19 +29,20 @@
 
     <view class="panel-card">
       <view class="form-label">昵称</view>
-      <input class="form-input" v-model="nickname" maxlength="20" placeholder="大家怎么称呼你？" />
+      <input class="form-input" v-model="nickname" maxlength="20" placeholder="请输入你的昵称" />
     </view>
 
     <view class="panel-card">
       <view class="form-label">学校</view>
       <input class="form-input" v-model="schoolName" maxlength="40" placeholder="例如：华东师范大学" />
       <view class="form-label" style="margin-top:18rpx;">年级</view>
-      <input class="form-input" v-model="gradeName" maxlength="20" placeholder="例如：大二" />
+      <input class="form-input" v-model="gradeName" maxlength="20" placeholder="例如：大三" />
     </view>
 
     <view class="panel-card">
       <view class="form-label">个性签名</view>
-      <textarea class="form-textarea" v-model="signature" maxlength="60" placeholder="写一句关于你的穿搭风格或校园生活吧。"></textarea>
+      <textarea class="form-textarea" v-model="signature" maxlength="60" placeholder="一句话介绍你的穿搭偏好、预算观或校园日常"></textarea>
+      <view class="note-box">建议写清自己的校园场景和穿搭偏好，例如“早八通勤 / 图书馆久坐 / 预算友好型搭配”。</view>
     </view>
 
     <button class="btn-primary" :loading="loading" @click="finish">完成注册</button>
@@ -53,7 +71,7 @@ export default {
     finish: function() {
       var self = this
       if (!/^1\d{10}$/.test(self.phone)) {
-        uni.showToast({ title: '请输入正确的手机号', icon: 'none' })
+        uni.showToast({ title: '请输入正确手机号', icon: 'none' })
         return
       }
       if (!self.nickname) {
@@ -87,4 +105,7 @@ export default {
 </script>
 
 <style>
+.register-hero {
+  margin-bottom: 18rpx;
+}
 </style>

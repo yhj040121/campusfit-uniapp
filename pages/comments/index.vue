@@ -1,23 +1,26 @@
-<template>
-  <view class="page-shell">
+﻿<template>
+  <view class="page-shell comments-shell">
     <view class="page-header">
-      <view class="page-title">评论列表</view>
-      <view class="page-desc">查看当前穿搭的评论，并继续参与交流。</view>
+      <view class="campus-ribbon">评论列表</view>
+      <view class="page-title">把大家对穿搭的反馈收进同一块讨论区</view>
+      <view class="page-desc">支持发表评论，也支持删除你自己刚发出的评论，让详情页的互动链路更完整。</view>
     </view>
 
-    <view class="panel-card">
-      <view class="text-copy" style="margin-top:0;">{{ statusText }}</view>
+    <view class="filter-summary-card">
+      <view class="summary-kicker">评论状态</view>
+      <view class="summary-line">{{ statusText }}</view>
+      <view class="summary-line">当前共 {{ comments.length }} 条评论，支持继续补充想法。</view>
     </view>
 
     <view v-if="comments.length">
-      <view class="list-card" v-for="item in comments" :key="item.id">
+      <view class="list-card comment-card" v-for="item in comments" :key="item.id">
         <view class="meta-left" style="align-items:flex-start;">
           <view :class="['avatar', item.avatarClass]">{{ item.avatar }}</view>
-          <view style="flex:1;">
+          <view style="flex:1; min-width:0;">
             <view class="meta-line" style="margin-top:0; align-items:flex-start;">
               <view>
                 <view class="meta-name">{{ item.name }}</view>
-                <view class="list-meta">{{ item.time }} | {{ item.likes }} 赞</view>
+                <view class="list-meta">{{ item.time }} · {{ item.likes }} 赞</view>
               </view>
               <view v-if="item.mine" class="float-link" @click.stop="confirmDelete(item)">删除</view>
             </view>
@@ -28,12 +31,12 @@
     </view>
 
     <view v-else class="panel-card">
-      <view class="section-title" style="margin-top:0;">暂无评论</view>
-      <view class="text-copy">成为第一个发表评论的人吧。</view>
+      <view class="section-title" style="margin-top:0;">还没有评论</view>
+      <view class="text-copy">你可以成为第一个留下反馈的人，帮这条穿搭内容补充更多校园场景建议。</view>
     </view>
 
     <view class="fixed-input">
-      <view class="form-label">添加评论</view>
+      <view class="form-label">写一条评论</view>
       <textarea class="form-textarea" v-model="draft" maxlength="80" :placeholder="draftPlaceholder"></textarea>
       <button class="btn-primary" style="margin-top:18rpx;" @click="submit">发送评论</button>
     </view>
@@ -60,7 +63,7 @@ export default {
   },
   computed: {
     draftPlaceholder: function() {
-      return '写下你的穿搭反馈'
+      return '写下你的穿搭反馈或搭配建议'
     }
   },
   onLoad: function(options) {
@@ -99,6 +102,7 @@ export default {
         .then(function(comment) {
           self.comments.unshift(comment)
           self.draft = ''
+          self.statusText = '评论已发送并同步到列表。'
           uni.showToast({ title: '评论已发送', icon: 'none' })
         })
         .catch(function(error) {
@@ -131,7 +135,7 @@ export default {
           self.comments = self.comments.filter(function(comment) {
             return comment.id !== item.id
           })
-          self.statusText = '评论已删除'
+          self.statusText = '评论已删除。'
           uni.showToast({ title: '删除成功', icon: 'none' })
         })
         .catch(function(error) {
@@ -161,4 +165,7 @@ export default {
 </script>
 
 <style>
+.comment-card {
+  margin-top: 16rpx;
+}
 </style>

@@ -16,8 +16,8 @@ export default {
 @import './common/theme.css';
 
 page {
-  background: #f4f8fb;
+  background: #eff6fb;
   color: #243240;
-  font-family: PingFang SC, Microsoft YaHei, sans-serif;
+  font-family: "HarmonyOS Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
 }
 </style>

@@ -1,22 +1,23 @@
-<template>
-  <view class="page-shell">
-    <view class="hero-card">
-      <view class="hero-badge">外部电商跳转</view>
-      <view class="hero-title">离开 CampusFit 前请确认</view>
-      <view class="hero-copy">你即将跳转到外部电商平台，查看商品与购买信息。</view>
+﻿<template>
+  <view class="page-shell product-shell">
+    <view class="hero-card product-hero">
+      <view class="hero-badge">商品跳转确认</view>
+      <view class="hero-title">即将离开 CampusFit 前往外部平台</view>
+      <view class="hero-copy">在跳转前再确认一次商品名称、价格和平台信息，同时保留理性消费提示，帮助用户更清楚地完成导购链路。</view>
     </view>
 
-    <view class="panel-card">
+    <view class="product-card">
       <view class="text-main">{{ post.product }}</view>
-      <view class="text-copy">{{ post.platform }} | {{ post.price }}</view>
-      <view class="note-box">理性消费提醒：请结合自身需求与预算，货比三家后再下单。</view>
-      <view class="note-box">平台盈利方式：用户通过导购链接完成订单后，平台与创作者可能按规则获得佣金。</view>
-      <view class="note-box">商品链接：{{ link }}</view>
+      <view class="text-copy">{{ post.platform }} · {{ post.price }}</view>
+      <view class="product-price">{{ post.price }}</view>
+      <view class="note-box">平台会记录这次导购跳转，用于后续统计内容转化与收益结算。</view>
+      <view class="note-box">请先确认商品是否符合当前预算与需求，再理性决定是否继续前往购买。</view>
+      <view class="note-box">跳转链接：{{ link }}</view>
     </view>
 
     <view class="btn-row">
       <button class="btn-secondary btn-half" @click="copyLink">复制链接</button>
-      <button class="btn-primary btn-half" @click="jumpOut">确认跳转</button>
+      <button class="btn-primary btn-half" @click="jumpOut">继续前往</button>
     </view>
   </view>
 </template>
@@ -26,8 +27,8 @@ var api = require('../../common/api.js')
 
 function fallbackPost() {
   return {
-    product: 'CampusFit 合作商品',
-    platform: '外部平台',
+    product: 'CampusFit 推荐单品',
+    platform: '外部电商平台',
     price: '￥39'
   }
 }
@@ -70,11 +71,18 @@ export default {
       })
     },
     jumpOut: function() {
-      uni.showToast({ title: '演示模式下将跳转到外部电商页面', icon: 'none' })
+      uni.showToast({ title: '演示环境下不真正跳转外部平台', icon: 'none' })
     }
   }
 }
 </script>
 
 <style>
+.product-shell {
+  padding-bottom: 120rpx;
+}
+
+.product-price {
+  margin-top: 18rpx;
+}
 </style>

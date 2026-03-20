@@ -66,6 +66,20 @@ function deletePost(postId) {
   })
 }
 
+function shelfDownPost(postId) {
+  return http.request({
+    url: '/api/posts/' + postId + '/shelf-down',
+    method: 'POST'
+  })
+}
+
+function restorePost(postId) {
+  return http.request({
+    url: '/api/posts/' + postId + '/restore',
+    method: 'POST'
+  })
+}
+
 function listFavoritePosts() {
   return http.request({
     url: '/api/posts/favorites',
@@ -226,6 +240,8 @@ module.exports = {
   getPostForEdit: getPostForEdit,
   updatePost: updatePost,
   deletePost: deletePost,
+  shelfDownPost: shelfDownPost,
+  restorePost: restorePost,
   listFavoritePosts: listFavoritePosts,
   searchPosts: searchPosts,
   getPostDetail: getPostDetail,
