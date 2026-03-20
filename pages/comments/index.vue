@@ -6,10 +6,12 @@
       <view class="page-desc">支持发表评论，也支持删除你自己刚发出的评论，让详情页的互动链路更完整。</view>
     </view>
 
-    <view class="filter-summary-card">
-      <view class="summary-kicker">评论状态</view>
-      <view class="summary-line">{{ statusText }}</view>
-      <view class="summary-line">当前共 {{ comments.length }} 条评论，支持继续补充想法。</view>
+    <view class="section-head" style="margin-top:18rpx;">
+      <view>
+        <view class="section-title" style="margin-top:0;">评论区</view>
+        <view class="section-subtitle">这里收纳大家对这条穿搭的反馈</view>
+      </view>
+      <view class="float-link" @click="loadComments">刷新评论</view>
     </view>
 
     <view v-if="comments.length">
@@ -81,11 +83,11 @@ export default {
       api.listComments(self.postId)
         .then(function(list) {
           self.comments = list || []
-          self.statusText = '评论列表已同步：' + (api.getActiveBaseUrl() || 'Spring Boot')
+          self.statusText = '评论列表已更新，可以继续浏览和互动。'
         })
         .catch(function() {
           self.comments = []
-          self.statusText = '后端评论数据暂时不可用。'
+          self.statusText = '评论暂时不可用，请稍后再试。'
         })
     },
     submit: function() {

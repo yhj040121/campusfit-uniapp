@@ -1,15 +1,15 @@
-﻿<template>
+<template>
   <view class="page-shell activity-shell">
     <view class="page-header">
       <view class="campus-ribbon">活动中心</view>
       <view class="page-title">把校园活动和内容增长绑定在一起</view>
-      <view class="page-desc">这里收纳热门专题、挑战赛和预算计划。你可以先报名参与，再把内容绑定到活动里发布。</view>
+      <view class="page-desc">这里收纳热门专题、挑战赛和预算计划。你可以先报名参与，再把内容绑定到发布页，形成更完整的内容增长闭环。</view>
     </view>
 
     <view class="hero-card activity-hero">
       <view class="hero-badge">本期重点</view>
       <view class="hero-title">活动是内容增长和激励的统一入口</view>
-      <view class="hero-copy">根据交付文档里的业务闭环，我们把活动入口放在前台，让用户更直观地理解“浏览内容 - 参与活动 - 获得激励”的路径。</view>
+      <view class="hero-copy">浏览专题、报名参与、绑定发布，这三步会一起沉淀到你的校园创作轨迹里。</view>
       <view class="hero-card-row">
         <view class="hero-card-pill">
           <text class="hero-card-pill-value">{{ activities.length }}</text>
@@ -22,44 +22,17 @@
       </view>
     </view>
 
-    <view class="filter-summary-card">
-      <view class="summary-kicker">选择状态</view>
-      <view class="summary-line">{{ selectedActivity ? '当前已绑定活动：' + selectedActivity.title : '当前还没有绑定活动，可以先报名或直接选择。' }}</view>
-      <view class="summary-line">如果你是从发布页进入，这里选择后会自动带回发布工作台。</view>
-    </view>
-
-    <view :class="['status-banner', activityStateClass]">
-      <view class="status-banner-head">
-        <view>
-          <view class="status-banner-title">活动模块状态</view>
-          <view class="status-banner-copy">{{ activityStateText }}</view>
-        </view>
-        <view class="status-link" @click="manualRefresh">刷新状态</view>
+    <view v-if="selectedActivity || fromPublish" class="panel-card activity-inline-card">
+      <view class="activity-inline-copy">
+        {{ selectedActivity ? '当前已选择活动：' + selectedActivity.title : '当前从发布页进入，选择活动后会自动返回发布页。' }}
       </view>
-      <view class="status-grid two-col">
-        <view class="status-item">
-          <view class="status-item-label">活动数量</view>
-          <text class="status-item-value">{{ activities.length }}</text>
-        </view>
-        <view class="status-item">
-          <view class="status-item-label">已报名</view>
-          <text class="status-item-value">{{ myStats.joinedCount }}</text>
-        </view>
-        <view class="status-item">
-          <view class="status-item-label">进入方式</view>
-          <text class="status-item-value">{{ fromPublish ? '发布页选择' : '普通浏览' }}</text>
-        </view>
-        <view class="status-item">
-          <view class="status-item-label">当前模式</view>
-          <text class="status-item-value">{{ sessionLabel }}</text>
-        </view>
-      </view>
+      <view class="float-link" @click="manualRefresh">刷新活动</view>
     </view>
 
     <view class="section-head">
       <view>
         <view class="section-title" style="margin-top:0;">活动列表</view>
-        <view class="section-subtitle">先补齐前端活动模块，不依赖后端也能完整演示</view>
+        <view class="section-subtitle">选择最适合当前内容的校园专题</view>
       </view>
       <view class="float-link" @click="goMyActivities">我的活动</view>
     </view>
@@ -120,14 +93,27 @@
 
     <view v-else class="panel-card">
       <view class="section-title" style="margin-top:0;">暂时还没有可展示的活动</view>
-      <view class="text-copy">你可以先刷新一次本地活动状态，或者稍后再回来查看。</view>
+      <view class="text-copy">你可以稍后再回来查看，也可以先去首页继续浏览穿搭内容。</view>
     </view>
   </view>
 </template>
 
 <script>
+var api = require('../../common/api.js')
 var session = require('../../common/session.js')
-var activity = require('../../common/activity.js')
+var activityStore = require('../../common/activity.js')
+
+function defaultStats() {
+  return {
+    joinedCount: 0,
+    ongoingCount: 0
+  }
+}
+
+function isAuthError(error) {
+  var message = ((error && error.message) || '').toLowerCase()
+  return message.indexOf('login') > -1 || message.indexOf('401') > -1 || message.indexOf('登录') > -1
+}
 
 export default {
   data: function() {
@@ -137,42 +123,52 @@ export default {
       selectedActivity: null,
       activityLoading: false,
       actionLoadingId: '',
-      myStats: {
-        joinedCount: 0,
-        ongoingCount: 0
-      }
+      pageError: false,
+      myStats: defaultStats()
     }
   },
-  computed: {
-    activityStateClass: function() {
-      return this.activityLoading ? 'status-banner-warning' : 'status-banner-success'
-    },
-    activityStateText: function() {
-      if (this.activityLoading) {
-        return '正在同步本地活动状态和发布绑定关系。'
-      }
-      if (this.fromPublish) {
-        return '你是从发布页进入的，选择活动后会自动返回发布工作台。'
-      }
-      return '活动中心已经准备就绪，可继续报名、浏览或绑定到发布内容。'
-    },
-    sessionLabel: function() {
-      return session.isLoggedIn() ? '已登录' : '游客'
-    }
-  },
+  computed: {},
   onLoad: function(options) {
     this.fromPublish = !!(options && String(options.pick || '') === '1')
   },
   onShow: function() {
-    this.refreshState()
+    this.refreshState(false)
   },
   methods: {
-    refreshState: function() {
-      this.activityLoading = true
-      this.activities = activity.listActivities()
-      this.selectedActivity = activity.getSelectedActivity()
-      this.myStats = activity.getMyActivityStats()
-      this.activityLoading = false
+    refreshState: function(showToast) {
+      var self = this
+      self.activityLoading = true
+      self.pageError = false
+      self.selectedActivity = activityStore.getSelectedActivity()
+
+      var tasks = [api.listActivities()]
+      if (session.isLoggedIn()) {
+        tasks.push(api.getMyActivitySummary())
+      } else {
+        tasks.push(Promise.resolve(defaultStats()))
+      }
+
+      Promise.all(tasks)
+        .then(function(result) {
+          self.activities = result[0] || []
+          self.myStats = result[1] || defaultStats()
+          self.selectedActivity = activityStore.getSelectedActivity()
+          self.pageError = false
+          if (showToast) {
+            uni.showToast({ title: '活动列表已刷新', icon: 'none' })
+          }
+        })
+        .catch(function(error) {
+          self.activities = []
+          self.myStats = defaultStats()
+          self.pageError = true
+          if (showToast) {
+            uni.showToast({ title: error.message || '活动加载失败', icon: 'none' })
+          }
+        })
+        .finally(function() {
+          self.activityLoading = false
+        })
     },
     toggleJoin: function(item) {
       var self = this
@@ -180,16 +176,30 @@ export default {
         return
       }
       if (!session.isLoggedIn()) {
-        this.promptLogin('登录后才能参与活动与获得活动激励。')
+        this.promptLogin('登录后才能参与活动和获得活动激励。')
         return
       }
       self.actionLoadingId = item.id
-      var result = activity.toggleJoin(item.id)
-      this.refreshState()
-      uni.showToast({ title: result.active ? '已报名活动' : '已退出活动', icon: 'none' })
-      setTimeout(function() {
-        self.actionLoadingId = ''
-      }, 120)
+      api.toggleActivityJoin(item.id)
+        .then(function(updated) {
+          if (self.selectedActivity && self.selectedActivity.id === updated.id) {
+            activityStore.selectActivity(updated)
+            self.selectedActivity = activityStore.getSelectedActivity()
+          }
+          self.refreshState(false)
+          uni.showToast({ title: updated.joined ? '已报名活动' : '已退出活动', icon: 'none' })
+        })
+        .catch(function(error) {
+          if (isAuthError(error)) {
+            session.clearSession()
+            self.promptLogin('登录状态已失效，请重新登录后再参与活动。')
+            return
+          }
+          uni.showToast({ title: error.message || '活动操作失败', icon: 'none' })
+        })
+        .finally(function() {
+          self.actionLoadingId = ''
+        })
     },
     selectForPublish: function(item) {
       var self = this
@@ -200,26 +210,20 @@ export default {
         this.promptLogin('登录后才能把内容绑定到活动中。')
         return
       }
-      self.actionLoadingId = item.id
-      activity.selectActivity(item.id)
-      this.refreshState()
+      activityStore.selectActivity(item)
+      self.selectedActivity = activityStore.getSelectedActivity()
       uni.showToast({ title: '已绑定到发布页', icon: 'none' })
       if (this.fromPublish) {
         setTimeout(function() {
           uni.switchTab({ url: '/pages/publish/index' })
         }, 260)
-      } else {
-        setTimeout(function() {
-          self.actionLoadingId = ''
-        }, 120)
       }
     },
     goMyActivities: function() {
       uni.navigateTo({ url: '/pages/my-activity/index' })
     },
     manualRefresh: function() {
-      this.refreshState()
-      uni.showToast({ title: '已刷新活动状态', icon: 'none' })
+      this.refreshState(true)
     },
     promptLogin: function(message) {
       uni.showModal({
@@ -241,6 +245,21 @@ export default {
 <style scoped>
 .activity-card {
   margin-top: 18rpx;
+}
+
+.activity-inline-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18rpx;
+  margin-top: 18rpx;
+}
+
+.activity-inline-copy {
+  flex: 1;
+  color: var(--campus-muted);
+  font-size: 24rpx;
+  line-height: 1.7;
 }
 
 .activity-cover {

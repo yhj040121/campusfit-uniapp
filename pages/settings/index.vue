@@ -11,13 +11,13 @@
       <view class="page-header">
         <view class="campus-ribbon">设置中心</view>
         <view class="page-title">账号、隐私与推送偏好放进同一个控制面板</view>
-        <view class="page-desc">设置项会优先保存在本地，账号和后端连接状态也会在这里同步展示。</view>
+        <view class="page-desc">设置项会优先保存在本地，账号信息和使用状态也会在这里统一展示。</view>
       </view>
 
       <view class="hero-card settings-hero">
         <view class="hero-badge">账户设置</view>
         <view class="hero-title">把账号状态和推送偏好都收紧管理</view>
-        <view class="hero-copy">这里既负责基础偏好切换，也承接退出登录、资料编辑和当前服务连接状态。</view>
+        <view class="hero-copy">这里既负责基础偏好切换，也承接退出登录、资料编辑和当前使用状态查看。</view>
       </view>
 
       <view class="panel-card">
@@ -31,7 +31,7 @@
         <view class="divider-line"></view>
         <view class="setting-item">
           <view class="setting-left">
-            <view class="setting-title">后端服务</view>
+            <view class="setting-title">使用状态</view>
             <view class="setting-copy">{{ backendLabel }}</view>
           </view>
           <view class="float-link" @click="refreshBackend">刷新状态</view>
@@ -81,7 +81,7 @@ export default {
     return {
       loggedIn: session.isLoggedIn(),
       accountLabel: '正在同步账号信息...',
-      backendLabel: '正在检测服务状态...',
+      backendLabel: '正在检查当前使用状态...',
       settings: defaultSettings()
     }
   },
@@ -113,11 +113,18 @@ export default {
     },
     refreshBackend: function() {
       if (!this.loggedIn) {
-        this.backendLabel = '未登录时不校验后端连接'
+        this.backendLabel = '未登录，可先浏览公开内容'
         return
       }
-      this.backendLabel = api.getActiveBaseUrl() || '暂未检测到服务地址'
-      api.getCurrentUser().then(function() {}).catch(function() {})
+      this.backendLabel = '正在确认账号状态...'
+      var self = this
+      api.getCurrentUser()
+        .then(function() {
+          self.backendLabel = '账号状态正常，可继续浏览、发布和互动'
+        })
+        .catch(function() {
+          self.backendLabel = '当前状态暂时无法确认，不影响基础浏览'
+        })
     },
     toggle: function(item) {
       item.active = !item.active

@@ -7,9 +7,11 @@
     </view>
 
     <view v-if="drafts.length">
-      <view class="filter-summary-card">
-        <view class="summary-kicker">草稿状态</view>
-        <view class="summary-line">当前共 {{ drafts.length }} 条本地草稿，可继续编辑或删除。</view>
+      <view class="section-head" style="margin-top:18rpx;">
+        <view>
+          <view class="section-title" style="margin-top:0;">本地草稿</view>
+          <view class="section-subtitle">草稿只保存在当前设备，适合继续打磨内容</view>
+        </view>
       </view>
 
       <view class="list-card draft-card" v-for="item in drafts" :key="item.id">
@@ -24,7 +26,7 @@
         </view>
         <view class="divider-line"></view>
         <view class="meta-line" style="margin-top:0;">
-          <view class="text-copy" style="margin-top:0;">草稿仅保存在当前设备</view>
+          <view class="list-meta">草稿仅保存在当前设备</view>
           <view class="float-link" @click="removeDraft(item.id)">删除草稿</view>
         </view>
       </view>

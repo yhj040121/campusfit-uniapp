@@ -41,11 +41,6 @@
       <view class="float-link auth-entry-link" @click="goHome">暂时先逛首页</view>
     </view>
 
-    <view class="panel-card auth-tips">
-      <view class="summary-kicker">登录后可用</view>
-      <view class="summary-line">发布穿搭、收藏商品、查看消息通知与我的活动。</view>
-      <view class="summary-line">如果账号不存在，系统会引导你去完善资料并完成注册。</view>
-    </view>
   </view>
 </template>
 

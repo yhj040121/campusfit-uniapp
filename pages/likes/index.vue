@@ -6,37 +6,12 @@
       <view class="page-desc">除了查看点赞用户，你也可以在这里继续关注感兴趣的校园穿搭创作者。</view>
     </view>
 
-    <view class="filter-summary-card">
-      <view class="summary-kicker">同步状态</view>
-      <view class="summary-line">{{ statusText }}</view>
-    </view>
-
-    <view :class="['status-banner', likeStateClass]">
-      <view class="status-banner-head">
-        <view>
-          <view class="status-banner-title">点赞列表状态</view>
-          <view class="status-banner-copy">{{ likeStateText }}</view>
-        </view>
-        <view class="status-link" @click="refreshUsers">刷新列表</view>
+    <view class="section-head" style="margin-top:18rpx;">
+      <view>
+        <view class="section-title" style="margin-top:0;">点赞用户</view>
+        <view class="section-subtitle">这里展示对当前内容点过赞的用户</view>
       </view>
-      <view class="status-grid two-col">
-        <view class="status-item">
-          <view class="status-item-label">点赞人数</view>
-          <text class="status-item-value">{{ users.length }}</text>
-        </view>
-        <view class="status-item">
-          <view class="status-item-label">当前内容</view>
-          <text class="status-item-value">{{ postId }}</text>
-        </view>
-        <view class="status-item">
-          <view class="status-item-label">支持操作</view>
-          <text class="status-item-value">查看 / 继续关注</text>
-        </view>
-        <view class="status-item">
-          <view class="status-item-label">当前模式</view>
-          <text class="status-item-value">{{ actionLoadingId ? '处理中' : '可浏览' }}</text>
-        </view>
-      </view>
+      <view class="float-link" @click="refreshUsers">刷新列表</view>
     </view>
 
     <view v-if="listLoading">
@@ -103,32 +78,7 @@ export default {
     this.postId = (options && options.id) || 'look1'
     this.loadUsers()
   },
-  computed: {
-    likeStateClass: function() {
-      if (this.listLoading || this.actionLoadingId) {
-        return 'status-banner-warning'
-      }
-      if (this.listFailed) {
-        return 'status-banner-error'
-      }
-      return 'status-banner-success'
-    },
-    likeStateText: function() {
-      if (this.listLoading) {
-        return '正在同步当前内容的点赞用户列表。'
-      }
-      if (this.actionLoadingId) {
-        return '正在更新关注状态，请稍候。'
-      }
-      if (this.listFailed) {
-        return '当前未能获取点赞数据，建议手动刷新。'
-      }
-      if (!this.users.length) {
-        return '这条内容暂时还没有收到新的点赞。'
-      }
-      return '点赞列表状态正常，可以继续关注感兴趣的用户。'
-    }
-  },
+  computed: {},
   methods: {
     loadUsers: function() {
       var self = this
@@ -137,12 +87,12 @@ export default {
       api.listLikeUsers(self.postId)
         .then(function(list) {
           self.users = list || []
-          self.statusText = '点赞列表已同步：' + (api.getActiveBaseUrl() || 'Spring Boot')
+          self.statusText = '点赞列表已更新。'
         })
         .catch(function() {
           self.users = []
           self.listFailed = true
-          self.statusText = '后端点赞数据暂时不可用。'
+          self.statusText = '点赞列表暂时不可用，请稍后重试。'
         })
         .finally(function() {
           self.listLoading = false

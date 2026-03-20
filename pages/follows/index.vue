@@ -14,37 +14,12 @@
         <view class="page-desc">你可以切换查看关注列表与粉丝列表，并在这里继续关注你感兴趣的校园穿搭创作者。</view>
       </view>
 
-      <view class="filter-summary-card">
-        <view class="summary-kicker">同步状态</view>
-        <view class="summary-line">{{ statusText }}</view>
-      </view>
-
-      <view :class="['status-banner', followStateClass]">
-        <view class="status-banner-head">
-          <view>
-            <view class="status-banner-title">社交关系状态</view>
-            <view class="status-banner-copy">{{ followStateText }}</view>
-          </view>
-          <view class="status-link" @click="refreshCurrentTab">刷新列表</view>
+      <view class="section-head" style="margin-top:18rpx;">
+        <view>
+          <view class="section-title" style="margin-top:0;">关系列表</view>
+          <view class="section-subtitle">切换查看关注和粉丝，继续建立内容连接</view>
         </view>
-        <view class="status-grid two-col">
-          <view class="status-item">
-            <view class="status-item-label">当前列表</view>
-            <text class="status-item-value">{{ tab === 'following' ? '关注' : '粉丝' }}</text>
-          </view>
-          <view class="status-item">
-            <view class="status-item-label">当前数量</view>
-            <text class="status-item-value">{{ currentList.length }}</text>
-          </view>
-          <view class="status-item">
-            <view class="status-item-label">支持操作</view>
-            <text class="status-item-value">继续关注</text>
-          </view>
-          <view class="status-item">
-            <view class="status-item-label">当前模式</view>
-            <text class="status-item-value">{{ actionLoadingId ? '处理中' : '可浏览' }}</text>
-          </view>
-        </view>
+        <view class="float-link" @click="refreshCurrentTab">刷新列表</view>
       </view>
 
       <view class="chip-row">
@@ -130,30 +105,6 @@ export default {
   computed: {
     currentList: function() {
       return this.tab === 'following' ? this.following : this.fans
-    },
-    followStateClass: function() {
-      if (this.listLoading || this.actionLoadingId) {
-        return 'status-banner-warning'
-      }
-      if (this.listFailed) {
-        return 'status-banner-error'
-      }
-      return 'status-banner-success'
-    },
-    followStateText: function() {
-      if (this.listLoading) {
-        return '正在同步当前社交关系列表。'
-      }
-      if (this.actionLoadingId) {
-        return '正在更新关注状态，请稍候。'
-      }
-      if (this.listFailed) {
-        return '当前未能同步社交关系数据，建议刷新后再试。'
-      }
-      if (!this.currentList.length) {
-        return '当前列表还没有内容，可以去首页或详情页继续互动。'
-      }
-      return '社交关系状态正常，可以切换列表或继续关注。'
     }
   },
   methods: {
@@ -171,7 +122,7 @@ export default {
       api.listFollows(type)
         .then(function(list) {
           self[type] = list || []
-          self.statusText = (type === 'following' ? '关注' : '粉丝') + '列表已同步：' + (api.getActiveBaseUrl() || 'Spring Boot')
+          self.statusText = (type === 'following' ? '关注' : '粉丝') + '列表已更新。'
         })
         .catch(function(error) {
           if (isAuthError(error)) {
@@ -184,7 +135,7 @@ export default {
           }
           self[type] = []
           self.listFailed = true
-          self.statusText = '后端关注数据暂时不可用。'
+          self.statusText = '当前列表暂时不可用，请稍后重试。'
         })
         .finally(function() {
           self.listLoading = false

@@ -89,7 +89,7 @@ export default {
             gradeName: profile.gradeName || '',
             signature: profile.signature || ''
           }
-          self.statusText = '可编辑资料已同步：' + (api.getActiveBaseUrl() || 'Spring Boot')
+          self.statusText = '资料已加载，可以直接编辑。'
         })
         .catch(function(error) {
           if (isAuthError(error)) {
@@ -99,7 +99,7 @@ export default {
             self.statusText = '登录已过期，请重新登录。'
             return
           }
-          self.statusText = '当前无法加载资料字段。'
+          self.statusText = '暂时无法加载资料字段。'
         })
     },
     save: function() {

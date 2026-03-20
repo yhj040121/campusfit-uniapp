@@ -30,39 +30,15 @@
         </view>
       </view>
 
-      <view :class="['status-banner', messageStateClass]">
-        <view class="status-banner-head">
-          <view>
-            <view class="status-banner-title">消息页状态</view>
-            <view class="status-banner-copy">{{ messageStateText }}</view>
-          </view>
-          <view class="status-link" @click="refreshMessages">刷新消息</view>
-        </view>
-        <view class="status-grid two-col">
-          <view class="status-item">
-            <view class="status-item-label">消息总数</view>
-            <text class="status-item-value">{{ messages.length }}</text>
-          </view>
-          <view class="status-item">
-            <view class="status-item-label">未读数量</view>
-            <text class="status-item-value">{{ unreadCount }}</text>
-          </view>
-          <view class="status-item">
-            <view class="status-item-label">当前分类</view>
-            <text class="status-item-value">{{ currentTab }}</text>
-          </view>
-          <view class="status-item">
-            <view class="status-item-label">同步方式</view>
-            <text class="status-item-value">实时更新</text>
-          </view>
-        </view>
-      </view>
-
       <view class="section-head">
         <view>
           <view class="section-title" style="margin-top:0;">消息分类</view>
           <view class="section-subtitle">点击标签切换你关心的消息类型</view>
         </view>
+        <view class="float-link" @click="refreshMessages">刷新消息</view>
+      </view>
+      <view class="section-head" style="margin-top:12rpx;">
+        <view></view>
         <view class="float-link" :class="markingAll ? 'btn-disabled' : ''" @click="markAllRead">{{ markAllLabel }}</view>
       </view>
       <view class="chip-row" v-if="tabs.length > 1">
@@ -133,7 +109,7 @@ export default {
       tabs: ['全部'],
       currentTab: '全部',
       messages: [],
-      statusText: '正在同步消息列表...',
+      statusText: '正在加载消息列表...',
       listLoading: false,
       listFailed: false,
       activeMessageId: '',
@@ -159,30 +135,6 @@ export default {
         return '处理中...'
       }
       return this.unreadCount > 0 ? '全部设为已读' : '全部已读'
-    },
-    messageStateClass: function() {
-      if (this.listLoading || this.markingAll) {
-        return 'status-banner-warning'
-      }
-      if (this.listFailed) {
-        return 'status-banner-error'
-      }
-      return 'status-banner-success'
-    },
-    messageStateText: function() {
-      if (this.listLoading) {
-        return '正在同步消息列表和未读状态。'
-      }
-      if (this.markingAll) {
-        return '正在批量处理消息已读状态，请稍候。'
-      }
-      if (this.listFailed) {
-        return '当前未能加载消息列表，建议刷新后重试。'
-      }
-      if (!this.messages.length) {
-        return '消息中心已连接完成，当前没有新的提醒。'
-      }
-      return '消息列表状态正常，可继续筛选、单条已读或全部已读。'
     }
   },
   onShow: function() {
@@ -193,7 +145,7 @@ export default {
       this.currentTab = '全部'
       this.listLoading = false
       this.listFailed = false
-      this.statusText = '登录后即可同步你的个人消息。'
+      this.statusText = '登录后即可查看你的个人消息。'
       return
     }
     this.loadMessages()
@@ -215,7 +167,7 @@ export default {
           if (self.tabs.indexOf(self.currentTab) === -1) {
             self.currentTab = '全部'
           }
-          self.statusText = '消息列表已同步：' + (api.getActiveBaseUrl() || 'Spring Boot')
+          self.statusText = '消息列表已更新。'
         })
         .catch(function(error) {
           if (isAuthError(error)) {
@@ -231,7 +183,7 @@ export default {
           self.tabs = ['全部']
           self.currentTab = '全部'
           self.listFailed = true
-          self.statusText = '后端消息接口暂时不可用。'
+          self.statusText = '消息暂时不可用，请稍后再试。'
         })
         .finally(function() {
           self.listLoading = false

@@ -34,43 +34,12 @@
         </view>
       </view>
 
-      <view class="panel-card posts-status">
-        <view class="section-head">
-          <view>
-            <view class="text-main">同步状态</view>
-            <view class="section-subtitle">发布列表与后端连接</view>
-          </view>
-          <view class="status-link" @click="refreshPosts">刷新列表</view>
+      <view class="section-head" style="margin-top:18rpx;">
+        <view>
+          <view class="section-title" style="margin-top:0;">状态总览</view>
+          <view class="section-subtitle">快速查看不同审核状态下的内容数量</view>
         </view>
-        <view class="text-copy">{{ statusText }}</view>
-      </view>
-
-      <view :class="['status-banner', postsStateClass]">
-        <view class="status-banner-head">
-          <view>
-            <view class="status-banner-title">内容列表状态</view>
-            <view class="status-banner-copy">{{ postsStateText }}</view>
-          </view>
-          <view class="note-stamp">POSTS</view>
-        </view>
-        <view class="status-grid two-col">
-          <view class="status-item">
-            <view class="status-item-label">已发布</view>
-            <text class="status-item-value">{{ publishedCount }}</text>
-          </view>
-          <view class="status-item">
-            <view class="status-item-label">审核中</view>
-            <text class="status-item-value">{{ pendingCount }}</text>
-          </view>
-          <view class="status-item">
-            <view class="status-item-label">已下架</view>
-            <text class="status-item-value">{{ offlineCount }}</text>
-          </view>
-          <view class="status-item">
-            <view class="status-item-label">已驳回</view>
-            <text class="status-item-value">{{ rejectedCount }}</text>
-          </view>
-        </view>
+        <view class="float-link" @click="refreshPosts">刷新列表</view>
       </view>
 
       <view class="status-overview">
@@ -208,27 +177,6 @@ export default {
     },
     rejectedCount: function() {
       return this.countByStatus('REJECTED')
-    },
-    postsStateClass: function() {
-      if (this.listLoading) {
-        return 'status-banner-warning'
-      }
-      if (this.listFailed) {
-        return 'status-banner-error'
-      }
-      return 'status-banner-success'
-    },
-    postsStateText: function() {
-      if (this.listLoading) {
-        return '正在同步我的发布列表和当前内容状态。'
-      }
-      if (this.listFailed) {
-        return '当前未能加载发布列表，建议手动刷新后再试。'
-      }
-      if (!this.posts.length) {
-        return '发布列表已连接成功，现在可以开始创建第一条校园穿搭内容。'
-      }
-      return '内容列表状态正常，可继续编辑、下架或重新上架。'
     }
   },
   onShow: function() {
@@ -259,7 +207,7 @@ export default {
       api.listMyPosts()
         .then(function(list) {
           self.posts = list || []
-          self.statusText = '共 ' + self.posts.length + ' 条内容，已连接后端：' + (api.getActiveBaseUrl() || 'Spring Boot')
+          self.statusText = '共 ' + self.posts.length + ' 条内容，可继续管理你的发布。'
         })
         .catch(function(error) {
           if (isAuthError(error)) {
@@ -271,7 +219,7 @@ export default {
           }
           self.posts = []
           self.listFailed = true
-          self.statusText = '后端发布列表暂时不可用。'
+          self.statusText = '发布列表暂时不可用，请稍后再试。'
         })
         .finally(function() {
           self.listLoading = false

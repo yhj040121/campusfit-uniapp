@@ -22,8 +22,8 @@
           <text class="hero-metric-label">推荐内容</text>
         </view>
         <view class="hero-metric">
-          <text class="hero-metric-value">{{ tabs.length }}</text>
-          <text class="hero-metric-label">校园频道</text>
+          <text class="hero-metric-value">{{ featuredActivities.length }}</text>
+          <text class="hero-metric-label">热门活动</text>
         </view>
         <view class="hero-metric">
           <text class="hero-metric-value">{{ unreadCount }}</text>
@@ -45,7 +45,7 @@
       </view>
       <view class="float-link" @click="goActivityCenter">查看全部</view>
     </view>
-    <view class="grid-menu">
+    <view class="grid-menu" v-if="featuredActivities.length">
       <view class="grid-item activity-entry-card" v-for="item in featuredActivities" :key="item.id" @click="goActivityCenter">
         <view class="grid-kicker">{{ item.badge }}</view>
         <view class="grid-title">{{ item.title }}</view>
@@ -54,46 +54,12 @@
       </view>
     </view>
 
-    <view class="panel-card note-card">
-      <view class="note-head">
-        <view>
-          <view class="text-main">系统状态</view>
-          <view class="section-subtitle">联调与消息同步</view>
-        </view>
-        <view class="note-stamp">LIVE</view>
-      </view>
-      <view class="text-copy">{{ statusText }}</view>
-      <view class="note-line"></view>
-      <view class="text-copy">{{ unreadHint }}</view>
-    </view>
-
-    <view :class="['status-banner', homeStateClass]">
-      <view class="status-banner-head">
-        <view>
-          <view class="status-banner-title">首页内容状态</view>
-          <view class="status-banner-copy">{{ homeStateText }}</view>
-        </view>
-        <view class="status-link" @click="refreshHome">刷新</view>
-      </view>
-      <view class="status-grid">
-        <view class="status-item">
-          <view class="status-item-label">推荐内容</view>
-          <text class="status-item-value">{{ outfits.length }}</text>
-        </view>
-        <view class="status-item">
-          <view class="status-item-label">活动入口</view>
-          <text class="status-item-value">{{ featuredActivities.length }}</text>
-        </view>
-        <view class="status-item">
-          <view class="status-item-label">消息状态</view>
-          <text class="status-item-value">{{ sessionStateText }}</text>
-        </view>
-      </view>
-    </view>
-
     <view class="section-head">
-      <view class="section-title">内容频道</view>
-      <view class="section-subtitle">用校园场景做第一层筛选</view>
+      <view>
+        <view class="section-title">内容频道</view>
+        <view class="section-subtitle">用校园场景做第一层筛选</view>
+      </view>
+      <view class="float-link" @click="refreshHome">刷新内容</view>
     </view>
     <view class="chip-row channel-row">
       <view
@@ -127,8 +93,8 @@
     <view v-else-if="listFailed" class="status-banner status-banner-error">
       <view class="status-banner-head">
         <view>
-          <view class="status-banner-title">推荐内容加载失败</view>
-          <view class="status-banner-copy">当前已经切换到本地演示数据，你也可以再试一次，看看后端接口是否恢复。</view>
+          <view class="status-banner-title">推荐内容暂时没有加载出来</view>
+          <view class="status-banner-copy">可以稍后再试一次，或先通过搜索与活动中心继续浏览。</view>
         </view>
         <view class="status-link" @click="refreshHome">重试</view>
       </view>
@@ -164,20 +130,8 @@
       </view>
     </view>
     <view v-else class="panel-card">
-      <view class="section-title" style="margin-top:0;">暂无推荐内容</view>
-      <view class="text-copy">后端接口连通后，推荐穿搭内容将在这里展示。</view>
-    </view>
-
-    <view class="section-head">
-      <view class="section-title">快捷入口</view>
-      <view class="section-subtitle">常用页面一键直达</view>
-    </view>
-    <view class="grid-menu">
-      <view class="grid-item pinned-card" v-for="item in demos" :key="item.path" @click="goPage(item.path)">
-        <view class="grid-kicker">直达</view>
-        <view class="grid-title">{{ item.title }}</view>
-        <view class="grid-copy">{{ item.copy }}</view>
-      </view>
+      <view class="section-title" style="margin-top:0;">暂时还没有推荐内容</view>
+      <view class="text-copy">先去搜索页按场景筛选，或者看看当前正在进行的活动专题。</view>
     </view>
 
     <view class="bottom-gap"></view>
@@ -186,110 +140,23 @@
 
 <script>
 var api = require('../../common/api.js')
-var activity = require('../../common/activity.js')
 var session = require('../../common/session.js')
-
-function fallbackRecommendations() {
-  return [
-    {
-      id: 'look1',
-      coverTag: '图书馆精选',
-      title: '适合早八与图书馆的叠穿造型',
-      subtitle: '蓝白层次清爽干净，适合学生日常路线。',
-      desc: '白衬衫叠穿浅蓝针织马甲，搭配灰色百褶裙，既上镜又好穿。',
-      user: '乔乔',
-      avatar: 'Q',
-      avatarClass: 'soft',
-      school: '华东师范大学 | 大三',
-      scene: '图书馆',
-      style: '学院风',
-      budget: '100-150',
-      likes: 128,
-      comments: 36,
-      saves: 92
-    },
-    {
-      id: 'look2',
-      coverTag: '社团活力',
-      title: '社团活动和下午校园散步穿搭',
-      subtitle: '宽松版型搭配青春色彩，舒适又有活力。',
-      desc: '薄荷绿连帽卫衣搭配乳白色工装裤，很适合社团招新和校园散步。',
-      user: '安宁',
-      avatar: 'A',
-      avatarClass: 'alt',
-      school: '上海大学 | 大二',
-      scene: '社团活动',
-      style: '运动休闲',
-      budget: '50-100',
-      likes: 96,
-      comments: 18,
-      saves: 54
-    }
-  ]
-}
-
-function buildDemos() {
-  return [
-    { title: '启动页', copy: '查看品牌入口与启动体验', path: '/pages/splash/index' },
-    { title: '登录', copy: '手机号验证码登录', path: '/pages/login/index' },
-    { title: '注册', copy: '完善校园身份信息', path: '/pages/register/index' },
-    { title: '活动中心', copy: '查看热门专题与挑战活动', path: '/pages/activity/index' },
-    { title: '搜索结果', copy: '查看筛选后的穿搭结果', path: '/pages/results/index?keyword=%E5%9B%BE%E4%B9%A6%E9%A6%86' },
-    { title: '我的发布', copy: '管理已发布的穿搭内容', path: '/pages/my-posts/index' },
-    { title: '消息通知', copy: '查看互动与收益提醒', path: '/pages/messages/index' }
-  ]
-}
 
 export default {
   data: function() {
-      return {
-        tabs: ['推荐', '热门', '校园', '场景'],
-        activeTab: '推荐',
-        outfits: [],
-        featuredActivities: [],
-        listLoading: false,
-        listFailed: false,
-        unreadCount: 0,
-        statusText: '正在连接后端服务...',
-        demos: buildDemos()
-      }
-    },
+    return {
+      tabs: ['推荐', '热门', '校园', '场景'],
+      activeTab: '推荐',
+      outfits: [],
+      featuredActivities: [],
+      listLoading: false,
+      listFailed: false,
+      unreadCount: 0
+    }
+  },
   computed: {
     unreadBadgeText: function() {
       return this.unreadCount > 99 ? '99+' : String(this.unreadCount)
-    },
-    unreadHint: function() {
-      if (!session.isLoggedIn()) {
-        return '登录后可查看个人消息通知。'
-      }
-      if (this.unreadCount > 0) {
-        return '当前有 ' + this.unreadCount + ' 条未读消息，点击右上角即可查看。'
-      }
-      return '暂无未读消息，可以安心逛逛推荐内容。'
-    },
-    homeStateClass: function() {
-      if (this.listLoading) {
-        return 'status-banner-warning'
-      }
-      if (this.listFailed) {
-        return 'status-banner-error'
-      }
-      return 'status-banner-success'
-    },
-    homeStateText: function() {
-      if (this.listLoading) {
-        return '正在同步首页推荐与消息状态，稍等一下就能看到最新内容。'
-      }
-      if (this.listFailed) {
-        return '后端推荐接口暂时不可用，当前已切换到本地演示内容。'
-      }
-      return '首页推荐、活动入口与消息提醒都已准备就绪，可以直接继续浏览。'
-    },
-    sessionStateText: function() {
-      if (!session.isLoggedIn()) {
-        return '游客'
-      }
-      return this.unreadCount > 0 ? '有未读' : '已同步'
     }
   },
   onShow: function() {
@@ -299,7 +166,14 @@ export default {
   },
   methods: {
     loadActivities: function() {
-      this.featuredActivities = activity.getFeaturedActivities()
+      var self = this
+      api.listFeaturedActivities()
+        .then(function(list) {
+          self.featuredActivities = list || []
+        })
+        .catch(function() {
+          self.featuredActivities = []
+        })
     },
     loadRecommendations: function() {
       var self = this
@@ -308,12 +182,10 @@ export default {
       api.listRecommendations()
         .then(function(list) {
           self.outfits = list || []
-          self.statusText = '已连接后端：' + (api.getActiveBaseUrl() || '后端服务')
           self.listFailed = false
         })
         .catch(function() {
-          self.outfits = fallbackRecommendations()
-          self.statusText = '后端暂时不可用，已显示本地演示推荐内容。'
+          self.outfits = []
           self.listFailed = true
         })
         .finally(function() {
@@ -343,9 +215,6 @@ export default {
     goDetail: function(id) {
       uni.navigateTo({ url: '/pages/detail/index?id=' + id })
     },
-    goPage: function(path) {
-      uni.navigateTo({ url: path })
-    },
     goMessages: function() {
       if (!session.isLoggedIn()) {
         uni.navigateTo({ url: '/pages/login/index' })
@@ -357,7 +226,7 @@ export default {
       this.loadActivities()
       this.loadRecommendations()
       this.loadUnreadCount()
-      uni.showToast({ title: '正在刷新首页', icon: 'none' })
+      uni.showToast({ title: '首页已刷新', icon: 'none' })
     }
   }
 }
@@ -460,47 +329,11 @@ export default {
   font-weight: 600;
 }
 
-.note-card {
-  position: relative;
-  overflow: hidden;
-}
-
-.note-card::after {
-  content: "";
-  position: absolute;
-  right: -26rpx;
-  top: -30rpx;
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 28rpx;
-  background: rgba(77, 171, 228, 0.08);
-  transform: rotate(18deg);
-}
-
-.note-head,
 .section-head {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 18rpx;
-}
-
-.note-stamp {
-  display: inline-flex;
-  align-items: center;
-  padding: 10rpx 18rpx;
-  border-radius: 999rpx;
-  background: rgba(67, 198, 157, 0.14);
-  color: #34a77f;
-  font-size: 20rpx;
-  font-weight: 700;
-  letter-spacing: 2rpx;
-}
-
-.note-line {
-  height: 2rpx;
-  margin: 18rpx 0 6rpx;
-  background: linear-gradient(90deg, rgba(88, 186, 245, 0.2) 0%, rgba(88, 186, 245, 0) 100%);
 }
 
 .channel-row {
@@ -587,32 +420,5 @@ export default {
 .bulletin-meta {
   padding-top: 16rpx;
   border-top: 1rpx solid rgba(112, 155, 188, 0.12);
-}
-
-.pinned-card {
-  position: relative;
-  overflow: hidden;
-}
-
-.pinned-card::before {
-  content: "";
-  position: absolute;
-  right: 18rpx;
-  top: 18rpx;
-  width: 18rpx;
-  height: 18rpx;
-  border-radius: 50%;
-  background: rgba(255, 180, 107, 0.84);
-}
-
-.grid-kicker {
-  display: inline-flex;
-  align-items: center;
-  padding: 8rpx 16rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.84);
-  color: #67a7ce;
-  font-size: 20rpx;
-  font-weight: 700;
 }
 </style>

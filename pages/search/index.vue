@@ -17,47 +17,14 @@
       <button class="btn-primary search-submit" @click="submitSearch">立即搜索</button>
     </view>
 
-    <view class="panel-card note-card">
-      <view class="section-head">
-        <view>
-          <view class="text-main">筛选项同步状态</view>
-          <view class="section-subtitle">标签来自后端接口</view>
-        </view>
-        <view class="note-stamp">FILTER</view>
-      </view>
-      <view class="text-copy">{{ statusText }}</view>
-    </view>
-
-    <view :class="['status-banner', searchStateClass]">
-      <view class="status-banner-head">
-        <view>
-          <view class="status-banner-title">搜索准备度</view>
-          <view class="status-banner-copy">{{ searchStateText }}</view>
-        </view>
-        <view class="status-link" @click="refreshFilters">刷新筛选</view>
-      </view>
-      <view class="status-grid two-col">
-        <view class="status-item">
-          <view class="status-item-label">关键词</view>
-          <text class="status-item-value">{{ keyword ? '已输入' : '未输入' }}</text>
-        </view>
-        <view class="status-item">
-          <view class="status-item-label">已选筛选</view>
-          <text class="status-item-value">{{ activeFilterCount }}</text>
-        </view>
-        <view class="status-item">
-          <view class="status-item-label">标签来源</view>
-          <text class="status-item-value">{{ tagLoading ? '同步中' : (tagFailed ? '本地兜底' : '后端已连通') }}</text>
-        </view>
-        <view class="status-item">
-          <view class="status-item-label">搜索动作</view>
-          <text class="status-item-value">{{ canSearch ? '可搜索' : '可浏览全部' }}</text>
-        </view>
-      </view>
-    </view>
-
     <view class="filter-summary-card">
-      <view class="summary-kicker">当前筛选</view>
+      <view class="section-head" style="margin-top:0; align-items:flex-start;">
+        <view>
+          <view class="summary-kicker">当前筛选</view>
+          <view class="section-subtitle" style="margin-top:8rpx;">先把场景和预算缩小，再进入结果页继续挑选。</view>
+        </view>
+        <view class="float-link" @click="refreshFilters">刷新筛选</view>
+      </view>
       <view class="summary-line">关键词：{{ keyword || '未设置' }}</view>
       <view class="summary-line">场景：{{ filters.scene || '不限' }}</view>
       <view class="summary-line">风格：{{ filters.style || '不限' }}</view>
@@ -157,7 +124,6 @@ export default {
       budgetTags: ['50-100', '100-150', '150-200', '200+'],
       tagLoading: false,
       tagFailed: false,
-      statusText: '正在同步后端标签选项...',
       filters: {
         scene: '',
         style: '',
@@ -170,36 +136,8 @@ export default {
     this.loadTagOptions()
   },
   computed: {
-    activeFilterCount: function() {
-      var count = 0
-      if (this.filters.scene) count += 1
-      if (this.filters.style) count += 1
-      if (this.filters.budget) count += 1
-      return count
-    },
     canSearch: function() {
-      return !!this.keyword || this.activeFilterCount > 0
-    },
-    searchStateClass: function() {
-      if (this.tagLoading) {
-        return 'status-banner-warning'
-      }
-      if (this.tagFailed) {
-        return 'status-banner-info'
-      }
-      return 'status-banner-success'
-    },
-    searchStateText: function() {
-      if (this.tagLoading) {
-        return '正在同步后端标签项，稍等一下就能拿到最新筛选。'
-      }
-      if (this.tagFailed) {
-        return '后端标签接口暂时不可用，当前已经切换到本地筛选项。'
-      }
-      if (this.canSearch) {
-        return '关键词和筛选项已经准备好，可以直接前往结果页继续对比。'
-      }
-      return '你可以先输入关键词，也可以直接靠场景、风格和预算筛内容。'
+      return !!this.keyword || !!this.filters.scene || !!this.filters.style || !!this.filters.budget
     }
   },
   methods: {
@@ -231,11 +169,9 @@ export default {
           self.sceneTags = data.sceneTags || self.sceneTags
           self.styleTags = data.styleTags || self.styleTags
           self.budgetTags = data.budgetTags || self.budgetTags
-          self.statusText = '筛选项已同步：' + (api.getActiveBaseUrl() || '后端服务')
           self.tagFailed = false
         })
         .catch(function() {
-          self.statusText = '后端标签暂时不可用，当前显示本地筛选项。'
           self.tagFailed = true
         })
         .finally(function() {
@@ -302,7 +238,6 @@ export default {
   margin-top: 18rpx;
 }
 
-.note-card,
 .filter-summary-card {
   margin-top: 18rpx;
 }

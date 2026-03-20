@@ -2,19 +2,19 @@
   <view class="page-shell profile-shell">
     <view v-if="!loggedIn" class="hero-card guest-hero">
       <view class="hero-badge">游客模式</view>
-      <view class="hero-title">登录后解锁你的创作者中心</view>
-      <view class="hero-copy">查看真实收益、消息红点、我的发布与社交互动，把校园灵感沉淀成你自己的风格名片。</view>
+      <view class="hero-title">登录后打开你的创作者中心</view>
+      <view class="hero-copy">我的发布、收藏、活动、消息和收益状态都会集中在这里，方便你管理自己的校园内容轨迹。</view>
       <view class="guest-points">
-        <view class="guest-point">创作者收益中心</view>
-        <view class="guest-point">消息与粉丝提醒</view>
-        <view class="guest-point">内容管理与草稿继续编辑</view>
+        <view class="guest-point">查看我的发布与收藏</view>
+        <view class="guest-point">管理消息与活动状态</view>
+        <view class="guest-point">继续编辑资料与草稿</view>
       </view>
       <button class="btn-primary" style="margin-top:24rpx;" @click="goLogin">去登录</button>
     </view>
 
     <view v-else>
       <view class="hero-card profile-hero">
-        <view class="hero-badge">个人主页</view>
+        <view class="hero-badge">创作者中心</view>
         <view class="profile-topline">
           <view class="meta-left">
             <view class="avatar profile-avatar">{{ profile.avatar }}</view>
@@ -31,27 +31,15 @@
             <text class="hero-card-pill-value">{{ unreadCount }}</text>
             <text class="hero-card-pill-label">未读消息</text>
           </view>
-        <view class="hero-card-pill">
-          <text class="hero-card-pill-value">{{ profile.cooperation }}</text>
-          <text class="hero-card-pill-label">合作记录</text>
-        </view>
-        <view class="hero-card-pill">
-          <text class="hero-card-pill-value">{{ activityStats.joinedCount }}</text>
-          <text class="hero-card-pill-label">我的活动</text>
-        </view>
-      </view>
-      </view>
-
-      <view class="panel-card profile-status">
-        <view class="section-head">
-          <view>
-            <view class="text-main">同步状态</view>
-            <view class="section-subtitle">账号与提醒</view>
+          <view class="hero-card-pill">
+            <text class="hero-card-pill-value">{{ profile.cooperation }}</text>
+            <text class="hero-card-pill-label">合作邀约</text>
           </view>
-          <view class="note-stamp">SYNC</view>
+          <view class="hero-card-pill">
+            <text class="hero-card-pill-value">{{ activityStats.joinedCount }}</text>
+            <text class="hero-card-pill-label">已参与活动</text>
+          </view>
         </view>
-        <view class="text-copy">{{ statusText }}</view>
-        <view class="text-copy" style="margin-top:8rpx;">{{ unreadHint }}</view>
       </view>
 
       <view class="metric-row profile-metrics">
@@ -73,65 +61,70 @@
         <view class="section-head">
           <view>
             <view class="section-title" style="margin-top:0;">创作者收益中心</view>
-            <view class="section-subtitle">导购佣金与品牌合作</view>
+            <view class="section-subtitle">把导购分佣和合作邀约放在一起查看</view>
           </view>
-          <view class="income-sticker">收入看板</view>
+          <view class="income-sticker">收益</view>
         </view>
         <view class="income-value">{{ profile.income }}</view>
-        <view class="text-copy">当前共有 {{ profile.cooperation }} 条合作记录，可在后台继续跟踪佣金与合作进度。</view>
+        <view class="text-copy">当前共有 {{ profile.cooperation }} 条合作邀约，活动参与和导购内容会一起影响你的创作曝光。</view>
       </view>
 
-      <view class="section-head">
-        <view class="section-title">内容与社交管理</view>
-        <view class="section-subtitle">常用入口整理成便签卡片</view>
-      </view>
-      <view class="grid-menu">
-        <view class="grid-item grid-item-badge profile-menu-card" v-for="item in menus" :key="item.path" @click="go(item.path)">
-          <view v-if="item.key === 'messages' && unreadCount > 0" class="badge-count">{{ unreadBadgeText }}</view>
-          <view class="menu-initial">{{ item.title.slice(0, 2) }}</view>
-          <view class="grid-title">{{ item.title }}</view>
-          <view class="grid-copy">{{ item.copy }}</view>
+      <view class="panel-card menu-card">
+        <view class="section-head">
+          <view>
+            <view class="section-title">内容与社交管理</view>
+            <view class="section-subtitle">把常用入口整理成一块清晰的个人工作台</view>
+          </view>
+        </view>
+        <view class="menu-grid">
+          <view class="menu-item" v-for="item in menus" :key="item.key" @click="go(item.path)">
+            <view class="menu-badge" v-if="item.key === 'messages' && unreadCount > 0">{{ unreadBadgeText }}</view>
+            <view class="menu-badge subtle" v-else-if="item.key === 'activity' && activityStats.joinedCount > 0">{{ activityStats.joinedCount }}</view>
+            <view class="menu-title">{{ item.title }}</view>
+            <view class="menu-copy">{{ item.copy }}</view>
+          </view>
         </view>
       </view>
 
-      <button class="btn-ghost" style="margin-top:24rpx;" @click="logout">退出登录</button>
+      <button class="btn-ghost logout-button" @click="logout">退出登录</button>
     </view>
-
-    <view class="bottom-gap"></view>
   </view>
 </template>
 
 <script>
 var api = require('../../common/api.js')
-var activity = require('../../common/activity.js')
 var session = require('../../common/session.js')
 
 function buildDefaultProfile() {
   return {
-    name: '校园创作者',
+    name: '校园新同学',
     avatar: 'C',
-    school: 'CampusFit 社区',
-    sign: '分享真实的校园穿搭与理性导购推荐。',
+    school: 'CampusFit 校园社区',
+    sign: '把校园日常场景也穿得轻盈、清爽、有预算感。',
     following: 0,
     followers: 0,
     likes: 0,
-    income: '￥0.00',
+    income: '¥0.00',
     cooperation: 0
   }
 }
 
 function buildMenus() {
   return [
-    { key: 'posts', title: '我的发布', copy: '查看已发布的穿搭内容', path: '/pages/my-posts/index' },
-    { key: 'favorites', title: '我的收藏', copy: '管理已收藏的穿搭与商品', path: '/pages/favorites/index' },
-    { key: 'activity', title: '我的活动', copy: '查看已报名的专题活动与挑战进度', path: '/pages/my-activity/index' },
-    { key: 'follows', title: '关注 / 粉丝', copy: '查看你的社交关系与创作者连接', path: '/pages/follows/index' },
-    { key: 'messages', title: '消息通知', copy: '互动、收益与合作提醒', path: '/pages/messages/index' },
-    { key: 'drafts', title: '草稿箱', copy: '继续编辑未完成的穿搭草稿', path: '/pages/drafts/index' },
-    { key: 'settings', title: '设置', copy: '账号、隐私与推送设置', path: '/pages/settings/index' },
-    { key: 'profile', title: '编辑资料', copy: '修改昵称、学校与个性签名', path: '/pages/edit-profile/index' },
-    { key: 'splash', title: '启动页', copy: '再次查看品牌启动页', path: '/pages/splash/index' }
+    { key: 'posts', title: '我的发布', copy: '查看和管理已经发布的穿搭内容', path: '/pages/my-posts/index' },
+    { key: 'favorites', title: '我的收藏', copy: '回看收藏过的穿搭和商品线索', path: '/pages/favorites/index' },
+    { key: 'activity', title: '我的活动', copy: '查看已报名活动和当前绑定专题', path: '/pages/my-activity/index' },
+    { key: 'follows', title: '关注 / 粉丝', copy: '管理社交关系与互动对象', path: '/pages/follows/index' },
+    { key: 'messages', title: '消息通知', copy: '查看评论、点赞、收益和合作提醒', path: '/pages/messages/index' },
+    { key: 'drafts', title: '草稿箱', copy: '继续编辑尚未完成的内容草稿', path: '/pages/drafts/index' },
+    { key: 'settings', title: '设置', copy: '管理账号、隐私与推送偏好', path: '/pages/settings/index' },
+    { key: 'profile', title: '编辑资料', copy: '更新昵称、学校和个性签名', path: '/pages/edit-profile/index' }
   ]
+}
+
+function isAuthError(error) {
+  var message = ((error && error.message) || '').toLowerCase()
+  return message.indexOf('login') > -1 || message.indexOf('401') > -1 || message.indexOf('登录') > -1
 }
 
 export default {
@@ -139,35 +132,31 @@ export default {
     return {
       loggedIn: session.isLoggedIn(),
       profile: buildDefaultProfile(),
-      activityStats: activity.getMyActivityStats(),
+      activityStats: {
+        joinedCount: 0,
+        ongoingCount: 0
+      },
       unreadCount: 0,
-      statusText: '正在同步个人资料...',
       menus: buildMenus()
     }
   },
   computed: {
     unreadBadgeText: function() {
       return this.unreadCount > 99 ? '99+' : String(this.unreadCount)
-    },
-    unreadHint: function() {
-      if (this.unreadCount > 0) {
-        return '未读消息 ' + this.unreadCount + ' 条，记得查看「消息通知」。'
-      }
-      return '暂无未读消息。'
     }
   },
   onShow: function() {
     this.loggedIn = session.isLoggedIn()
     this.menus = buildMenus()
-    this.activityStats = activity.getMyActivityStats()
     if (!this.loggedIn) {
-      this.statusText = '当前以游客身份浏览。'
       this.unreadCount = 0
       this.profile = buildDefaultProfile()
+      this.activityStats = { joinedCount: 0, ongoingCount: 0 }
       return
     }
     this.loadProfile()
     this.loadUnreadCount()
+    this.loadActivitySummary()
   },
   methods: {
     loadProfile: function() {
@@ -175,18 +164,15 @@ export default {
       api.getMyProfile()
         .then(function(profile) {
           self.profile = profile || buildDefaultProfile()
-          self.statusText = '个人资料已同步：' + (api.getActiveBaseUrl() || 'Spring Boot')
         })
         .catch(function(error) {
-          if ((error.message || '').toLowerCase().indexOf('login') > -1) {
+          if (isAuthError(error)) {
             session.clearSession()
             self.loggedIn = false
             self.profile = buildDefaultProfile()
-            self.statusText = '登录已过期，请重新登录。'
             return
           }
           self.profile = buildDefaultProfile()
-          self.statusText = '后端暂时不可用，已显示本地演示数据。'
         })
     },
     loadUnreadCount: function() {
@@ -197,6 +183,16 @@ export default {
         })
         .catch(function() {
           self.unreadCount = 0
+        })
+    },
+    loadActivitySummary: function() {
+      var self = this
+      api.getMyActivitySummary()
+        .then(function(summary) {
+          self.activityStats = summary || { joinedCount: 0, ongoingCount: 0 }
+        })
+        .catch(function() {
+          self.activityStats = { joinedCount: 0, ongoingCount: 0 }
         })
     },
     go: function(path) {
@@ -216,7 +212,7 @@ export default {
           self.loggedIn = false
           self.unreadCount = 0
           self.profile = buildDefaultProfile()
-          self.statusText = '已退出登录。'
+          self.activityStats = { joinedCount: 0, ongoingCount: 0 }
           uni.showToast({ title: '已退出登录', icon: 'none' })
         })
     }
@@ -224,154 +220,111 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
 .profile-shell {
-  padding-top: 30rpx;
-}
-
-.guest-hero,
-.profile-hero {
-  margin-top: 6rpx;
+  padding-bottom: 48rpx;
 }
 
 .guest-points {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 12rpx;
-  margin-top: 22rpx;
-}
-
-.guest-point {
-  padding: 12rpx 18rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.16);
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 22rpx;
-}
-
-.profile-topline,
-.section-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 18rpx;
-}
-
-.profile-avatar {
-  width: 84rpx;
-  height: 84rpx;
-  margin-right: 20rpx;
-  line-height: 84rpx;
-  font-size: 30rpx;
-}
-
-.profile-name {
-  margin-top: 0;
-  font-size: 38rpx;
-}
-
-.profile-school {
-  margin-top: 8rpx;
-  font-size: 24rpx;
-}
-
-.profile-sign {
   margin-top: 20rpx;
 }
 
-.hero-card-row {
+.guest-point {
+  padding: 18rpx 20rpx;
+  border-radius: 20rpx;
+  background: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 24rpx;
+}
+
+.profile-topline {
   display: flex;
-  flex-wrap: wrap;
-  gap: 14rpx;
-  margin-top: 22rpx;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
 }
 
-.hero-card-pill {
-  flex: 1;
-  min-width: 160rpx;
-  padding: 18rpx 16rpx;
-  border-radius: 24rpx;
-  background: rgba(255, 255, 255, 0.16);
+.profile-avatar {
+  width: 92rpx;
+  height: 92rpx;
+  font-size: 34rpx;
 }
 
-.hero-card-pill-value {
-  display: block;
-  color: #ffffff;
-  font-size: 32rpx;
-  font-weight: 700;
+.profile-name,
+.profile-school,
+.profile-sign {
+  max-width: 420rpx;
 }
 
-.hero-card-pill-label {
-  display: block;
-  margin-top: 8rpx;
-  color: rgba(255, 255, 255, 0.84);
-  font-size: 22rpx;
-}
-
-.profile-status,
-.profile-metrics,
-.income-card {
-  margin-top: 16rpx;
-}
-
-.note-stamp {
-  display: inline-flex;
-  align-items: center;
-  padding: 10rpx 18rpx;
-  border-radius: 999rpx;
-  background: rgba(67, 198, 157, 0.14);
-  color: #34a77f;
-  font-size: 20rpx;
-  font-weight: 700;
-  letter-spacing: 2rpx;
-}
-
-.income-sticker {
-  display: inline-flex;
-  align-items: center;
-  padding: 12rpx 18rpx;
-  border-radius: 18rpx;
-  background: rgba(255, 180, 107, 0.18);
-  color: #d18a45;
-  font-size: 20rpx;
-  font-weight: 700;
+.income-card,
+.menu-card {
+  margin-top: 24rpx;
 }
 
 .income-value {
-  margin-top: 16rpx;
-  color: #243646;
+  margin-top: 20rpx;
+  color: var(--campus-text);
   font-size: 44rpx;
   font-weight: 700;
 }
 
-.profile-menu-card {
-  position: relative;
-  overflow: hidden;
-}
-
-.profile-menu-card::after {
-  content: "";
-  position: absolute;
-  right: -12rpx;
-  top: -20rpx;
-  width: 90rpx;
-  height: 90rpx;
-  border-radius: 24rpx;
-  background: rgba(87, 189, 240, 0.08);
-  transform: rotate(16deg);
-}
-
-.menu-initial {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 54rpx;
-  height: 54rpx;
-  border-radius: 18rpx;
-  background: rgba(87, 189, 240, 0.12);
-  color: #4a9fd5;
+.income-sticker {
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  background: rgba(126, 205, 179, 0.18);
+  color: var(--campus-text);
   font-size: 22rpx;
   font-weight: 700;
-  margin-bottom: 16rpx;
+}
+
+.menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18rpx;
+}
+
+.menu-item {
+  position: relative;
+  padding: 26rpx 24rpx;
+  border-radius: 26rpx;
+  background: rgba(245, 249, 253, 0.96);
+}
+
+.menu-title {
+  color: var(--campus-text);
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.menu-copy {
+  margin-top: 10rpx;
+  color: var(--campus-muted);
+  font-size: 22rpx;
+  line-height: 1.65;
+}
+
+.menu-badge {
+  position: absolute;
+  top: 18rpx;
+  right: 18rpx;
+  min-width: 40rpx;
+  padding: 6rpx 12rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(135deg, #ff9c95, #ff6d8f);
+  color: #ffffff;
+  font-size: 20rpx;
+  text-align: center;
+}
+
+.menu-badge.subtle {
+  background: rgba(123, 198, 233, 0.2);
+  color: var(--campus-text);
+}
+
+.logout-button {
+  margin-top: 24rpx;
 }
 </style>

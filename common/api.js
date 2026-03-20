@@ -202,6 +202,41 @@ function getTagOptions() {
   })
 }
 
+function listActivities() {
+  return http.request({
+    url: '/api/activities',
+    method: 'GET'
+  })
+}
+
+function listFeaturedActivities() {
+  return http.request({
+    url: '/api/activities/featured',
+    method: 'GET'
+  })
+}
+
+function listMyActivities() {
+  return http.request({
+    url: '/api/activities/mine',
+    method: 'GET'
+  })
+}
+
+function getMyActivitySummary() {
+  return http.request({
+    url: '/api/activities/summary',
+    method: 'GET'
+  })
+}
+
+function toggleActivityJoin(activityId) {
+  return http.request({
+    url: '/api/activities/' + activityId + '/join-toggle',
+    method: 'POST'
+  })
+}
+
 function listMessages() {
   return http.request({
     url: '/api/messages',
@@ -258,6 +293,11 @@ module.exports = {
   listFollows: listFollows,
   toggleFollow: toggleFollow,
   getTagOptions: getTagOptions,
+  listActivities: listActivities,
+  listFeaturedActivities: listFeaturedActivities,
+  listMyActivities: listMyActivities,
+  getMyActivitySummary: getMyActivitySummary,
+  toggleActivityJoin: toggleActivityJoin,
   listMessages: listMessages,
   getUnreadMessageCount: getUnreadMessageCount,
   markMessageRead: markMessageRead,

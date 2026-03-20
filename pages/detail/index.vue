@@ -7,6 +7,7 @@
         <view class="cover-copy">{{ post.subtitle }}</view>
         <view class="detail-price-chip">{{ post.price }}</view>
       </view>
+
       <view class="detail-stats">
         <view class="detail-stat">
           <text class="detail-stat-value">{{ post.likes }}</text>
@@ -23,35 +24,6 @@
       </view>
     </view>
 
-    <view v-if="detailLoading" class="status-banner status-banner-warning">
-      <view class="status-banner-head">
-        <view>
-          <view class="status-banner-title">详情加载中</view>
-          <view class="status-banner-copy">正在同步穿搭详情、互动状态和活动归属信息。</view>
-        </view>
-      </view>
-    </view>
-
-    <view v-else-if="detailFailed" class="status-banner status-banner-error">
-      <view class="status-banner-head">
-        <view>
-          <view class="status-banner-title">详情接口暂时不可用</view>
-          <view class="status-banner-copy">当前已切换为本地演示内容，你也可以重新刷新一次。</view>
-        </view>
-        <view class="status-link" @click="refreshDetail">重试</view>
-      </view>
-    </view>
-
-    <view class="panel-card detail-status">
-      <view class="section-head" style="margin-top:0;">
-        <view>
-          <view class="section-subtitle">同步状态</view>
-          <view class="text-copy" style="margin-top: 0;">{{ statusText }}</view>
-        </view>
-        <view class="float-link" @click="refreshDetail">刷新详情</view>
-      </view>
-    </view>
-
     <view class="panel-card author-card">
       <view class="author-head">
         <view class="meta-left">
@@ -61,11 +33,16 @@
             <view class="meta-school">{{ post.school }}</view>
           </view>
         </view>
-        <view :class="['side-pill', followed ? 'side-pill-active' : '', actionLoading ? 'btn-disabled' : '']" @click="toggleFollowAction">{{ followLabel }}</view>
+        <view
+          :class="['side-pill', followed ? 'side-pill-active' : '', actionLoading ? 'btn-disabled' : '']"
+          @click="toggleFollowAction"
+        >
+          {{ followLabel }}
+        </view>
       </view>
 
       <view class="detail-copy-card">
-        <view class="section-title detail-title">穿搭亮点</view>
+        <view class="section-title detail-title">穿搭说明</view>
         <view class="chip-row">
           <view class="chip chip-outline">{{ post.scene }}</view>
           <view class="chip chip-outline">{{ post.style }}</view>
@@ -78,125 +55,141 @@
       </view>
 
       <view class="action-row detail-actions">
-        <view :class="['action-chip', liked ? 'action-chip-active' : '', actionLoading ? 'btn-disabled' : '']" @click="toggleLikeAction">{{ liked ? '已点赞' : '点赞' }}</view>
+        <view
+          :class="['action-chip', liked ? 'action-chip-active' : '', actionLoading ? 'btn-disabled' : '']"
+          @click="toggleLikeAction"
+        >
+          {{ liked ? '已点赞' : '点赞' }}
+        </view>
+        <view
+          :class="['action-chip', saved ? 'action-chip-active' : '', actionLoading ? 'btn-disabled' : '']"
+          @click="toggleFavoriteAction"
+        >
+          {{ saved ? '已收藏' : '收藏' }}
+        </view>
         <view class="action-chip" @click="goComments">评论</view>
-        <view :class="['action-chip', saved ? 'action-chip-active' : '', actionLoading ? 'btn-disabled' : '']" @click="toggleFavoriteAction">{{ saved ? '已收藏' : '收藏' }}</view>
         <view class="action-chip" @click="sharePost">分享</view>
       </view>
     </view>
 
-    <view v-if="currentActivity" class="panel-card activity-panel">
-      <view class="section-head">
+    <view v-if="currentActivity" class="panel-card detail-activity-card">
+      <view class="section-head" style="margin-top:0;">
         <view>
-          <view class="section-title" style="margin-top:0;">活动归属</view>
-          <view class="section-subtitle">把内容消费、活动参与和激励表达串在同一页</view>
+          <view class="section-title" style="margin-top:0;">所属活动</view>
+          <view class="section-subtitle">这条内容正在参与校园专题活动</view>
         </view>
-        <view class="note-stamp activity-stamp">EVENT</view>
+        <view class="note-stamp">ACTIVITY</view>
       </view>
-      <view class="list-title" style="margin-top:18rpx;">{{ currentActivity.title }}</view>
+      <view class="list-title">{{ currentActivity.title }}</view>
       <view class="list-copy">{{ currentActivity.summary }}</view>
-      <view class="chip-row detail-highlight-row">
-        <view class="chip chip-outline">{{ currentActivity.period }}</view>
-        <view class="chip chip-active">{{ currentActivity.status }}</view>
+      <view class="chip-row" style="margin-top:16rpx;">
+        <view class="chip chip-active">{{ currentActivity.period }}</view>
+        <view class="chip chip-outline">{{ currentActivity.status }}</view>
       </view>
-      <view class="note-box">参与方式：{{ currentActivity.participation }}</view>
-      <view class="note-box">活动激励：{{ currentActivity.reward }}</view>
+      <view class="note-box">参与说明：{{ currentActivity.participation }}</view>
+      <view class="note-box">活动奖励：{{ currentActivity.reward }}</view>
       <view class="btn-row">
         <button class="btn-secondary btn-half" @click="goActivityCenter">查看活动</button>
-        <button class="btn-primary btn-half" @click="toggleJoinActivity">{{ currentActivity.joined ? '退出活动' : '报名活动' }}</button>
+        <button
+          class="btn-primary btn-half"
+          :disabled="activityActionLoading"
+          :class="activityActionLoading ? 'btn-disabled' : ''"
+          @click="toggleJoinActivity"
+        >
+          {{ currentActivity.joined ? '退出活动' : '报名活动' }}
+        </button>
       </view>
     </view>
 
-    <view class="panel-card commerce-card">
-      <view class="section-head commerce-head">
+    <view class="panel-card guide-card">
+      <view class="section-head" style="margin-top:0;">
         <view>
-          <view class="section-title" style="margin-top:0;">商品导购</view>
-          <view class="section-subtitle">从种草到跳转购买的理性导购链路</view>
+          <view class="section-title" style="margin-top:0;">导购信息</view>
+          <view class="section-subtitle">从穿搭灵感直接进入商品参考</view>
         </view>
         <view class="note-stamp">GUIDE</view>
       </view>
-      <view class="product-card commerce-product">
-        <view class="product-price">{{ post.price }}</view>
-        <view class="text-main" style="margin-top:10rpx;">{{ post.product }}</view>
-        <view class="text-copy" style="margin-top:8rpx;">{{ post.platform }}</view>
-        <view class="note-box">理性消费提醒：{{ post.guideTip }}</view>
-        <view class="note-box">平台盈利说明：{{ post.profit }}</view>
-      </view>
+      <view class="list-title">{{ post.product }}</view>
+      <view class="list-copy">{{ post.platform }}</view>
+      <view class="detail-price">{{ post.price }}</view>
+      <view class="note-box">理性消费提示：{{ post.guideTip }}</view>
+      <view class="note-box">收益说明：{{ post.profit }}</view>
       <view class="btn-row">
-        <button class="btn-secondary btn-half" @click="goLikes">点赞列表</button>
-        <button class="btn-primary btn-half" @click="goProduct">去购买</button>
+        <button class="btn-secondary btn-half" @click="goLikes">查看点赞</button>
+        <button class="btn-primary btn-half" @click="goProduct">前往购买</button>
       </view>
     </view>
 
-    <view class="panel-card comment-board">
-      <view class="section-head">
+    <view class="panel-card comment-preview-card">
+      <view class="section-head" style="margin-top:0;">
         <view>
           <view class="section-title" style="margin-top:0;">评论预览</view>
-          <view class="section-subtitle">看看大家在意哪些场景和单品</view>
+          <view class="section-subtitle">先看看大家在关注什么，再进入完整评论区</view>
         </view>
-        <view class="float-link" @click="goComments">查看全部</view>
+        <view class="float-link" @click="goComments">全部评论</view>
       </view>
       <view v-if="previewComments.length">
-        <view class="list-card comment-card" v-for="item in previewComments" :key="item.id">
-          <view class="meta-left" style="align-items:flex-start;">
-            <view :class="['avatar', item.avatarClass]">{{ item.avatar }}</view>
-            <view class="comment-content">
+        <view class="preview-item" v-for="item in previewComments" :key="item.id">
+          <view :class="['avatar', item.avatarClass]">{{ item.avatar }}</view>
+          <view class="preview-body">
+            <view class="preview-name-row">
               <view class="meta-name">{{ item.name }}</view>
-              <view class="text-copy" style="margin-top:6rpx;">{{ item.text }}</view>
-              <view class="list-meta">{{ item.time }} | {{ item.likes }} 赞</view>
+              <view class="meta-school">{{ item.time }}</view>
             </view>
+            <view class="text-copy">{{ item.text }}</view>
           </view>
         </view>
       </view>
-      <view v-else class="text-copy">还没有评论，快来占个前排。</view>
+      <view v-else class="text-copy">还没有评论，快来留下第一条建议吧。</view>
     </view>
   </view>
 </template>
 
 <script>
 var api = require('../../common/api.js')
-var activity = require('../../common/activity.js')
 var session = require('../../common/session.js')
+var activityStore = require('../../common/activity.js')
 
-function buildFallbackPost(id) {
+function emptyPost(id) {
   return {
     id: id,
-    coverTag: '校园精选',
-    title: '清爽日常的校园穿搭灵感',
-    subtitle: '干净利落的版型，适合大学生日常场景。',
-    desc: '围绕常见学生预算与校园生活路线，快速参考好穿又好搭的选择。',
+    coverTag: '校园推荐',
+    title: '正在加载穿搭详情',
+    subtitle: '稍等一下，我们正在整理这条内容的核心亮点。',
+    desc: '系统会同步穿搭描述、场景标签、导购信息和互动状态，方便你继续浏览和操作。',
     authorId: 0,
-    user: '校园创作者',
+    user: 'CampusFit',
     avatar: 'C',
     avatarClass: 'soft',
-    school: 'CampusFit 社区',
+    school: '校园穿搭社',
     mine: false,
     liked: false,
     favorited: false,
     followed: false,
-    scene: '校园日常',
-    style: '极简清爽',
+    scene: '图书馆',
+    style: '清爽通勤',
     budget: '100-150',
     likes: 0,
     comments: 0,
     saves: 0,
     shares: 0,
-    price: '￥39',
-    product: '校园入门套装',
-    platform: '外部电商平台',
-    profit: '用户完成有效订单后，平台与创作者可能获得导购佣金。',
-    guideTip: '请结合自身需要与预算进行理性消费。',
-    highlights: ['校园通用', '预算友好', '日常好搭'],
+    price: '预算 100-150',
+    product: '浅蓝针织开衫与百褶半裙',
+    platform: '淘宝 / 天猫',
+    profit: '平台会根据真实导购成交统计收益，不会影响你的正常浏览。',
+    guideTip: '购买前记得核对尺码、优惠和运费，保持理性消费。',
+    activity: null,
+    highlights: [],
     commentsPreview: []
   }
 }
 
 function buildCommentPreview(list) {
   var result = []
-  for (var i = 0; i < list.length; i += 1) {
+  for (var i = 0; i < (list || []).length; i += 1) {
     result.push({
       id: 'preview-' + i,
-      name: '用户' + (i + 1),
+      name: '同学' + (i + 1),
       avatar: String(i + 1),
       avatarClass: i % 2 === 0 ? 'soft' : 'alt',
       text: list[i],
@@ -208,14 +201,15 @@ function buildCommentPreview(list) {
 }
 
 function isAuthError(error) {
-  return ((error && error.message) || '').toLowerCase().indexOf('login') > -1
+  var message = ((error && error.message) || '').toLowerCase()
+  return message.indexOf('login') > -1 || message.indexOf('401') > -1 || message.indexOf('登录') > -1
 }
 
 export default {
   data: function() {
     return {
       postId: 'look1',
-      post: buildFallbackPost('look1'),
+      post: emptyPost('look1'),
       liked: false,
       saved: false,
       followed: false,
@@ -225,32 +219,29 @@ export default {
       detailLoading: false,
       detailFailed: false,
       actionLoading: false,
-      statusText: '正在加载穿搭详情...'
+      activityActionLoading: false,
+      statusText: '正在准备详情内容...'
     }
   },
   computed: {
     followLabel: function() {
       if (this.isMine) {
-        return '我的'
+        return '我的内容'
       }
       return this.followed ? '已关注' : '关注'
     }
   },
   onLoad: function(options) {
     this.postId = (options && options.id) || 'look1'
-    this.post = buildFallbackPost(this.postId)
+    this.post = emptyPost(this.postId)
     this.loadDetail()
-  },
-  onShow: function() {
-    if (this.postId) {
-      this.currentActivity = activity.getPostActivity(this.postId, this.post)
-    }
   },
   methods: {
     loadDetail: function() {
       var self = this
       self.detailLoading = true
       self.detailFailed = false
+      self.statusText = '正在同步这条穿搭的详情信息。'
       api.getPostDetail(self.postId)
         .then(function(detail) {
           self.post = detail
@@ -258,16 +249,16 @@ export default {
           self.saved = !!detail.favorited
           self.followed = !!detail.followed
           self.isMine = !!detail.mine
-          self.currentActivity = activity.getPostActivity(self.postId, detail)
+          self.currentActivity = detail.activity || null
           self.previewComments = buildCommentPreview(detail.commentsPreview || [])
-          self.statusText = '详情已同步：' + (api.getActiveBaseUrl() || '后端服务')
+          self.statusText = '内容已更新，可以继续查看导购、评论和活动信息。'
           self.detailFailed = false
         })
         .catch(function() {
-          self.post = buildFallbackPost(self.postId)
-          self.currentActivity = activity.getPostActivity(self.postId, self.post)
+          self.post = emptyPost(self.postId)
+          self.currentActivity = null
           self.previewComments = []
-          self.statusText = '后端详情暂时不可用，已显示本地演示数据。'
+          self.statusText = '暂时无法获取最新详情，当前展示默认内容。'
           self.detailFailed = true
         })
         .finally(function() {
@@ -280,7 +271,7 @@ export default {
         return
       }
       if (!session.isLoggedIn()) {
-        self.promptLogin('点赞前请先登录')
+        self.promptLogin('登录后才能点赞这条内容。')
         return
       }
       self.actionLoading = true
@@ -291,7 +282,7 @@ export default {
           uni.showToast({ title: self.liked ? '已点赞' : '已取消点赞', icon: 'none' })
         })
         .catch(function(error) {
-          self.handleActionError(error, '点赞状态更新失败')
+          self.handleActionError(error, '点赞状态更新失败，请稍后重试。')
         })
         .finally(function() {
           self.actionLoading = false
@@ -303,7 +294,7 @@ export default {
         return
       }
       if (!session.isLoggedIn()) {
-        self.promptLogin('收藏前请先登录')
+        self.promptLogin('登录后才能收藏这条内容。')
         return
       }
       self.actionLoading = true
@@ -314,7 +305,7 @@ export default {
           uni.showToast({ title: self.saved ? '已收藏' : '已取消收藏', icon: 'none' })
         })
         .catch(function(error) {
-          self.handleActionError(error, '收藏状态更新失败')
+          self.handleActionError(error, '收藏状态更新失败，请稍后重试。')
         })
         .finally(function() {
           self.actionLoading = false
@@ -326,11 +317,11 @@ export default {
         return
       }
       if (self.isMine) {
-        uni.showToast({ title: '这是你自己的内容', icon: 'none' })
+        uni.showToast({ title: '这是你自己的内容。', icon: 'none' })
         return
       }
       if (!session.isLoggedIn()) {
-        self.promptLogin('关注前请先登录')
+        self.promptLogin('登录后才能关注这位同学。')
         return
       }
       self.actionLoading = true
@@ -340,16 +331,42 @@ export default {
           uni.showToast({ title: self.followed ? '已关注' : '已取消关注', icon: 'none' })
         })
         .catch(function(error) {
-          self.handleActionError(error, '关注状态更新失败')
+          self.handleActionError(error, '关注状态更新失败，请稍后重试。')
         })
         .finally(function() {
           self.actionLoading = false
         })
     },
+    toggleJoinActivity: function() {
+      var self = this
+      if (!self.currentActivity || self.activityActionLoading) {
+        return
+      }
+      if (!session.isLoggedIn()) {
+        self.promptLogin('登录后才能报名或退出活动。')
+        return
+      }
+      self.activityActionLoading = true
+      api.toggleActivityJoin(self.currentActivity.id)
+        .then(function(updated) {
+          self.currentActivity = updated
+          var selected = activityStore.getSelectedActivity()
+          if (selected && selected.id === updated.id) {
+            activityStore.selectActivity(updated)
+          }
+          uni.showToast({ title: updated.joined ? '已报名活动' : '已退出活动', icon: 'none' })
+        })
+        .catch(function(error) {
+          self.handleActionError(error, '活动状态更新失败，请稍后重试。')
+        })
+        .finally(function() {
+          self.activityActionLoading = false
+        })
+    },
     handleActionError: function(error, fallbackMessage) {
       if (isAuthError(error)) {
         session.clearSession()
-        this.promptLogin('登录已过期，请重新登录')
+        this.promptLogin('登录状态已失效，请重新登录。')
         return
       }
       uni.showToast({ title: error.message || fallbackMessage, icon: 'none' })
@@ -368,19 +385,7 @@ export default {
       })
     },
     sharePost: function() {
-      uni.showToast({ title: '演示模式下展示分享动作', icon: 'none' })
-    },
-    toggleJoinActivity: function() {
-      if (!this.currentActivity) {
-        return
-      }
-      if (!session.isLoggedIn()) {
-        this.promptLogin('登录后才能参与专题活动')
-        return
-      }
-      var result = activity.toggleJoin(this.currentActivity.id)
-      this.currentActivity = result.activity
-      uni.showToast({ title: result.active ? '已报名活动' : '已退出活动', icon: 'none' })
+      uni.showToast({ title: '分享功能将在演示阶段展示。', icon: 'none' })
     },
     goActivityCenter: function() {
       uni.navigateTo({ url: '/pages/activity/index' })
@@ -396,161 +401,138 @@ export default {
     },
     refreshDetail: function() {
       this.loadDetail()
-      uni.showToast({ title: '正在刷新详情', icon: 'none' })
+      uni.showToast({ title: '详情已刷新', icon: 'none' })
     }
   }
 }
 </script>
 
-<style scoped>
+<style>
 .detail-shell {
-  padding-top: 30rpx;
+  padding-bottom: 44rpx;
 }
 
 .detail-stage {
-  margin-bottom: 16rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
 }
 
 .detail-cover {
-  min-height: 340rpx;
-  box-shadow: 0 18rpx 34rpx rgba(61, 132, 175, 0.14);
+  min-height: 360rpx;
+  justify-content: flex-end;
 }
 
 .detail-price-chip {
-  position: absolute;
-  right: 22rpx;
-  bottom: 22rpx;
-  padding: 12rpx 18rpx;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 20rpx;
+  padding: 12rpx 22rpx;
   border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.9);
-  color: #2e9fd8;
-  font-size: 24rpx;
-  font-weight: 700;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  font-size: 22rpx;
 }
 
 .detail-stats {
-  display: flex;
-  gap: 14rpx;
-  margin-top: -24rpx;
-  padding: 0 18rpx;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18rpx;
 }
 
 .detail-stat {
-  flex: 1;
-  padding: 22rpx 12rpx;
-  border-radius: 24rpx;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1rpx solid rgba(112, 155, 188, 0.12);
-  box-shadow: 0 12rpx 28rpx rgba(61, 132, 175, 0.08);
+  padding: 28rpx 16rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 14rpx 36rpx rgba(108, 156, 196, 0.12);
   text-align: center;
 }
 
 .detail-stat-value {
   display: block;
-  color: #253646;
-  font-size: 30rpx;
+  color: var(--campus-text);
+  font-size: 36rpx;
   font-weight: 700;
 }
 
 .detail-stat-label {
   display: block;
   margin-top: 8rpx;
-  color: #7d91a2;
-  font-size: 21rpx;
-}
-
-.detail-status,
-.author-card,
-.activity-panel,
-.commerce-card,
-.comment-board {
-  margin-top: 16rpx;
+  color: var(--campus-muted);
+  font-size: 22rpx;
 }
 
 .author-head,
-.section-head {
+.preview-name-row {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: 18rpx;
+  gap: 20rpx;
 }
 
 .detail-copy-card {
-  margin-top: 22rpx;
-  padding: 22rpx;
-  border-radius: 26rpx;
-  background: rgba(247, 251, 254, 0.88);
+  margin-top: 24rpx;
+  padding: 28rpx;
+  border-radius: 28rpx;
+  background: rgba(245, 250, 255, 0.92);
 }
 
 .detail-title {
   margin-top: 0;
 }
 
-.detail-highlight-row {
-  margin-top: 14rpx;
-}
-
 .detail-copy {
   margin-top: 18rpx;
+  line-height: 1.8;
 }
 
 .detail-actions {
+  display: flex;
   flex-wrap: wrap;
-  justify-content: flex-start;
-  margin-top: 22rpx;
+  gap: 16rpx;
+  margin-top: 24rpx;
 }
 
 .action-chip {
-  padding: 16rpx 24rpx;
+  min-width: 128rpx;
+  padding: 18rpx 24rpx;
   border-radius: 999rpx;
-  background: rgba(87, 189, 240, 0.1);
-  color: #4699cf;
+  background: rgba(229, 238, 247, 0.92);
+  color: var(--campus-text);
   font-size: 24rpx;
   font-weight: 600;
+  text-align: center;
 }
 
 .action-chip-active {
-  background: linear-gradient(135deg, #58bdf0 0%, #67d9af 100%);
+  background: linear-gradient(135deg, #7cccf0, #67d8b7);
   color: #ffffff;
-  box-shadow: 0 12rpx 24rpx rgba(73, 183, 237, 0.18);
 }
 
-.commerce-head .note-stamp {
-  display: inline-flex;
-  align-items: center;
-  padding: 10rpx 18rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 180, 107, 0.16);
-  color: #d78a3b;
-  font-size: 20rpx;
+.detail-activity-card,
+.guide-card,
+.comment-preview-card {
+  margin-top: 24rpx;
+}
+
+.detail-price {
+  margin-top: 18rpx;
+  color: var(--campus-text);
+  font-size: 34rpx;
   font-weight: 700;
-  letter-spacing: 2rpx;
 }
 
-.activity-stamp {
-  display: inline-flex;
-  align-items: center;
-  padding: 10rpx 18rpx;
-  border-radius: 999rpx;
-  background: rgba(87, 189, 240, 0.14);
-  color: #4a9fd5;
-  font-size: 20rpx;
-  font-weight: 700;
-  letter-spacing: 2rpx;
+.preview-item {
+  display: flex;
+  gap: 18rpx;
+  padding: 20rpx 0;
 }
 
-.commerce-product {
-  margin-top: 10rpx;
+.preview-item + .preview-item {
+  border-top: 1rpx solid rgba(133, 159, 184, 0.16);
 }
 
-.comment-card {
-  margin-top: 16rpx;
-  background: rgba(247, 251, 254, 0.84);
-  box-shadow: none;
-}
-
-.comment-content {
+.preview-body {
   flex: 1;
-  min-width: 0;
 }
 </style>

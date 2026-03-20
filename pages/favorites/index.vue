@@ -14,37 +14,12 @@
         <view class="page-desc">这里会集中展示你已经收藏的内容，后续可以继续查看详情，也能直接取消收藏。</view>
       </view>
 
-      <view class="filter-summary-card">
-        <view class="summary-kicker">收藏状态</view>
-        <view class="summary-line">{{ statusText }}</view>
-      </view>
-
-      <view :class="['status-banner', favoriteStateClass]">
-        <view class="status-banner-head">
-          <view>
-            <view class="status-banner-title">收藏页状态</view>
-            <view class="status-banner-copy">{{ favoriteStateText }}</view>
-          </view>
-          <view class="status-link" @click="refreshFavorites">刷新收藏</view>
+      <view class="section-head" style="margin-top:18rpx;">
+        <view>
+          <view class="section-title" style="margin-top:0;">收藏列表</view>
+          <view class="section-subtitle">收藏过的穿搭与商品入口都在这里</view>
         </view>
-        <view class="status-grid two-col">
-          <view class="status-item">
-            <view class="status-item-label">收藏内容</view>
-            <text class="status-item-value">{{ favorites.length }}</text>
-          </view>
-          <view class="status-item">
-            <view class="status-item-label">当前模式</view>
-            <text class="status-item-value">{{ actionLoadingId ? '处理中' : '可浏览' }}</text>
-          </view>
-          <view class="status-item">
-            <view class="status-item-label">同步来源</view>
-            <text class="status-item-value">后端收藏列表</text>
-          </view>
-          <view class="status-item">
-            <view class="status-item-label">支持操作</view>
-            <text class="status-item-value">查看 / 取消收藏</text>
-          </view>
-        </view>
+        <view class="float-link" @click="refreshFavorites">刷新收藏</view>
       </view>
 
       <view v-if="listLoading">
@@ -111,32 +86,7 @@ export default {
       actionLoadingId: ''
     }
   },
-  computed: {
-    favoriteStateClass: function() {
-      if (this.listLoading || this.actionLoadingId) {
-        return 'status-banner-warning'
-      }
-      if (this.listFailed) {
-        return 'status-banner-error'
-      }
-      return 'status-banner-success'
-    },
-    favoriteStateText: function() {
-      if (this.listLoading) {
-        return '正在同步收藏列表和商品信息。'
-      }
-      if (this.actionLoadingId) {
-        return '正在更新收藏状态，请稍候。'
-      }
-      if (this.listFailed) {
-        return '当前未能读取收藏列表，建议刷新后重试。'
-      }
-      if (!this.favorites.length) {
-        return '收藏夹已经准备好，现在还没有内容被加入。'
-      }
-      return '收藏列表状态正常，可以继续查看详情或取消收藏。'
-    }
-  },
+  computed: {},
   onShow: function() {
     this.loggedIn = session.isLoggedIn()
     if (!this.loggedIn) {
@@ -156,7 +106,7 @@ export default {
       api.listFavoritePosts()
         .then(function(list) {
           self.favorites = list || []
-          self.statusText = '收藏列表已同步：' + (api.getActiveBaseUrl() || 'Spring Boot')
+          self.statusText = '收藏内容已更新。'
         })
         .catch(function(error) {
           if (isAuthError(error)) {
@@ -168,7 +118,7 @@ export default {
           }
           self.favorites = []
           self.listFailed = true
-          self.statusText = '后端收藏列表暂时不可用。'
+          self.statusText = '收藏内容暂时不可用，请稍后再试。'
         })
         .finally(function() {
           self.listLoading = false

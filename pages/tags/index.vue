@@ -6,10 +6,11 @@
       <view class="page-desc">标签会回写到发布页和搜索页，帮助你快速定位“在哪穿、什么风格、预算多少”这三个核心问题。</view>
     </view>
 
-    <view class="filter-summary-card">
-      <view class="summary-kicker">当前选择</view>
-      <view class="summary-line">{{ statusText }}</view>
-      <view class="summary-line">已选择：{{ selected.scene }} / {{ selected.style }} / {{ selected.budget }}</view>
+    <view class="section-head" style="margin-top:18rpx;">
+      <view>
+        <view class="section-title" style="margin-top:0;">已选标签</view>
+        <view class="section-subtitle">{{ selected.scene }} / {{ selected.style }} / {{ selected.budget }}</view>
+      </view>
     </view>
 
     <view class="panel-card">
@@ -69,8 +70,7 @@ export default {
       sceneTags: ['图书馆', '早八', '社团活动', '约会'],
       styleTags: ['学院风', '通勤风', '运动休闲', '极简'],
       budgetTags: ['0-50', '50-100', '100-150', '150+'],
-      selected: defaultSelection(),
-      statusText: '正在同步标签选项...'
+      selected: defaultSelection()
     }
   },
   onLoad: function() {
@@ -95,11 +95,8 @@ export default {
           self.sceneTags = data.sceneTags || self.sceneTags
           self.styleTags = data.styleTags || self.styleTags
           self.budgetTags = data.budgetTags || self.budgetTags
-          self.statusText = '标签选项已同步，可以直接选择。'
         })
-        .catch(function() {
-          self.statusText = '后端标签接口暂时不可用，已使用本地默认选项。'
-        })
+        .catch(function() {})
     },
     select: function(type, tag) {
       this.selected[type] = tag
