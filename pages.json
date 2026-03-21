@@ -121,6 +121,12 @@
       }
     },
     {
+      "path": "pages/incentives/index",
+      "style": {
+        "navigationBarTitleText": "创作激励"
+      }
+    },
+    {
       "path": "pages/drafts/index",
       "style": {
         "navigationBarTitleText": "草稿箱"

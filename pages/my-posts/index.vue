@@ -81,7 +81,8 @@
 
       <view v-else-if="posts.length">
         <view class="look-card post-card" v-for="item in posts" :key="item.id">
-          <view class="look-cover post-cover" :class="{ 'look-cover-disabled': !item.canViewDetail }" @click="handleCardClick(item)">
+          <view :class="['look-cover', 'post-cover', item.coverImageUrl ? 'has-media' : '', !item.canViewDetail ? 'look-cover-disabled' : '']" @click="handleCardClick(item)">
+            <image v-if="item.coverImageUrl" class="cover-media" :src="item.coverImageUrl" mode="aspectFill"></image>
             <view class="cover-top">
               <view class="cover-tag">{{ item.coverTag }}</view>
               <view class="status-chip" :class="statusClass(item.publishStatus)">{{ item.publishStatusText }}</view>

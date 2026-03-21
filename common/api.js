@@ -1,4 +1,69 @@
 var http = require('./request.js')
+var session = require('./session.js')
+
+function parseUploadResponse(rawData) {
+  var payload = rawData
+  if (typeof rawData === 'string') {
+    try {
+      payload = JSON.parse(rawData || '{}')
+    } catch (error) {
+      throw new Error('图片上传返回结果无法解析')
+    }
+  }
+  payload = payload || {}
+  if (payload.code === 0) {
+    return payload.data
+  }
+  throw new Error(payload.message || '图片上传失败')
+}
+
+function uploadFileWithBaseUrl(baseUrl, filePath) {
+  return new Promise(function(resolve, reject) {
+    var header = {}
+    var token = session.getToken()
+    if (token) {
+      header.Authorization = 'Bearer ' + token
+    }
+    uni.uploadFile({
+      url: baseUrl + '/api/uploads/images',
+      filePath: filePath,
+      name: 'file',
+      timeout: 20000,
+      header: header,
+      success: function(response) {
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          reject(new Error('HTTP ' + response.statusCode))
+          return
+        }
+        try {
+          resolve(parseUploadResponse(response.data))
+        } catch (error) {
+          reject(error)
+        }
+      },
+      fail: function(error) {
+        reject(new Error(error.errMsg || '图片上传失败'))
+      }
+    })
+  })
+}
+
+function uploadPostImage(filePath) {
+  return http.resolveBaseUrl(false)
+    .then(function(baseUrl) {
+      return uploadFileWithBaseUrl(baseUrl, filePath)
+    })
+    .catch(function(error) {
+      uni.removeStorageSync('campusfit_base_url')
+      return http.resolveBaseUrl(true)
+        .then(function(baseUrl) {
+          return uploadFileWithBaseUrl(baseUrl, filePath)
+        })
+        .catch(function() {
+          throw error
+        })
+    })
+}
 
 function loginUser(phone, code) {
   return http.request({
@@ -108,11 +173,70 @@ function getPostDetail(id) {
   })
 }
 
+function getProductJumpInfo(postId) {
+  return http.request({
+    url: '/api/posts/' + postId + '/product-jump',
+    method: 'GET'
+  })
+}
+
+function trackProductJump(postId) {
+  return http.request({
+    url: '/api/posts/' + postId + '/product-jump/track',
+    method: 'POST'
+  })
+}
+
 function createPost(payload) {
   return http.request({
     url: '/api/posts',
     method: 'POST',
     data: payload
+  })
+}
+
+function listDrafts() {
+  return http.request({
+    url: '/api/drafts',
+    method: 'GET'
+  })
+}
+
+function getDraftDetail(draftId) {
+  return http.request({
+    url: '/api/drafts/' + draftId,
+    method: 'GET'
+  })
+}
+
+function createDraft(payload) {
+  return http.request({
+    url: '/api/drafts',
+    method: 'POST',
+    data: payload
+  })
+}
+
+function updateDraft(draftId, payload) {
+  return http.request({
+    url: '/api/drafts/' + draftId,
+    method: 'PUT',
+    data: payload
+  })
+}
+
+function deleteDraft(draftId) {
+  return http.request({
+    url: '/api/drafts/' + draftId,
+    method: 'DELETE'
+  })
+}
+
+function publishDraft(draftId, payload) {
+  return http.request({
+    url: '/api/drafts/' + draftId + '/publish',
+    method: 'POST',
+    data: payload || {}
   })
 }
 
@@ -170,6 +294,21 @@ function getMyProfileForEdit() {
   return http.request({
     url: '/api/profile/me/edit',
     method: 'GET'
+  })
+}
+
+function getMyIncentiveCenter() {
+  return http.request({
+    url: '/api/profile/incentives',
+    method: 'GET'
+  })
+}
+
+function requestIncentiveWithdraw(amount) {
+  return http.request({
+    url: '/api/profile/incentives/withdraw',
+    method: 'POST',
+    data: amount ? { amount: amount } : {}
   })
 }
 
@@ -270,6 +409,7 @@ module.exports = {
   registerUser: registerUser,
   getCurrentUser: getCurrentUser,
   logoutUser: logoutUser,
+  uploadPostImage: uploadPostImage,
   listRecommendations: listRecommendations,
   listMyPosts: listMyPosts,
   getPostForEdit: getPostForEdit,
@@ -280,7 +420,15 @@ module.exports = {
   listFavoritePosts: listFavoritePosts,
   searchPosts: searchPosts,
   getPostDetail: getPostDetail,
+  getProductJumpInfo: getProductJumpInfo,
+  trackProductJump: trackProductJump,
   createPost: createPost,
+  listDrafts: listDrafts,
+  getDraftDetail: getDraftDetail,
+  createDraft: createDraft,
+  updateDraft: updateDraft,
+  deleteDraft: deleteDraft,
+  publishDraft: publishDraft,
   listComments: listComments,
   createComment: createComment,
   deleteComment: deleteComment,
@@ -289,6 +437,8 @@ module.exports = {
   toggleFavorite: toggleFavorite,
   getMyProfile: getMyProfile,
   getMyProfileForEdit: getMyProfileForEdit,
+  getMyIncentiveCenter: getMyIncentiveCenter,
+  requestIncentiveWithdraw: requestIncentiveWithdraw,
   updateMyProfile: updateMyProfile,
   listFollows: listFollows,
   toggleFollow: toggleFollow,

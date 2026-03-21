@@ -69,7 +69,7 @@ var SETTINGS_KEY = 'campusfit_local_settings'
 
 function defaultSettings() {
   return [
-    { key: 'push', title: '消息推送', copy: '及时接收评论、点赞、收益与活动提醒', active: true },
+    { key: 'push', title: '消息推送', copy: '及时接收评论、点赞、激励与活动提醒', active: true },
     { key: 'privacy', title: '隐私可见', copy: '控制校园信息与个人资料的展示范围', active: true },
     { key: 'recommend', title: '个性化推荐', copy: '根据你的浏览和互动记录推荐内容', active: true },
     { key: 'safe', title: '理性消费提醒', copy: '导购场景下展示预算与消费提示', active: true }

@@ -24,7 +24,7 @@
             <view class="hero-title publish-hero-title">{{ mode === 'edit' ? '当前正在修改已发布内容' : '标题 + 描述 + 标签 + 导购链接' }}</view>
             <view class="hero-copy">{{ mode === 'edit' ? '编辑完成后会直接更新原内容，不会重复创建。' : '整理好基础信息后，就能快速发布一条适合校园场景浏览的穿搭内容。' }}</view>
           </view>
-          <view v-if="mode === 'edit'" class="hero-float-link" @click="exitEditMode">退出编辑</view>
+          <view v-if="mode === 'edit'" class="hero-float-link" @click="secondaryAction">退出编辑</view>
         </view>
         <view class="hero-metrics">
           <view class="hero-metric">
@@ -32,8 +32,8 @@
             <text class="hero-metric-label">已选标签</text>
           </view>
           <view class="hero-metric">
-            <text class="hero-metric-value">{{ imageCount }}</text>
-            <text class="hero-metric-label">展示位</text>
+            <text class="hero-metric-value">{{ uploadedImageCount }}</text>
+            <text class="hero-metric-label">已上传图片</text>
           </view>
           <view class="hero-metric">
             <text class="hero-metric-value">{{ selectedActivity ? '已绑定' : '未绑定' }}</text>
@@ -50,16 +50,44 @@
       <view class="panel-card upload-card">
         <view class="section-head">
           <view>
-            <view class="section-title" style="margin-top:0;">图片展示位</view>
-            <view class="section-subtitle">当前先用示意图位承接发布流程，后续会接入真实上传能力</view>
+            <view class="section-title" style="margin-top:0;">内容图片</view>
+            <view class="section-subtitle">支持 jpg / jpeg / png / webp，单张最多 10MB，首张会自动作为封面图。</view>
           </view>
-          <view class="upload-tip">最多 9 张</view>
+          <view class="upload-tip">{{ uploadedImageCount }}/9</view>
         </view>
+
         <view class="upload-grid">
-          <view class="upload-slot" v-for="n in 9" :key="'slot-' + n">
-            <view class="upload-index">{{ n }}</view>
-            <view class="upload-copy">{{ n <= imageCount ? '已准备' : '待添加' }}</view>
+          <view
+            v-for="(item, index) in images"
+            :key="item.id"
+            class="upload-item"
+            @click="handleImageTap(index)"
+          >
+            <image class="upload-thumb" :src="item.previewUrl || item.url" mode="aspectFill"></image>
+            <view v-if="index === 0" class="upload-cover-badge">封面</view>
+            <view class="upload-remove" @click.stop="removeImage(index)">删除</view>
+            <view v-if="item.status === 'uploading'" class="upload-mask">
+              <text class="upload-mask-title">上传中</text>
+              <text class="upload-mask-copy">请稍候...</text>
+            </view>
+            <view v-else-if="item.status === 'error'" class="upload-mask upload-mask-error">
+              <text class="upload-mask-title">上传失败</text>
+              <text class="upload-mask-copy">{{ item.errorMessage || '点击重试' }}</text>
+            </view>
           </view>
+
+          <view v-if="canChooseMoreImages" class="upload-add-card" @click="chooseImages">
+            <view class="upload-add-mark">+</view>
+            <view class="upload-add-title">添加图片</view>
+            <view class="upload-add-copy">还可上传 {{ remainingImageCount }} 张</view>
+          </view>
+        </view>
+
+        <view class="upload-hint">
+          <text v-if="!uploadedImageCount && !uploadingCount">先上传至少 1 张图片后再发布。</text>
+          <text v-else-if="uploadingCount">当前还有 {{ uploadingCount }} 张图片正在上传。</text>
+          <text v-else-if="failedImageCount">有 {{ failedImageCount }} 张图片上传失败，点击图片可重试。</text>
+          <text v-else>图片已准备就绪，首张会展示在列表封面位。</text>
         </view>
       </view>
 
@@ -114,7 +142,14 @@
       </view>
 
       <view class="action-row publish-actions">
-        <button class="btn-secondary btn-half" @click="secondaryAction">{{ mode === 'edit' ? '退出编辑' : '保存草稿' }}</button>
+        <button
+          class="btn-secondary btn-half"
+          :disabled="mode !== 'edit' && savingDraft"
+          :class="mode !== 'edit' && savingDraft ? 'btn-disabled' : ''"
+          @click="secondaryAction"
+        >
+          {{ mode === 'edit' ? '退出编辑' : (savingDraft ? '保存中...' : '保存草稿') }}
+        </button>
         <button
           class="btn-primary btn-half"
           :disabled="!isReadyToSubmit || submitting"
@@ -133,33 +168,80 @@ var api = require('../../common/api.js')
 var activityStore = require('../../common/activity.js')
 var session = require('../../common/session.js')
 
-var DRAFT_KEY = 'campusfit_publish_draft'
+var LEGACY_DRAFT_KEY = 'campusfit_publish_draft'
+var ACTIVE_DRAFT_KEY = 'campusfit_active_draft_id'
 var EDIT_POST_KEY = 'campusfit_edit_post_id'
+var MAX_IMAGE_COUNT = 9
+var MAX_FILE_SIZE = 10 * 1024 * 1024
 
 function defaultForm() {
   return {
     title: '',
     desc: '',
-    link: 'https://campusfit.example.com/product/new-look',
+    link: '',
     tags: ['早八', '清爽通勤', '100-150']
   }
 }
 
-function buildImageUrls(count) {
+function createImageId() {
+  return 'img_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8)
+}
+
+function createImageItem(options) {
+  var safeOptions = options || {}
+  return {
+    id: safeOptions.id || createImageId(),
+    url: safeOptions.url || '',
+    previewUrl: safeOptions.previewUrl || safeOptions.url || '',
+    localPath: safeOptions.localPath || '',
+    status: safeOptions.status || 'success',
+    errorMessage: safeOptions.errorMessage || ''
+  }
+}
+
+function buildImageItems(imageUrls) {
   var list = []
-  for (var i = 0; i < count; i += 1) {
-    list.push('https://campusfit.example.com/mock/' + (i + 1) + '.jpg')
+  if (!imageUrls || !imageUrls.length) {
+    return list
+  }
+  for (var i = 0; i < imageUrls.length; i += 1) {
+    if (imageUrls[i]) {
+      list.push(createImageItem({
+        url: imageUrls[i],
+        previewUrl: imageUrls[i],
+        status: 'success'
+      }))
+    }
   }
   return list
 }
 
-function formatNow() {
-  var date = new Date()
-  var month = String(date.getMonth() + 1).padStart(2, '0')
-  var day = String(date.getDate()).padStart(2, '0')
-  var hours = String(date.getHours()).padStart(2, '0')
-  var minutes = String(date.getMinutes()).padStart(2, '0')
-  return date.getFullYear() + '-' + month + '-' + day + ' ' + hours + ':' + minutes
+function collectImageUrls(images) {
+  var list = []
+  if (!images || !images.length) {
+    return list
+  }
+  for (var i = 0; i < images.length; i += 1) {
+    if (images[i] && images[i].status === 'success' && images[i].url) {
+      list.push(images[i].url)
+    }
+  }
+  return list
+}
+
+function hasListValue(list) {
+  return !!(list && list.length)
+}
+
+function buildDraftPayload(vm) {
+  return {
+    title: vm.form.title,
+    desc: vm.form.desc,
+    imageUrls: collectImageUrls(vm.images),
+    tags: vm.form.tags,
+    productLink: vm.form.link,
+    activityId: vm.selectedActivity ? vm.selectedActivity.id : ''
+  }
 }
 
 function isAuthError(error) {
@@ -171,37 +253,64 @@ export default {
   data: function() {
     return {
       loggedIn: session.isLoggedIn(),
-      imageCount: 6,
+      images: [],
       form: defaultForm(),
       selectedActivity: null,
       pageLoading: false,
       lastSavedAt: '',
       lastSuccessText: '',
       submitting: false,
+      savingDraft: false,
       mode: 'create',
-      editingId: ''
+      editingId: '',
+      currentDraftId: ''
     }
   },
   computed: {
+    imageCount: function() {
+      return this.images.length
+    },
+    uploadedImageCount: function() {
+      return collectImageUrls(this.images).length
+    },
+    uploadingCount: function() {
+      var count = 0
+      for (var i = 0; i < this.images.length; i += 1) {
+        if (this.images[i] && this.images[i].status === 'uploading') {
+          count += 1
+        }
+      }
+      return count
+    },
+    failedImageCount: function() {
+      var count = 0
+      for (var i = 0; i < this.images.length; i += 1) {
+        if (this.images[i] && this.images[i].status === 'error') {
+          count += 1
+        }
+      }
+      return count
+    },
+    remainingImageCount: function() {
+      return Math.max(0, MAX_IMAGE_COUNT - this.imageCount)
+    },
+    canChooseMoreImages: function() {
+      return this.remainingImageCount > 0
+    },
     submitLabel: function() {
       if (this.submitting) {
         return this.mode === 'edit' ? '保存中...' : '发布中...'
       }
       return this.mode === 'edit' ? '保存修改' : '立即发布'
     },
-    readyCount: function() {
-      var count = 0
-      if (this.form.title) count += 1
-      if (this.form.desc) count += 1
-      if (this.form.link) count += 1
-      if (this.form.tags && this.form.tags.length) count += 1
-      return count
+    hasBasicFields: function() {
+      return !!(this.form.title && this.form.desc && this.form.link && this.form.tags && this.form.tags.length)
     },
     isReadyToSubmit: function() {
-      return this.readyCount === 4 && !this.pageLoading
+      return this.hasBasicFields && this.uploadedImageCount > 0 && !this.pageLoading && !this.uploadingCount && !this.failedImageCount
     },
     publishStateClass: function() {
-      if (this.pageLoading || this.submitting) {
+      if (this.pageLoading || this.savingDraft || this.submitting || this.uploadingCount || this.failedImageCount) {
         return 'status-banner-warning'
       }
       if (this.lastSuccessText) {
@@ -214,15 +323,30 @@ export default {
     },
     publishStateText: function() {
       if (this.pageLoading) {
-        return '正在加载当前编辑内容...'
+        return this.mode === 'edit' ? '正在加载当前编辑内容...' : '正在恢复草稿内容...'
+      }
+      if (this.uploadingCount) {
+        return '正在上传 ' + this.uploadingCount + ' 张图片，请稍候...'
+      }
+      if (this.savingDraft) {
+        return '正在把草稿同步到你的账号...'
       }
       if (this.submitting) {
         return this.mode === 'edit' ? '正在保存修改...' : '正在发布内容...'
       }
+      if (this.failedImageCount) {
+        return '有 ' + this.failedImageCount + ' 张图片上传失败，请点击图片重试或删除后继续。'
+      }
       if (this.lastSuccessText) {
         return this.lastSuccessText
       }
-      if (!this.isReadyToSubmit) {
+      if (!this.uploadedImageCount) {
+        return '先上传至少 1 张图片，首张会作为内容封面。'
+      }
+      if (!this.hasBasicFields && this.currentDraftId && this.lastSavedAt) {
+        return '已恢复 ' + this.lastSavedAt + ' 保存的草稿，可继续补全后发布。'
+      }
+      if (!this.hasBasicFields) {
         return '还差一点点：补齐标题、描述、标签和导购链接即可发布。'
       }
       return this.selectedActivity ? '信息已完整，带着活动专题一起发布吧。' : '信息已完整，可以直接发布。'
@@ -234,13 +358,14 @@ export default {
       return '写一下这套穿搭适合什么场景、预算大概多少、搭配亮点是什么。'
     },
     linkPlaceholder: function() {
-      return '粘贴商品导购链接'
+      return '粘贴真实商品导购链接'
     }
   },
   onShow: function() {
     this.loggedIn = session.isLoggedIn()
     this.applyStoredTags()
     this.loadSelectedActivity()
+    this.lastSuccessText = ''
     var editId = uni.getStorageSync(EDIT_POST_KEY)
     if (!this.loggedIn) {
       return
@@ -253,9 +378,9 @@ export default {
     }
     if (this.mode === 'edit') {
       this.resetCreateMode(false)
+      return
     }
-    this.restoreDraft()
-    this.lastSuccessText = ''
+    this.restoreActiveDraft(false)
   },
   methods: {
     applyStoredTags: function() {
@@ -264,20 +389,108 @@ export default {
         this.form.tags = stored
       }
     },
-    restoreDraft: function() {
-      var draft = uni.getStorageSync(DRAFT_KEY)
-      if (draft && draft.title) {
-        this.form = Object.assign(defaultForm(), draft)
-        this.lastSavedAt = draft.savedAt || ''
-        if (draft.selectedActivity) {
-          this.selectedActivity = activityStore.selectActivity(draft.selectedActivity)
-        }
-      } else {
-        this.lastSavedAt = ''
-      }
-    },
     loadSelectedActivity: function() {
       this.selectedActivity = activityStore.getSelectedActivity()
+    },
+    syncActiveDraftId: function(draftId) {
+      this.currentDraftId = draftId || ''
+      if (draftId) {
+        uni.setStorageSync(ACTIVE_DRAFT_KEY, draftId)
+        return
+      }
+      uni.removeStorageSync(ACTIVE_DRAFT_KEY)
+    },
+    clearActiveDraftState: function() {
+      this.syncActiveDraftId('')
+      this.lastSavedAt = ''
+    },
+    setImagesFromUrls: function(imageUrls) {
+      this.images = buildImageItems(imageUrls)
+    },
+    findImageIndex: function(imageId) {
+      for (var i = 0; i < this.images.length; i += 1) {
+        if (this.images[i] && this.images[i].id === imageId) {
+          return i
+        }
+      }
+      return -1
+    },
+    replaceImageItem: function(imageId, patch) {
+      var index = this.findImageIndex(imageId)
+      if (index < 0) {
+        return
+      }
+      this.images.splice(index, 1, Object.assign({}, this.images[index], patch || {}))
+    },
+    ensureImageQueueReady: function(actionText) {
+      if (this.uploadingCount) {
+        uni.showToast({ title: '请等待图片上传完成后再' + actionText, icon: 'none' })
+        return false
+      }
+      if (this.failedImageCount) {
+        uni.showToast({ title: '请先重试或删除上传失败的图片', icon: 'none' })
+        return false
+      }
+      return true
+    },
+    applyDraftData: function(draft) {
+      var base = defaultForm()
+      this.mode = 'create'
+      this.editingId = ''
+      this.form = {
+        title: draft.title || '',
+        desc: draft.desc || '',
+        link: draft.productLink || base.link,
+        tags: hasListValue(draft.tags) ? draft.tags : base.tags
+      }
+      this.setImagesFromUrls(draft.imageUrls || [])
+      this.lastSavedAt = draft.savedAt || ''
+      this.syncActiveDraftId(draft.id || '')
+      uni.removeStorageSync(LEGACY_DRAFT_KEY)
+      if (draft.activity) {
+        this.selectedActivity = activityStore.selectActivity(draft.activity)
+        return
+      }
+      activityStore.clearSelectedActivity()
+      this.selectedActivity = null
+    },
+    restoreActiveDraft: function(forceReload) {
+      var draftId = uni.getStorageSync(ACTIVE_DRAFT_KEY) || ''
+      if (!draftId) {
+        if (forceReload) {
+          this.clearActiveDraftState()
+        }
+        return Promise.resolve(null)
+      }
+      if (!forceReload && this.currentDraftId === draftId) {
+        return Promise.resolve(null)
+      }
+      return this.loadDraftDetail(draftId)
+    },
+    loadDraftDetail: function(draftId) {
+      var self = this
+      self.pageLoading = true
+      self.lastSuccessText = ''
+      return api.getDraftDetail(draftId)
+        .then(function(draft) {
+          self.applyDraftData(draft)
+        })
+        .catch(function(error) {
+          if (isAuthError(error)) {
+            session.clearSession()
+            self.loggedIn = false
+            return
+          }
+          if (uni.getStorageSync(ACTIVE_DRAFT_KEY) === draftId) {
+            uni.removeStorageSync(ACTIVE_DRAFT_KEY)
+          }
+          self.currentDraftId = ''
+          self.lastSavedAt = ''
+          uni.showToast({ title: error.message || '暂时无法读取草稿。', icon: 'none' })
+        })
+        .finally(function() {
+          self.pageLoading = false
+        })
     },
     resetCreateMode: function(clearEditStorage) {
       if (clearEditStorage !== false) {
@@ -285,12 +498,13 @@ export default {
       }
       this.mode = 'create'
       this.editingId = ''
-      this.imageCount = 6
+      this.images = []
       this.form = defaultForm()
       this.pageLoading = false
       this.lastSuccessText = ''
       this.selectedActivity = activityStore.getSelectedActivity()
-      this.restoreDraft()
+      this.lastSavedAt = ''
+      this.restoreActiveDraft(true)
     },
     loadEditPost: function(postId) {
       var self = this
@@ -304,10 +518,15 @@ export default {
             title: post.title || '',
             desc: post.desc || '',
             link: post.productLink || '',
-            tags: post.tags && post.tags.length ? post.tags : defaultForm().tags
+            tags: hasListValue(post.tags) ? post.tags : defaultForm().tags
           }
-          self.selectedActivity = post.activity ? activityStore.selectActivity(post.activity) : activityStore.getSelectedActivity()
-          self.imageCount = post.imageUrls && post.imageUrls.length ? post.imageUrls.length : 1
+          self.setImagesFromUrls(post.imageUrls || [])
+          if (post.activity) {
+            self.selectedActivity = activityStore.selectActivity(post.activity)
+          } else {
+            activityStore.clearSelectedActivity()
+            self.selectedActivity = null
+          }
         })
         .catch(function(error) {
           if (isAuthError(error)) {
@@ -330,20 +549,189 @@ export default {
     chooseActivity: function() {
       uni.navigateTo({ url: '/pages/activity/index?pick=1' })
     },
+    chooseImages: function() {
+      var self = this
+      if (!session.isLoggedIn()) {
+        self.promptLogin('登录后才能上传图片并发布内容。')
+        return
+      }
+      if (!self.canChooseMoreImages) {
+        uni.showToast({ title: '最多上传 9 张图片', icon: 'none' })
+        return
+      }
+      uni.chooseImage({
+        count: self.remainingImageCount,
+        sizeType: ['original'],
+        sourceType: ['album', 'camera'],
+        success: function(result) {
+          var tempFilePaths = result.tempFilePaths || []
+          var tempFiles = result.tempFiles || []
+          var acceptedPaths = []
+          var skippedCount = 0
+          for (var i = 0; i < tempFilePaths.length; i += 1) {
+            var tempFile = tempFiles[i] || {}
+            var tempFilePath = tempFile.path || tempFile.tempFilePath || tempFilePaths[i]
+            if (tempFile.size && tempFile.size > MAX_FILE_SIZE) {
+              skippedCount += 1
+              continue
+            }
+            if (tempFilePath) {
+              acceptedPaths.push(tempFilePath)
+            }
+          }
+          if (!tempFiles.length) {
+            acceptedPaths = tempFilePaths.slice(0)
+          }
+          if (skippedCount) {
+            uni.showToast({ title: '有 ' + skippedCount + ' 张图片超过 10MB，已跳过', icon: 'none' })
+          }
+          if (acceptedPaths.length) {
+            self.uploadSelectedImages(acceptedPaths)
+          }
+        }
+      })
+    },
+    uploadSelectedImages: function(filePaths) {
+      var self = this
+      var chain = Promise.resolve()
+      for (var i = 0; i < filePaths.length; i += 1) {
+        (function(filePath) {
+          chain = chain.then(function() {
+            var imageId = createImageId()
+            self.images.push(createImageItem({
+              id: imageId,
+              localPath: filePath,
+              previewUrl: filePath,
+              status: 'uploading'
+            }))
+            return self.uploadImageById(imageId, filePath).catch(function() {
+              return null
+            })
+          })
+        })(filePaths[i])
+      }
+      return chain
+    },
+    uploadImageById: function(imageId, filePath) {
+      var self = this
+      return api.uploadPostImage(filePath)
+        .then(function(result) {
+          if (!result || !result.url) {
+            throw new Error('图片上传成功但未返回可用链接')
+          }
+          self.replaceImageItem(imageId, {
+            url: result.url,
+            previewUrl: result.url,
+            localPath: filePath,
+            status: 'success',
+            errorMessage: ''
+          })
+        })
+        .catch(function(error) {
+          self.replaceImageItem(imageId, {
+            status: 'error',
+            localPath: filePath,
+            previewUrl: filePath,
+            errorMessage: error.message || '上传失败'
+          })
+          uni.showToast({ title: error.message || '图片上传失败', icon: 'none' })
+          throw error
+        })
+    },
+    handleImageTap: function(index) {
+      var item = this.images[index]
+      if (!item) {
+        return
+      }
+      if (item.status === 'uploading') {
+        uni.showToast({ title: '图片上传中，请稍候', icon: 'none' })
+        return
+      }
+      if (item.status === 'error') {
+        this.retryImage(index)
+        return
+      }
+      this.previewImages(index)
+    },
+    retryImage: function(index) {
+      var item = this.images[index]
+      if (!item || !item.localPath) {
+        uni.showToast({ title: '当前图片无法重试，请重新选择', icon: 'none' })
+        return
+      }
+      this.images.splice(index, 1, Object.assign({}, item, {
+        status: 'uploading',
+        errorMessage: ''
+      }))
+      this.uploadImageById(item.id, item.localPath).catch(function() {
+        return null
+      })
+    },
+    removeImage: function(index) {
+      if (index < 0 || index >= this.images.length) {
+        return
+      }
+      this.images.splice(index, 1)
+      uni.showToast({ title: '图片已移除', icon: 'none' })
+    },
+    previewImages: function(index) {
+      var current = this.images[index]
+      if (!current) {
+        return
+      }
+      var urls = []
+      for (var i = 0; i < this.images.length; i += 1) {
+        if (this.images[i] && (this.images[i].previewUrl || this.images[i].url)) {
+          urls.push(this.images[i].previewUrl || this.images[i].url)
+        }
+      }
+      if (!urls.length) {
+        return
+      }
+      uni.previewImage({
+        current: current.previewUrl || current.url,
+        urls: urls
+      })
+    },
     clearActivity: function() {
       activityStore.clearSelectedActivity()
       this.selectedActivity = null
       uni.showToast({ title: '已清除活动绑定', icon: 'none' })
     },
     saveDraft: function() {
-      var payload = Object.assign({}, this.form, {
-        savedAt: formatNow(),
-        selectedActivity: this.selectedActivity || null
-      })
-      uni.setStorageSync(DRAFT_KEY, payload)
-      this.lastSavedAt = payload.savedAt
-      this.lastSuccessText = '草稿已经保存，下次可以继续接着编辑。'
-      uni.showToast({ title: '已保存草稿', icon: 'none' })
+      var self = this
+      if (self.savingDraft) {
+        return
+      }
+      if (!session.isLoggedIn()) {
+        self.promptLogin('登录后才能把草稿同步到你的账号。')
+        return
+      }
+      if (!self.ensureImageQueueReady('保存草稿')) {
+        return
+      }
+      self.savingDraft = true
+      self.lastSuccessText = ''
+      var payload = buildDraftPayload(self)
+      var request = self.currentDraftId ? api.updateDraft(self.currentDraftId, payload) : api.createDraft(payload)
+      request
+        .then(function(draft) {
+          self.applyDraftData(draft)
+          self.lastSuccessText = '草稿已经同步到你的账号，可在草稿箱继续编辑。'
+          uni.showToast({ title: '已保存草稿', icon: 'none' })
+        })
+        .catch(function(error) {
+          if (isAuthError(error)) {
+            session.clearSession()
+            self.loggedIn = false
+            self.promptLogin('登录状态已失效，请重新登录后继续保存草稿。')
+            return
+          }
+          uni.showToast({ title: error.message || '草稿保存失败', icon: 'none' })
+        })
+        .finally(function() {
+          self.savingDraft = false
+        })
     },
     goLogin: function() {
       uni.navigateTo({ url: '/pages/login/index' })
@@ -354,6 +742,10 @@ export default {
     },
     secondaryAction: function() {
       if (this.mode === 'edit') {
+        if (this.uploadingCount) {
+          uni.showToast({ title: '请等待图片上传完成后再退出编辑', icon: 'none' })
+          return
+        }
         this.exitEditMode()
         return
       }
@@ -368,27 +760,37 @@ export default {
         self.promptLogin('登录后才能继续发布这条内容。')
         return
       }
+      if (!self.ensureImageQueueReady('发布内容')) {
+        return
+      }
       if (!self.form.title || !self.form.desc || !self.form.link || !self.form.tags.length) {
         uni.showToast({ title: '请先补齐标题、描述、标签和导购链接。', icon: 'none' })
         return
       }
+      if (!self.uploadedImageCount) {
+        uni.showToast({ title: '请至少上传 1 张图片', icon: 'none' })
+        return
+      }
       self.submitting = true
       self.lastSuccessText = ''
-      var payload = {
-        title: self.form.title,
-        desc: self.form.desc,
-        imageUrls: buildImageUrls(self.imageCount),
-        tags: self.form.tags,
-        productLink: self.form.link,
-        activityId: self.selectedActivity ? self.selectedActivity.id : ''
+      var payload = buildDraftPayload(self)
+      var isDraftPublish = self.mode === 'create' && !!self.currentDraftId
+      var request = null
+      if (self.mode === 'edit') {
+        request = api.updatePost(self.editingId, payload)
+      } else if (isDraftPublish) {
+        request = api.publishDraft(self.currentDraftId, payload)
+      } else {
+        request = api.createPost(payload)
       }
-      var request = self.mode === 'edit' ? api.updatePost(self.editingId, payload) : api.createPost(payload)
       request
         .then(function() {
-          uni.removeStorageSync(DRAFT_KEY)
+          if (self.mode !== 'edit') {
+            self.clearActiveDraftState()
+            uni.removeStorageSync(LEGACY_DRAFT_KEY)
+          }
           activityStore.clearSelectedActivity()
           self.selectedActivity = null
-          self.lastSavedAt = ''
           if (self.mode === 'edit') {
             uni.removeStorageSync(EDIT_POST_KEY)
             self.lastSuccessText = '这条内容已经更新成功。'
@@ -420,10 +822,23 @@ export default {
         })
     },
     refreshComposer: function() {
+      if (this.uploadingCount) {
+        uni.showToast({ title: '图片上传中，请稍候再刷新', icon: 'none' })
+        return
+      }
       this.applyStoredTags()
       this.loadSelectedActivity()
-      this.restoreDraft()
       this.lastSuccessText = ''
+      if (!this.loggedIn) {
+        uni.showToast({ title: '已刷新状态', icon: 'none' })
+        return
+      }
+      var editId = uni.getStorageSync(EDIT_POST_KEY)
+      if (editId) {
+        this.loadEditPost(editId)
+      } else {
+        this.restoreActiveDraft(true)
+      }
       uni.showToast({ title: '已刷新状态', icon: 'none' })
     },
     promptLogin: function(message) {
@@ -476,7 +891,7 @@ export default {
 
 .publish-inline-copy {
   flex: 1;
-  color: var(--campus-muted);
+  color: var(--campus-text-muted);
   font-size: 24rpx;
   line-height: 1.7;
 }
@@ -510,26 +925,114 @@ export default {
   gap: 18rpx;
 }
 
-.upload-slot {
-  min-height: 146rpx;
-  padding: 22rpx 16rpx;
-  border-radius: 24rpx;
-  background: rgba(243, 248, 252, 0.96);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+.upload-item,
+.upload-add-card {
+  position: relative;
+  min-height: 214rpx;
+  border-radius: 28rpx;
+  overflow: hidden;
 }
 
-.upload-index {
+.upload-item {
+  background: rgba(239, 246, 251, 0.98);
+}
+
+.upload-thumb {
+  width: 100%;
+  height: 214rpx;
+  display: block;
+}
+
+.upload-cover-badge {
+  position: absolute;
+  left: 14rpx;
+  top: 14rpx;
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.92);
   color: var(--campus-text);
-  font-size: 30rpx;
+  font-size: 20rpx;
   font-weight: 700;
 }
 
-.upload-copy,
-.upload-tip {
-  color: var(--campus-muted);
+.upload-remove {
+  position: absolute;
+  right: 14rpx;
+  top: 14rpx;
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  background: rgba(11, 24, 36, 0.56);
+  color: #fff;
+  font-size: 20rpx;
+}
+
+.upload-mask {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8rpx;
+  padding: 22rpx 20rpx;
+  background: linear-gradient(180deg, rgba(15, 30, 45, 0.08) 0%, rgba(15, 30, 45, 0.76) 100%);
+  color: #fff;
+}
+
+.upload-mask-error {
+  background: linear-gradient(180deg, rgba(115, 35, 35, 0.08) 0%, rgba(115, 35, 35, 0.82) 100%);
+}
+
+.upload-mask-title {
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.upload-mask-copy {
   font-size: 22rpx;
+  line-height: 1.5;
+}
+
+.upload-add-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  border: 2rpx dashed rgba(89, 154, 191, 0.3);
+  background:
+    radial-gradient(circle at top, rgba(120, 222, 207, 0.28), transparent 58%),
+    rgba(247, 251, 255, 0.96);
+}
+
+.upload-add-mark {
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 24rpx;
+  background: rgba(103, 191, 223, 0.14);
+  color: #3f97c8;
+  font-size: 42rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-add-title {
+  color: var(--campus-text);
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.upload-add-copy,
+.upload-tip,
+.upload-hint {
+  color: var(--campus-text-muted);
+  font-size: 22rpx;
+}
+
+.upload-hint {
+  margin-top: 18rpx;
+  line-height: 1.7;
 }
 
 .activity-binding-card {

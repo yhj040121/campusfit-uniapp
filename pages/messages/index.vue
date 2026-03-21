@@ -3,14 +3,14 @@
     <view v-if="!loggedIn" class="hero-card">
       <view class="hero-badge">需要登录</view>
       <view class="hero-title">登录后查看你的消息通知</view>
-      <view class="hero-copy">互动提醒、评论动态、活动通知和收益消息都会汇总到这里，方便你统一查看。</view>
+      <view class="hero-copy">互动提醒、评论动态、活动通知和激励消息都会汇总到这里，方便你统一查看。</view>
       <button class="btn-primary" style="margin-top:24rpx;" @click="goLogin">去登录</button>
     </view>
 
     <view v-else>
       <view class="page-header">
         <view class="campus-ribbon">消息中心</view>
-        <view class="page-title">把互动、系统和收益提醒放进同一个收件箱</view>
+        <view class="page-title">把互动、系统和激励提醒放进同一个收件箱</view>
         <view class="page-desc">消息支持按类型筛选，也支持单条已读和全部设为已读，让首页和我的页红点状态保持同步。</view>
       </view>
 

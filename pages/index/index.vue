@@ -2,9 +2,9 @@
   <view class="page-shell home-shell">
     <view class="page-header home-header">
       <view class="home-header-copy">
-        <view class="campus-ribbon">CampusFit 校园穿搭</view>
-        <view class="page-title">把校园日常穿成一张会被收藏的公告</view>
-        <view class="page-desc">围绕早八、图书馆、社团活动和约会场景，把真实穿搭、预算建议和导购线索整理成轻盈好逛的信息流。</view>
+        <view class="campus-ribbon">CampusFit 校园 Lookbook</view>
+        <view class="page-title">把校园日常穿成值得保存的穿搭笔记</view>
+        <view class="page-desc">围绕早八、图书馆、社团活动和约会场景，把真实穿搭、预算建议和导购线索整理成顺手好逛的图文内容流。</view>
       </view>
       <view class="icon-action home-message" @click="goMessages">
         消息
@@ -13,9 +13,9 @@
     </view>
 
     <view class="hero-card home-hero">
-      <view class="hero-badge">校园公告栏</view>
+      <view class="hero-badge">WEEKLY LOOKS</view>
       <view class="hero-title">本周值得抄作业的清爽穿搭</view>
-      <view class="hero-copy">把“好看”和“适合大学生日常”同时做好：看得快、筛得准、买得理性。</view>
+      <view class="hero-copy">先看图片，再读思路，再决定要不要买。把灵感、预算和场景放到一条真正适合校园分享的穿搭信息流里。</view>
       <view class="hero-metrics">
         <view class="hero-metric">
           <text class="hero-metric-value">{{ outfits.length }}</text>
@@ -57,7 +57,7 @@
     <view class="section-head">
       <view>
         <view class="section-title">内容频道</view>
-        <view class="section-subtitle">用校园场景做第一层筛选</view>
+        <view class="section-subtitle">先按真实场景筛，再进穿搭细节</view>
       </view>
       <view class="float-link" @click="refreshHome">刷新内容</view>
     </view>
@@ -75,12 +75,12 @@
     <view class="feature-note">
       <view class="feature-label">本周专题</view>
       <view class="feature-title">适合校园高频场景的清爽春季穿搭</view>
-      <view class="feature-copy">重点关注“图书馆久坐也舒适”“社团合照更出片”“百元预算也显干净”这三类真实需求。</view>
+      <view class="feature-copy">重点关注“图书馆久坐也舒服”“社团合照更出片”“百元预算也显干净”这三类真实需求。</view>
     </view>
 
     <view class="section-head">
       <view class="section-title">穿搭信息流</view>
-      <view class="section-subtitle">像翻公告栏一样浏览校园灵感</view>
+      <view class="section-subtitle">图片先吸引你，文字再帮你判断这套是否适合自己</view>
     </view>
     <view v-if="listLoading">
       <view class="skeleton-card" v-for="item in 2" :key="'skeleton-' + item">
@@ -100,31 +100,44 @@
       </view>
     </view>
     <view v-else-if="outfits.length">
-      <view class="look-card bulletin-card" v-for="item in outfits" :key="item.id" @click="goDetail(item.id)">
-        <view class="look-cover bulletin-cover">
-          <view class="cover-tag">{{ item.coverTag }}</view>
-          <view class="cover-title">{{ item.title }}</view>
-          <view class="cover-copy">{{ item.subtitle }}</view>
-          <view class="bulletin-pin"></view>
-        </view>
-        <view class="bulletin-tags">
-          <view class="mini-tag">{{ item.scene }}</view>
-          <view class="mini-tag">{{ item.style }}</view>
-          <view class="mini-tag">预算 {{ item.budget }}</view>
-        </view>
-        <view class="text-copy">{{ item.desc }}</view>
-        <view class="meta-line bulletin-meta">
-          <view class="meta-left">
-            <view :class="['avatar', item.avatarClass]">{{ item.avatar }}</view>
-            <view>
-              <view class="meta-name">{{ item.user }}</view>
-              <view class="meta-school">{{ item.school }}</view>
-            </view>
+      <view class="look-card editorial-card" v-for="item in outfits" :key="item.id" @click="goDetail(item.id)">
+        <view class="editorial-photo">
+          <image v-if="item.coverImageUrl" class="editorial-image" :src="item.coverImageUrl" mode="aspectFill"></image>
+          <view class="editorial-photo-overlay">
+            <view class="editorial-pill">{{ item.coverTag }}</view>
+            <view class="editorial-budget">预算 {{ item.budget }}</view>
           </view>
-          <view class="stats-line">
-            <view class="stat-text">赞 {{ item.likes }}</view>
-            <view class="stat-text">评 {{ item.comments }}</view>
-            <view class="stat-text">藏 {{ item.saves }}</view>
+          <view v-if="!item.coverImageUrl" class="editorial-empty">
+            <view class="editorial-empty-kicker">OOTD</view>
+            <view class="editorial-empty-title">{{ item.title }}</view>
+          </view>
+        </view>
+
+        <view class="editorial-body">
+          <view class="editorial-kicker">{{ item.scene }} · {{ item.style }}</view>
+          <view class="editorial-title">{{ item.title }}</view>
+          <view class="editorial-subtitle">{{ item.subtitle }}</view>
+          <view class="editorial-desc">{{ item.desc }}</view>
+
+          <view class="editorial-tags">
+            <view class="mini-tag">{{ item.scene }}</view>
+            <view class="mini-tag">{{ item.style }}</view>
+            <view class="mini-tag">{{ item.platform }}</view>
+          </view>
+
+          <view class="meta-line editorial-meta">
+            <view class="meta-left">
+              <view :class="['avatar', item.avatarClass]">{{ item.avatar }}</view>
+              <view>
+                <view class="meta-name">{{ item.user }}</view>
+                <view class="meta-school">{{ item.school }}</view>
+              </view>
+            </view>
+            <view class="stats-line">
+              <view class="stat-text">赞 {{ item.likes }}</view>
+              <view class="stat-text">评 {{ item.comments }}</view>
+              <view class="stat-text">藏 {{ item.saves }}</view>
+            </view>
           </view>
         </view>
       </view>
@@ -237,18 +250,6 @@ export default {
   padding-top: 34rpx;
 }
 
-.campus-ribbon {
-  display: inline-flex;
-  align-items: center;
-  padding: 12rpx 20rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.84);
-  color: #4699cf;
-  font-size: 22rpx;
-  letter-spacing: 2rpx;
-  box-shadow: 0 12rpx 24rpx rgba(80, 150, 193, 0.1);
-}
-
 .home-header {
   display: flex;
   align-items: flex-start;
@@ -329,13 +330,6 @@ export default {
   font-weight: 600;
 }
 
-.section-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 18rpx;
-}
-
 .channel-row {
   margin-top: 12rpx;
 }
@@ -361,48 +355,127 @@ export default {
   background: rgba(255, 180, 107, 0.5);
 }
 
-.feature-label {
-  color: #4a9fd5;
-  font-size: 22rpx;
-  font-weight: 700;
-  letter-spacing: 1rpx;
-}
-
-.feature-title {
-  margin-top: 14rpx;
-  color: #243646;
-  font-size: 34rpx;
-  font-weight: 700;
-  line-height: 1.42;
-}
-
-.feature-copy {
-  margin-top: 12rpx;
-  color: #637888;
-  font-size: 24rpx;
-  line-height: 1.74;
-}
-
-.bulletin-card {
+.editorial-card {
   overflow: hidden;
+  padding: 18rpx;
+  border-radius: 34rpx;
 }
 
-.bulletin-cover {
-  min-height: 274rpx;
+.editorial-photo {
+  position: relative;
+  overflow: hidden;
+  height: 440rpx;
+  border-radius: 28rpx;
+  background:
+    radial-gradient(circle at 18% 14%, rgba(117, 221, 255, 0.24), transparent 26%),
+    linear-gradient(140deg, #f3f9ff 0%, #dfeefb 100%);
 }
 
-.bulletin-pin {
+.editorial-photo::after {
+  content: "";
   position: absolute;
-  right: 22rpx;
-  top: 22rpx;
-  width: 20rpx;
-  height: 20rpx;
-  border-radius: 20rpx;
-  background: #ffffff;
-  box-shadow: 0 0 0 8rpx rgba(255, 255, 255, 0.18);
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(13, 25, 37, 0.04) 0%, rgba(13, 25, 37, 0.18) 100%),
+    linear-gradient(120deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 34%);
+  pointer-events: none;
 }
 
-.bulletin-tags {
+.editorial-image {
+  width: 100%;
+  height: 100%;
+}
+
+.editorial-photo-overlay {
+  position: absolute;
+  left: 20rpx;
+  right: 20rpx;
+  top: 20rpx;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.editorial-pill,
+.editorial-budget {
+  display: inline-flex;
+  align-items: center;
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  font-size: 21rpx;
+  font-weight: 700;
+}
+
+.editorial-pill {
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--campus-primary);
+}
+
+.editorial-budget {
+  background: rgba(32, 49, 66, 0.52);
+  color: #ffffff;
+}
+
+.editorial-empty {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  padding: 32rpx;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(239, 248, 255, 0.78) 48%, rgba(239, 248, 255, 0.94) 100%);
+}
+
+.editorial-empty-kicker {
+  color: rgba(32, 49, 66, 0.64);
+  font-size: 22rpx;
+  letter-spacing: 3rpx;
+}
+
+.editorial-empty-title {
+  margin-top: 12rpx;
+  color: var(--campus-text);
+  font-size: 36rpx;
+  font-weight: 700;
+  line-height: 1.28;
+}
+
+.editorial-body {
+  padding: 24rpx 10rpx 6rpx;
+}
+
+.editorial-kicker {
+  color: var(--campus-primary);
+  font-size: 21rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
+}
+
+.editorial-title {
+  margin-top: 14rpx;
+  color: var(--campus-text);
+  font-size: 38rpx;
+  font-weight: 700;
+  line-height: 1.28;
+}
+
+.editorial-subtitle {
+  margin-top: 10rpx;
+  color: var(--campus-text);
+  font-size: 25rpx;
+  line-height: 1.68;
+}
+
+.editorial-desc {
+  margin-top: 14rpx;
+  color: var(--campus-text-soft);
+  font-size: 24rpx;
+  line-height: 1.8;
+}
+
+.editorial-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 10rpx;
@@ -417,8 +490,8 @@ export default {
   font-size: 22rpx;
 }
 
-.bulletin-meta {
-  padding-top: 16rpx;
+.editorial-meta {
+  padding-top: 18rpx;
   border-top: 1rpx solid rgba(112, 155, 188, 0.12);
 }
 </style>
