@@ -1,96 +1,85 @@
 <template>
   <view class="page-shell profile-shell">
     <view v-if="!loggedIn" class="hero-card guest-hero">
-      <view class="hero-badge">游客模式</view>
-      <view class="hero-title">登录后打开你的创作者中心</view>
-      <view class="hero-copy">我的发布、收藏、活动、消息和激励状态都会集中在这里，方便你管理自己的校园内容轨迹。</view>
-      <view class="guest-points">
-        <view class="guest-point">查看我的发布与收藏</view>
-        <view class="guest-point">管理消息与活动状态</view>
-        <view class="guest-point">继续编辑资料与草稿</view>
-      </view>
-      <button class="btn-primary" style="margin-top:24rpx;" @click="goLogin">去登录</button>
+      <view class="hero-badge profile-hero-badge">游客模式</view>
+      <view class="hero-title profile-hero-title">登录后查看你的内容和消息</view>
+      <view class="hero-copy profile-hero-copy">发布、收藏、活动和草稿都会集中在这里。</view>
+      <button class="btn-primary profile-login-button" @click="goLogin">去登录</button>
     </view>
 
     <view v-else>
       <view class="hero-card profile-hero">
-        <view class="hero-badge">创作者中心</view>
+        <view class="profile-hero-head">
+          <view class="hero-badge profile-hero-badge">我的空间</view>
+          <view class="side-pill side-pill-active profile-edit-pill" @click="go('/pages/edit-profile/index')">编辑资料</view>
+        </view>
         <view class="profile-topline">
           <view class="meta-left">
-            <view class="avatar profile-avatar">{{ profile.avatar }}</view>
+            <view class="avatar profile-avatar profile-avatar-shell">
+              <image v-if="effectiveAvatarUrl" class="profile-avatar-image" :src="effectiveAvatarUrl" mode="aspectFill"></image>
+              <text v-else>{{ profile.avatar }}</text>
+            </view>
             <view>
               <view class="hero-title profile-name">{{ profile.name }}</view>
-              <view class="hero-copy profile-school">{{ profile.school }}</view>
+              <view class="hero-copy profile-school">{{ displaySchool }}</view>
             </view>
-          </view>
-          <view class="side-pill side-pill-active" @click="go('/pages/edit-profile/index')">编辑资料</view>
-        </view>
-        <view class="hero-copy profile-sign">{{ profile.sign }}</view>
-        <view class="hero-card-row profile-quick-actions">
-          <view class="hero-card-pill profile-quick-pill" @click="go('/pages/messages/index')">
-            <text class="hero-card-pill-kicker">消息</text>
-            <text class="hero-card-pill-value">{{ unreadCount }}</text>
-            <text class="hero-card-pill-label">未读消息</text>
-          </view>
-          <view class="hero-card-pill profile-quick-pill" @click="go('/pages/messages/index')">
-            <text class="hero-card-pill-kicker">邀约</text>
-            <text class="hero-card-pill-value">{{ profile.cooperation }}</text>
-            <text class="hero-card-pill-label">合作邀约</text>
-          </view>
-          <view class="hero-card-pill profile-quick-pill" @click="go('/pages/my-activity/index')">
-            <text class="hero-card-pill-kicker">活动</text>
-            <text class="hero-card-pill-value">{{ activityStats.joinedCount }}</text>
-            <text class="hero-card-pill-label">已参与活动</text>
           </view>
         </view>
-        <view class="profile-social-panel">
-          <view class="profile-social-head">
-            <view class="profile-social-title">社交热度</view>
-            <view class="profile-social-copy">把关系链和内容反馈集中放到这里</view>
+        <view class="hero-copy profile-sign">{{ displaySign }}</view>
+        <view class="profile-stat-row">
+          <view class="profile-stat-chip" @click="go('/pages/follows/index')">
+            <text class="profile-stat-label">关注</text>
+            <text class="profile-stat-value">{{ profile.following }}</text>
           </view>
-          <view class="profile-social-grid">
-            <view class="profile-social-item" @click="go('/pages/follows/index')">
-              <text class="profile-social-value">{{ profile.following }}</text>
-              <text class="profile-social-label">关注</text>
-            </view>
-            <view class="profile-social-item" @click="go('/pages/follows/index')">
-              <text class="profile-social-value">{{ profile.followers }}</text>
-              <text class="profile-social-label">粉丝</text>
-            </view>
-            <view class="profile-social-item" @click="go('/pages/my-posts/index')">
-              <text class="profile-social-value">{{ profile.likes }}</text>
-              <text class="profile-social-label">获赞</text>
-            </view>
+          <view class="profile-stat-chip" @click="go('/pages/follows/index')">
+            <text class="profile-stat-label">粉丝</text>
+            <text class="profile-stat-value">{{ profile.followers }}</text>
+          </view>
+          <view class="profile-stat-chip" @click="go('/pages/my-posts/index')">
+            <text class="profile-stat-label">获赞</text>
+            <text class="profile-stat-value">{{ profile.likes }}</text>
+          </view>
+        </view>
+        <view class="profile-mini-actions">
+          <view class="profile-mini-action" @click="go('/pages/messages/index')">
+            <text class="profile-mini-action-label">消息</text>
+            <text class="profile-mini-action-value">{{ displayUnreadCount }}</text>
+          </view>
+          <view class="profile-mini-action" @click="go('/pages/messages/index')">
+            <text class="profile-mini-action-label">邀约</text>
+            <text class="profile-mini-action-value">{{ profile.cooperation }}</text>
+          </view>
+          <view class="profile-mini-action" @click="go('/pages/my-activity/index')">
+            <text class="profile-mini-action-label">活动</text>
+            <text class="profile-mini-action-value">{{ activityStats.joinedCount }}</text>
           </view>
         </view>
       </view>
 
       <view class="panel-card income-card income-card-entry" @click="go('/pages/incentives/index')">
-        <view class="section-head">
+        <view class="income-topline">
           <view>
-            <view class="section-title" style="margin-top:0;">创作激励中心</view>
-            <view class="section-subtitle">把创作激励和合作邀约放在一起查看</view>
+            <view class="section-title" style="margin-top:0;">创作激励</view>
+            <view class="income-copy">收入和合作进度都在这里看。</view>
           </view>
-          <view class="income-sticker">查看明细</view>
+          <view class="income-sticker">查看</view>
         </view>
         <view class="income-value">{{ profile.income }}</view>
-        <view class="text-copy">当前共有 {{ profile.cooperation }} 条合作邀约，活动参与、互动表现、内容质量和导购点击会一起影响你的创作激励。</view>
-        <view class="income-action-row">
-          <text class="income-action-copy">进入后可查看结算记录、提现进度与申请入口</text>
-          <text class="income-action-arrow">›</text>
+        <view class="income-chip-row">
+          <view class="income-chip">合作 {{ profile.cooperation }}</view>
+          <view class="income-chip">活动 {{ activityStats.joinedCount }}</view>
         </view>
       </view>
 
       <view class="panel-card menu-card">
         <view class="section-head">
           <view>
-            <view class="section-title">内容与社交管理</view>
-            <view class="section-subtitle">把常用入口整理成一块清晰的个人工作台</view>
+            <view class="section-title" style="margin-top:0;">常用入口</view>
           </view>
         </view>
         <view class="menu-grid">
           <view class="menu-item" v-for="item in menus" :key="item.key" @click="go(item.path)">
-            <view class="menu-badge" v-if="item.key === 'messages' && unreadCount > 0">{{ unreadBadgeText }}</view>
+            <view class="menu-badge" v-if="item.key === 'messages' && displayUnreadCount > 0">{{ unreadBadgeText }}</view>
             <view class="menu-badge subtle" v-else-if="item.key === 'activity' && activityStats.joinedCount > 0">{{ activityStats.joinedCount }}</view>
             <view class="menu-title">{{ item.title }}</view>
             <view class="menu-copy">{{ item.copy }}</view>
@@ -106,11 +95,13 @@
 <script>
 var api = require('../../common/api.js')
 var session = require('../../common/session.js')
+var settingsStore = require('../../common/settings.js')
 
 function buildDefaultProfile() {
   return {
     name: '校园新同学',
     avatar: 'C',
+    avatarUrl: '',
     school: 'CampusFit 校园社区',
     sign: '把校园日常场景也穿得轻盈、清爽、有预算感。',
     following: 0,
@@ -123,14 +114,14 @@ function buildDefaultProfile() {
 
 function buildMenus() {
   return [
-    { key: 'posts', title: '我的发布', copy: '查看和管理已经发布的穿搭内容', path: '/pages/my-posts/index' },
-    { key: 'favorites', title: '我的收藏', copy: '回看收藏过的穿搭和商品线索', path: '/pages/favorites/index' },
-    { key: 'activity', title: '我的活动', copy: '查看已报名活动和当前绑定专题', path: '/pages/my-activity/index' },
-    { key: 'follows', title: '关注 / 粉丝', copy: '管理社交关系与互动对象', path: '/pages/follows/index' },
-    { key: 'messages', title: '消息通知', copy: '查看评论、点赞、激励和合作提醒', path: '/pages/messages/index' },
-    { key: 'drafts', title: '草稿箱', copy: '继续编辑尚未完成的内容草稿', path: '/pages/drafts/index' },
-    { key: 'settings', title: '设置', copy: '管理账号、隐私与推送偏好', path: '/pages/settings/index' },
-    { key: 'profile', title: '编辑资料', copy: '更新昵称、学校和个性签名', path: '/pages/edit-profile/index' }
+    { key: 'posts', title: '我的发布', copy: '管理已发布内容', path: '/pages/my-posts/index' },
+    { key: 'favorites', title: '我的收藏', copy: '回看收藏线索', path: '/pages/favorites/index' },
+    { key: 'activity', title: '我的活动', copy: '查看报名活动', path: '/pages/my-activity/index' },
+    { key: 'follows', title: '关注 / 粉丝', copy: '管理社交关系', path: '/pages/follows/index' },
+    { key: 'messages', title: '消息通知', copy: '评论点赞提醒', path: '/pages/messages/index' },
+    { key: 'drafts', title: '草稿箱', copy: '继续编辑草稿', path: '/pages/drafts/index' },
+    { key: 'settings', title: '设置', copy: '账号与隐私', path: '/pages/settings/index' },
+    { key: 'profile', title: '编辑资料', copy: '更新头像和签名', path: '/pages/edit-profile/index' }
   ]
 }
 
@@ -149,16 +140,41 @@ export default {
         ongoingCount: 0
       },
       unreadCount: 0,
+      settingMap: settingsStore.getSettingMap(),
       menus: buildMenus()
     }
   },
   computed: {
+    effectiveAvatarUrl: function() {
+      var profileAvatar = (this.profile && this.profile.avatarUrl) || ''
+      if (profileAvatar) {
+        return profileAvatar
+      }
+      var user = session.getUser() || {}
+      return user.avatarUrl || ''
+    },
     unreadBadgeText: function() {
-      return this.unreadCount > 99 ? '99+' : String(this.unreadCount)
+      return this.displayUnreadCount > 99 ? '99+' : String(this.displayUnreadCount)
+    },
+    pushEnabled: function() {
+      return this.settingMap.push !== false
+    },
+    privacyEnabled: function() {
+      return this.settingMap.privacy !== false
+    },
+    displayUnreadCount: function() {
+      return this.pushEnabled ? this.unreadCount : 0
+    },
+    displaySchool: function() {
+      return this.privacyEnabled ? this.profile.school : '校园信息已隐藏'
+    },
+    displaySign: function() {
+      return this.privacyEnabled ? this.profile.sign : '已开启隐私保护，仅自己可见'
     }
   },
   onShow: function() {
     this.loggedIn = session.isLoggedIn()
+    this.settingMap = settingsStore.getSettingMap()
     this.menus = buildMenus()
     if (!this.loggedIn) {
       this.unreadCount = 0
@@ -175,7 +191,10 @@ export default {
       var self = this
       api.getMyProfile()
         .then(function(profile) {
-          self.profile = profile || buildDefaultProfile()
+          var currentUser = session.getUser() || {}
+          self.profile = Object.assign({}, buildDefaultProfile(), profile || {}, {
+            avatarUrl: (profile && profile.avatarUrl) || currentUser.avatarUrl || ''
+          })
         })
         .catch(function(error) {
           if (isAuthError(error)) {
@@ -189,6 +208,10 @@ export default {
     },
     loadUnreadCount: function() {
       var self = this
+      if (!self.pushEnabled) {
+        self.unreadCount = 0
+        return
+      }
       api.getUnreadMessageCount()
         .then(function(count) {
           self.unreadCount = Number(count || 0)
@@ -237,42 +260,70 @@ export default {
   padding-bottom: 48rpx;
 }
 
+.guest-hero,
 .profile-hero {
   z-index: 2;
+  margin-top: 0;
+  padding: 18rpx 18rpx 20rpx;
+  border-radius: 28rpx;
 }
 
-.guest-points {
+.profile-hero-head {
   display: flex;
-  flex-direction: column;
-  gap: 12rpx;
-  margin-top: 20rpx;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
 }
 
-.guest-point {
-  padding: 18rpx 20rpx;
-  border-radius: 20rpx;
-  background: rgba(255, 255, 255, 0.18);
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 24rpx;
+.profile-hero-badge {
+  padding: 8rpx 14rpx;
+  font-size: 18rpx;
+}
+
+.profile-hero-title {
+  margin-top: 10rpx;
+  font-size: 36rpx;
+  line-height: 1.14;
+}
+
+.profile-hero-copy {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.45;
+}
+
+.profile-login-button {
+  margin-top: 18rpx;
 }
 
 .profile-topline {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20rpx;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 18rpx;
+  margin-top: 12rpx;
 }
 
-.profile-topline .side-pill {
-  position: relative;
-  z-index: 2;
+.profile-edit-pill {
   flex-shrink: 0;
+  font-size: 20rpx;
 }
 
 .profile-avatar {
-  width: 92rpx;
-  height: 92rpx;
-  font-size: 34rpx;
+  width: 84rpx;
+  height: 84rpx;
+  font-size: 30rpx;
+}
+
+.profile-avatar-shell {
+  overflow: hidden;
+  padding: 0;
+}
+
+.profile-avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
 }
 
 .profile-name,
@@ -281,113 +332,100 @@ export default {
   max-width: 420rpx;
 }
 
-.profile-quick-actions {
-  margin-top: 26rpx;
+.profile-name {
+  font-size: 40rpx;
+  line-height: 1.1;
 }
 
-.profile-quick-pill {
-  position: relative;
-  min-height: 138rpx;
-  padding: 24rpx 22rpx 22rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.12);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.12) 100%);
-  box-shadow: 0 12rpx 28rpx rgba(31, 108, 147, 0.12);
+.profile-school {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  line-height: 1.4;
 }
 
-.profile-quick-pill:active {
-  transform: scale(0.98);
+.profile-sign {
+  margin-top: 12rpx;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 22rpx;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.hero-card-pill-kicker {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 66rpx;
-  height: 38rpx;
-  padding: 0 14rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.18);
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 20rpx;
-  letter-spacing: 1rpx;
-}
-
-.profile-social-panel {
-  margin-top: 18rpx;
-  padding: 22rpx;
-  border-radius: 28rpx;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.12) 100%);
-  border: 1rpx solid rgba(255, 255, 255, 0.14);
-}
-
-.profile-social-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 18rpx;
-}
-
-.profile-social-title {
-  color: #ffffff;
-  font-size: 24rpx;
-  font-weight: 700;
-}
-
-.profile-social-copy {
-  max-width: 290rpx;
-  color: rgba(255, 255, 255, 0.78);
-  font-size: 20rpx;
-  line-height: 1.55;
-  text-align: right;
-}
-
-.profile-social-grid {
+.profile-stat-row,
+.profile-mini-actions {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14rpx;
-  margin-top: 18rpx;
+  gap: 8rpx;
+  margin-top: 14rpx;
 }
 
-.profile-social-item {
+.profile-stat-chip,
+.profile-mini-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
   min-width: 0;
-  padding: 20rpx 14rpx;
-  border-radius: 22rpx;
-  background: rgba(255, 255, 255, 0.16);
-  text-align: center;
+  width: 100%;
+  min-height: 54rpx;
+  gap: 6rpx;
+  padding: 10rpx 12rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
+  box-sizing: border-box;
 }
 
-.profile-social-item:active {
-  transform: scale(0.98);
-}
-
-.profile-social-value {
-  display: block;
+.profile-stat-value,
+.profile-mini-action-value {
+  display: inline-block;
+  min-width: 22rpx;
   color: #ffffff;
-  font-size: 32rpx;
+  font-size: 22rpx;
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
-.profile-social-label {
-  display: block;
-  margin-top: 8rpx;
-  color: rgba(255, 255, 255, 0.82);
-  font-size: 22rpx;
+.profile-stat-label,
+.profile-mini-action-label {
+  display: inline-block;
+  min-width: 0;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 18rpx;
+  line-height: 1;
+  white-space: nowrap;
+  text-align: left;
 }
 
 .income-card,
 .menu-card {
-  margin-top: 24rpx;
+  margin-top: 18rpx;
 }
 
 .income-card-entry:active {
   transform: scale(0.99);
 }
 
+.income-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.income-copy {
+  margin-top: 8rpx;
+  color: var(--campus-text-soft);
+  font-size: 22rpx;
+  line-height: 1.45;
+}
+
 .income-value {
-  margin-top: 20rpx;
+  margin-top: 16rpx;
   color: var(--campus-text);
   font-size: 44rpx;
   font-weight: 700;
@@ -402,64 +440,65 @@ export default {
   font-weight: 700;
 }
 
-.income-action-row {
+.income-chip-row {
   display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: 16rpx;
+}
+
+.income-chip {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 18rpx;
-  margin-top: 20rpx;
-  padding-top: 18rpx;
-  border-top: 1rpx solid rgba(109, 154, 190, 0.12);
-}
-
-.income-action-copy {
+  padding: 10rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 250, 245, 0.92);
+  border: 1rpx solid rgba(43, 24, 34, 0.08);
   color: var(--campus-text-soft);
-  font-size: 22rpx;
-  line-height: 1.6;
-}
-
-.income-action-arrow {
-  color: var(--campus-primary);
-  font-size: 34rpx;
-  line-height: 1;
+  font-size: 20rpx;
 }
 
 .menu-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18rpx;
+  gap: 10rpx;
 }
 
 .menu-item {
   position: relative;
-  padding: 26rpx 24rpx;
-  border-radius: 26rpx;
+  padding: 16rpx 16rpx;
+  border-radius: 20rpx;
   background: rgba(245, 249, 253, 0.96);
 }
 
 .menu-title {
   color: var(--campus-text);
-  font-size: 28rpx;
+  font-size: 24rpx;
   font-weight: 700;
 }
 
 .menu-copy {
-  margin-top: 10rpx;
+  margin-top: 4rpx;
   color: var(--campus-text-muted);
-  font-size: 22rpx;
-  line-height: 1.65;
+  font-size: 19rpx;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  padding-right: 18rpx;
 }
 
 .menu-badge {
   position: absolute;
-  top: 18rpx;
-  right: 18rpx;
-  min-width: 40rpx;
-  padding: 6rpx 12rpx;
+  top: 12rpx;
+  right: 12rpx;
+  min-width: 30rpx;
+  padding: 2rpx 8rpx;
   border-radius: 999rpx;
   background: linear-gradient(135deg, #ff9c95, #ff6d8f);
   color: #ffffff;
-  font-size: 20rpx;
+  font-size: 17rpx;
   text-align: center;
 }
 
@@ -469,6 +508,33 @@ export default {
 }
 
 .logout-button {
-  margin-top: 24rpx;
+  margin-top: 18rpx;
+}
+
+.income-card,
+.menu-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.menu-item {
+  min-height: 102rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.menu-item::after {
+  content: "›";
+  position: absolute;
+  right: 14rpx;
+  bottom: 14rpx;
+  color: var(--campus-secondary);
+  font-size: 22rpx;
+  line-height: 1;
+}
+
+.menu-title {
+  padding-right: 18rpx;
 }
 </style>

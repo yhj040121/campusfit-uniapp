@@ -21,7 +21,8 @@ function saveSession(payload) {
   uni.setStorageSync(USER_KEY, {
     userId: payload.userId,
     phone: payload.phone,
-    nickname: payload.nickname
+    nickname: payload.nickname,
+    avatarUrl: payload.avatarUrl || ''
   })
 }
 

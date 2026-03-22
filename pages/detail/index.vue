@@ -47,12 +47,11 @@
       </view>
 
       <view class="detail-head-card">
-        <view class="detail-label-row">
-          <view class="detail-label">STYLE NOTE</view>
+        <view class="detail-topline">
           <view class="detail-price-chip">{{ post.price }}</view>
         </view>
         <view class="detail-title">{{ post.title }}</view>
-        <view class="detail-subtitle">{{ post.subtitle }}</view>
+        <view v-if="getDisplaySubtitle(post)" class="detail-subtitle">{{ getDisplaySubtitle(post) }}</view>
         <view class="detail-tag-row">
           <view class="detail-meta-chip">{{ post.scene }}</view>
           <view class="detail-meta-chip">{{ post.style }}</view>
@@ -62,20 +61,19 @@
           <view class="chip chip-active" v-for="item in post.highlights" :key="item">{{ item }}</view>
         </view>
         <view class="detail-intro">{{ post.desc }}</view>
-      </view>
-
-      <view class="detail-stats">
-        <view class="detail-stat">
-          <text class="detail-stat-value">{{ post.likes }}</text>
-          <text class="detail-stat-label">点赞</text>
-        </view>
-        <view class="detail-stat">
-          <text class="detail-stat-value">{{ post.comments }}</text>
-          <text class="detail-stat-label">评论</text>
-        </view>
-        <view class="detail-stat">
-          <text class="detail-stat-value">{{ post.saves }}</text>
-          <text class="detail-stat-label">收藏</text>
+        <view class="detail-summary-row">
+          <view class="detail-stat-inline">
+            <text class="detail-stat-inline-value">{{ post.likes }}</text>
+            <text class="detail-stat-inline-label">点赞</text>
+          </view>
+          <view class="detail-stat-inline">
+            <text class="detail-stat-inline-value">{{ post.comments }}</text>
+            <text class="detail-stat-inline-label">评论</text>
+          </view>
+          <view class="detail-stat-inline">
+            <text class="detail-stat-inline-value">{{ post.saves }}</text>
+            <text class="detail-stat-inline-label">收藏</text>
+          </view>
         </view>
       </view>
     </view>
@@ -83,7 +81,10 @@
     <view class="panel-card author-card">
       <view class="author-head">
         <view class="meta-left">
-          <view :class="['avatar', post.avatarClass]">{{ post.avatar }}</view>
+          <view :class="['avatar', post.avatarClass, authorAvatarUrl ? 'avatar-has-image' : '']">
+            <image v-if="authorAvatarUrl" class="avatar-image" :src="authorAvatarUrl" mode="aspectFill"></image>
+            <text v-else>{{ authorAvatarText }}</text>
+          </view>
           <view>
             <view class="meta-name">{{ post.user }}</view>
             <view class="meta-school">{{ post.school }}</view>
@@ -155,7 +156,7 @@
       <view class="list-title">{{ post.product }}</view>
       <view class="list-copy">{{ post.platform }}</view>
       <view class="detail-price">{{ post.price }}</view>
-      <view class="note-box">理性消费提示：{{ post.guideTip }}</view>
+      <view v-if="showSafeReminder" class="note-box">理性消费提示：{{ post.guideTip }}</view>
       <view class="note-box">激励说明：{{ post.profit }}</view>
       <view class="btn-row">
         <button class="btn-secondary btn-half" @click="goLikes">查看点赞</button>
@@ -173,13 +174,25 @@
       </view>
       <view v-if="previewComments.length">
         <view class="preview-item" v-for="item in previewComments" :key="item.id">
-          <view :class="['avatar', item.avatarClass]">{{ item.avatar }}</view>
+          <view :class="['avatar', item.avatarClass, item.avatarUrl ? 'avatar-has-image' : '']">
+            <image v-if="item.avatarUrl" class="avatar-image" :src="item.avatarUrl" mode="aspectFill"></image>
+            <text v-else>{{ item.avatar }}</text>
+          </view>
           <view class="preview-body">
             <view class="preview-name-row">
               <view class="meta-name">{{ item.name }}</view>
               <view class="meta-school">{{ item.time }}</view>
             </view>
-            <view class="text-copy">{{ item.text }}</view>
+            <view class="text-copy">
+              <text v-if="item.replyToName" class="preview-reply-prefix">回复 {{ item.replyToName }}：</text>
+              <text>{{ item.text }}</text>
+            </view>
+            <view class="preview-action-row">
+              <view class="preview-action" @click="togglePreviewCommentLike(item)">
+                {{ item.liked ? '已赞' : '点赞' }} {{ item.likes || 0 }}
+              </view>
+              <view class="preview-action" @click="replyPreviewComment(item)">回复</view>
+            </view>
           </view>
         </view>
       </view>
@@ -192,6 +205,92 @@
 var api = require('../../common/api.js')
 var session = require('../../common/session.js')
 var activityStore = require('../../common/activity.js')
+var postDisplay = require('../../common/post-display.js')
+var settingsStore = require('../../common/settings.js')
+
+function pickFirstText(value, fallback) {
+  var text = String(value || '').trim()
+  if (!text) {
+    return fallback || 'C'
+  }
+  return text.slice(0, 1).toUpperCase()
+}
+
+function resolveAuthorAvatarUrl(post, isMine) {
+  var detail = post || {}
+  var candidates = [
+    detail.avatarUrl,
+    detail.authorAvatarUrl,
+    detail.userAvatarUrl,
+    detail.creatorAvatarUrl,
+    detail.userAvatar
+  ]
+  for (var i = 0; i < candidates.length; i += 1) {
+    if (candidates[i]) {
+      return candidates[i]
+    }
+  }
+  var currentUser = session.getUser() || {}
+  var sameAuthor = !!isMine
+  if (!sameAuthor && detail.authorId && currentUser.userId) {
+    sameAuthor = String(detail.authorId) === String(currentUser.userId)
+  }
+  if (sameAuthor && currentUser.avatarUrl) {
+    return currentUser.avatarUrl
+  }
+  return ''
+}
+
+function buildShareMetaLine(post) {
+  var detail = post || {}
+  var segments = []
+  if (detail.scene) {
+    segments.push(detail.scene)
+  }
+  if (detail.style) {
+    segments.push(detail.style)
+  }
+  if (detail.budget) {
+    segments.push('\u9884\u7b97 ' + detail.budget)
+  }
+  return segments.join(' \u00b7 ')
+}
+
+function buildShareCopyText(post, link) {
+  var detail = post || {}
+  var lines = [detail.title || 'CampusFit \u7a7f\u642d\u5206\u4eab']
+  var metaLine = buildShareMetaLine(detail)
+  if (metaLine) {
+    lines.push(metaLine)
+  }
+  if (detail.desc) {
+    lines.push(detail.desc)
+  }
+  var productLine = []
+  if (detail.product) {
+    productLine.push(detail.product)
+  }
+  if (detail.price) {
+    productLine.push(detail.price)
+  }
+  if (productLine.length) {
+    lines.push('\u5546\u54c1\uff1a' + productLine.join(' \u00b7 '))
+  }
+  if (link) {
+    lines.push('\u5546\u54c1\u94fe\u63a5\uff1a' + link)
+  }
+  return lines.join('\n')
+}
+
+function getCurrentShareUrl(postId) {
+  if (typeof window !== 'undefined' && window.location && window.location.href) {
+    return window.location.href
+  }
+  if (postId) {
+    return '/pages/detail/index?id=' + postId
+  }
+  return ''
+}
 
 function emptyPost(id) {
   return {
@@ -205,6 +304,7 @@ function emptyPost(id) {
     authorId: 0,
     user: 'CampusFit',
     avatar: 'C',
+    avatarUrl: '',
     avatarClass: 'soft',
     school: '\u6821\u56ed\u7a7f\u642d\u793e',
     mine: false,
@@ -229,22 +329,6 @@ function emptyPost(id) {
   }
 }
 
-function buildCommentPreview(list) {
-  var result = []
-  for (var i = 0; i < (list || []).length; i += 1) {
-    result.push({
-      id: 'preview-' + i,
-      name: '\u540c\u5b66' + (i + 1),
-      avatar: String(i + 1),
-      avatarClass: i % 2 === 0 ? 'soft' : 'alt',
-      text: list[i],
-      time: (i + 2) + '\u5206\u949f\u524d',
-      likes: Math.max(2, 12 - i * 2)
-    })
-  }
-  return result
-}
-
 function isAuthError(error) {
   var message = ((error && error.message) || '').toLowerCase()
   return message.indexOf('login') > -1 || message.indexOf('401') > -1 || message.indexOf('\u767b\u5f55') > -1
@@ -265,7 +349,10 @@ export default {
       detailFailed: false,
       actionLoading: false,
       activityActionLoading: false,
+      shareLoading: false,
+      shareLink: '',
       galleryCurrent: 0,
+      settingMap: settingsStore.getSettingMap(),
       statusText: '\u6b63\u5728\u51c6\u5907\u8be6\u60c5\u5185\u5bb9...'
     }
   },
@@ -295,6 +382,29 @@ export default {
         return '1 / 1'
       }
       return String(this.galleryCurrent + 1) + ' / ' + String(images.length)
+    },
+    showSafeReminder: function() {
+      return this.settingMap.safe !== false
+    },
+    authorAvatarUrl: function() {
+      return resolveAuthorAvatarUrl(this.post, this.isMine)
+    },
+    authorAvatarText: function() {
+      return pickFirstText((this.post && this.post.avatar) || (this.post && this.post.user), 'C')
+    }
+  },
+  onShareAppMessage: function() {
+    return {
+      title: (this.post && this.post.title) || 'CampusFit \u7a7f\u642d\u5206\u4eab',
+      path: '/pages/detail/index?id=' + ((this.post && this.post.id) || this.postId || 'look1'),
+      imageUrl: (this.galleryImages && this.galleryImages[0]) || (this.post && this.post.coverImageUrl) || ''
+    }
+  },
+  onShareTimeline: function() {
+    return {
+      title: (this.post && this.post.title) || 'CampusFit \u7a7f\u642d\u5206\u4eab',
+      query: 'id=' + ((this.post && this.post.id) || this.postId || 'look1'),
+      imageUrl: (this.galleryImages && this.galleryImages[0]) || (this.post && this.post.coverImageUrl) || ''
     }
   },
   onLoad: function(options) {
@@ -302,11 +412,18 @@ export default {
     this.post = emptyPost(this.postId)
     this.loadDetail()
   },
+  onShow: function() {
+    this.settingMap = settingsStore.getSettingMap()
+    if (this.postId) {
+      this.loadDetail()
+    }
+  },
   methods: {
     loadDetail: function() {
       var self = this
       self.detailLoading = true
       self.detailFailed = false
+      self.shareLink = ''
       self.statusText = '\u6b63\u5728\u540c\u6b65\u8fd9\u6761\u7a7f\u642d\u7684\u8be6\u60c5\u4fe1\u606f\u3002'
       api.getPostDetail(self.postId)
         .then(function(detail) {
@@ -316,7 +433,7 @@ export default {
           self.followed = !!detail.followed
           self.isMine = !!detail.mine
           self.currentActivity = detail.activity || null
-          self.previewComments = buildCommentPreview(detail.commentsPreview || [])
+          self.previewComments = detail.commentsPreview || []
           self.galleryCurrent = 0
           self.statusText = '\u5185\u5bb9\u5df2\u66f4\u65b0\uff0c\u53ef\u4ee5\u7ee7\u7eed\u67e5\u770b\u5bfc\u8d2d\u3001\u8bc4\u8bba\u548c\u6d3b\u52a8\u4fe1\u606f\u3002'
           self.detailFailed = false
@@ -468,14 +585,149 @@ export default {
         }
       })
     },
+    resolveShareLink: function() {
+      var self = this
+      if (self.shareLink) {
+        return Promise.resolve(self.shareLink)
+      }
+      return api.getProductJumpInfo(self.post.id)
+        .then(function(detail) {
+          self.shareLink = (detail && detail.jumpUrl) || ''
+          return self.shareLink
+        })
+        .catch(function() {
+          self.shareLink = ''
+          return ''
+        })
+    },
+    canUseNativeShare: function() {
+      return typeof navigator !== 'undefined' && typeof navigator.share === 'function'
+    },
+    copyShareContent: function(text, successMessage) {
+      return new Promise(function(resolve, reject) {
+        uni.setClipboardData({
+          data: text,
+          success: function() {
+            uni.showToast({ title: successMessage || '\u5df2\u590d\u5236', icon: 'none' })
+            resolve()
+          },
+          fail: function(error) {
+            reject(error)
+          }
+        })
+      })
+    },
+    openNativeShare: function(link) {
+      var self = this
+      if (!self.canUseNativeShare()) {
+        return Promise.reject(new Error('native-share-unavailable'))
+      }
+      var payload = {
+        title: (self.post && self.post.title) || 'CampusFit \u7a7f\u642d\u5206\u4eab',
+        text: buildShareCopyText(self.post, link)
+      }
+      var currentUrl = getCurrentShareUrl(self.post && self.post.id)
+      if (currentUrl) {
+        payload.url = currentUrl
+      } else if (link) {
+        payload.url = link
+      }
+      return navigator.share(payload)
+    },
     sharePost: function() {
-      uni.showToast({ title: '\u5206\u4eab\u529f\u80fd\u5c06\u5728\u6f14\u793a\u9636\u6bb5\u5c55\u793a\u3002', icon: 'none' })
+      var self = this
+      if (self.shareLoading) {
+        return
+      }
+      var itemList = []
+      var actions = []
+      if (self.canUseNativeShare()) {
+        itemList.push('\u7cfb\u7edf\u5206\u4eab')
+        actions.push('native')
+      }
+      itemList.push('\u590d\u5236\u5206\u4eab\u6587\u6848')
+      actions.push('copy-text')
+      itemList.push('\u590d\u5236\u5546\u54c1\u94fe\u63a5')
+      actions.push('copy-link')
+
+      uni.showActionSheet({
+        itemList: itemList,
+        success: function(result) {
+          var action = actions[result.tapIndex]
+          if (!action) {
+            return
+          }
+          self.shareLoading = true
+          self.resolveShareLink()
+            .then(function(link) {
+              var shareText = buildShareCopyText(self.post, link)
+              if (action === 'native') {
+                return self.openNativeShare(link)
+                  .catch(function(error) {
+                    if (error && error.name === 'AbortError') {
+                      return
+                    }
+                    return self.copyShareContent(shareText, '\u5f53\u524d\u73af\u5883\u4e0d\u652f\u6301\u7cfb\u7edf\u5206\u4eab\uff0c\u5df2\u590d\u5236\u6587\u6848')
+                  })
+              }
+              if (action === 'copy-link') {
+                if (link) {
+                  return self.copyShareContent(link, '\u5546\u54c1\u94fe\u63a5\u5df2\u590d\u5236')
+                }
+                return self.copyShareContent(shareText, '\u6682\u65e0\u5546\u54c1\u94fe\u63a5\uff0c\u5df2\u590d\u5236\u5206\u4eab\u6587\u6848')
+              }
+              return self.copyShareContent(shareText, '\u5206\u4eab\u6587\u6848\u5df2\u590d\u5236')
+            })
+            .catch(function(error) {
+              uni.showToast({ title: (error && error.message) || '\u5206\u4eab\u6682\u65f6\u4e0d\u53ef\u7528', icon: 'none' })
+            })
+            .finally(function() {
+              self.shareLoading = false
+            })
+        }
+      })
     },
     goActivityCenter: function() {
       uni.navigateTo({ url: '/pages/activity/index' })
     },
     goComments: function() {
       uni.navigateTo({ url: '/pages/comments/index?id=' + this.post.id })
+    },
+    togglePreviewCommentLike: function(item) {
+      var self = this
+      if (!item || self.actionLoading) {
+        return
+      }
+      if (!session.isLoggedIn()) {
+        self.promptLogin('\u767b\u5f55\u540e\u624d\u80fd\u70b9\u8d5e\u8bc4\u8bba\u3002')
+        return
+      }
+      self.actionLoading = true
+      api.toggleCommentLike(self.post.id, item.id)
+        .then(function(result) {
+          for (var i = 0; i < self.previewComments.length; i += 1) {
+            if (self.previewComments[i] && self.previewComments[i].id === item.id) {
+              self.previewComments.splice(i, 1, Object.assign({}, self.previewComments[i], {
+                liked: !!result.active,
+                likes: result.count
+              }))
+              break
+            }
+          }
+          uni.showToast({ title: result.active ? '\u5df2\u70b9\u8d5e\u8bc4\u8bba' : '\u5df2\u53d6\u6d88\u70b9\u8d5e', icon: 'none' })
+        })
+        .catch(function(error) {
+          self.handleActionError(error, '\u8bc4\u8bba\u70b9\u8d5e\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u518d\u8bd5\u3002')
+        })
+        .finally(function() {
+          self.actionLoading = false
+        })
+    },
+    replyPreviewComment: function(item) {
+      if (!item) {
+        return
+      }
+      uni.navigateTo({ url: '/pages/comments/index?id=' + this.post.id + '&replyCommentId=' + item.id })
     },
     goLikes: function() {
       uni.navigateTo({ url: '/pages/likes/index?id=' + this.post.id })
@@ -486,6 +738,9 @@ export default {
     refreshDetail: function() {
       this.loadDetail()
       uni.showToast({ title: '\u8be6\u60c5\u5df2\u5237\u65b0', icon: 'none' })
+    },
+    getDisplaySubtitle: function(item) {
+      return postDisplay.getDisplaySubtitle(item)
     }
   }
 }
@@ -527,8 +782,9 @@ export default {
   align-items: center;
   padding: 10rpx 18rpx;
   border-radius: 999rpx;
-  background: rgba(87, 189, 240, 0.12);
-  color: var(--campus-primary);
+  border: 1rpx solid rgba(45, 87, 217, 0.12);
+  background: rgba(45, 87, 217, 0.08);
+  color: var(--campus-secondary);
   font-size: 21rpx;
   font-weight: 700;
   letter-spacing: 2rpx;
@@ -559,8 +815,8 @@ export default {
 
 .gallery-slide {
   background:
-    radial-gradient(circle at 18% 14%, rgba(117, 221, 255, 0.24), transparent 26%),
-    linear-gradient(140deg, #f3f9ff 0%, #dfeefb 100%);
+    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.2), transparent 26%),
+    linear-gradient(140deg, rgba(255, 239, 231, 0.96) 0%, rgba(238, 244, 255, 0.96) 100%);
 }
 
 .gallery-image {
@@ -573,7 +829,7 @@ export default {
   flex-direction: column;
   justify-content: flex-end;
   padding: 34rpx;
-  background: linear-gradient(160deg, rgba(87, 189, 240, 0.26) 0%, rgba(105, 215, 175, 0.32) 100%);
+  background: linear-gradient(160deg, rgba(201, 49, 91, 0.18) 0%, rgba(45, 87, 217, 0.2) 100%);
   box-sizing: border-box;
 }
 
@@ -625,8 +881,8 @@ export default {
 }
 
 .thumb-item-active {
-  background: linear-gradient(135deg, #58bdf0 0%, #67d9af 100%);
-  box-shadow: 0 12rpx 24rpx rgba(73, 183, 237, 0.18);
+  background: linear-gradient(135deg, #ef6288 0%, #345fe0 100%);
+  box-shadow: 0 12rpx 24rpx rgba(201, 49, 91, 0.18);
 }
 
 .thumb-image {
@@ -798,5 +1054,219 @@ export default {
 
 .preview-body {
   flex: 1;
+}
+
+.preview-reply-prefix {
+  color: var(--campus-secondary);
+}
+
+.preview-action-row {
+  display: flex;
+  gap: 18rpx;
+  margin-top: 12rpx;
+}
+
+.preview-action {
+  color: var(--campus-text-muted);
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.detail-stage {
+  display: grid;
+  gap: 20rpx;
+}
+
+.gallery-card {
+  padding: 20rpx;
+  border-radius: 38rpx;
+  background:
+    linear-gradient(135deg, rgba(201, 49, 91, 0.04), transparent 28%),
+    linear-gradient(315deg, rgba(45, 87, 217, 0.05), transparent 36%),
+    rgba(255, 250, 245, 0.92);
+  border: 1rpx solid rgba(43, 24, 34, 0.08);
+  box-shadow: var(--campus-shadow-md);
+}
+
+.gallery-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.gallery-kicker,
+.gallery-count,
+.gallery-hint {
+  font-family: var(--campus-font-data);
+}
+
+.thumb-item {
+  background: rgba(255, 251, 247, 0.84);
+  border: 1rpx solid rgba(43, 24, 34, 0.08);
+}
+
+.thumb-item-active {
+  background: linear-gradient(135deg, rgba(201, 49, 91, 0.2), rgba(45, 87, 217, 0.18));
+  box-shadow: 0 12rpx 24rpx rgba(201, 49, 91, 0.12);
+}
+
+.detail-head-card {
+  position: relative;
+  padding-top: 24rpx;
+}
+
+.detail-title {
+  line-height: 1.14;
+}
+
+.detail-stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.detail-stat:last-child {
+  grid-column: 1 / -1;
+}
+
+.detail-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.action-chip {
+  min-width: auto;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.author-card,
+.detail-activity-card,
+.guide-card,
+.comment-preview-card {
+  padding: 26rpx;
+}
+
+.preview-item {
+  gap: 16rpx;
+}
+
+.detail-stage {
+  gap: 16rpx;
+}
+
+.detail-head-card {
+  padding: 20rpx 20rpx 18rpx;
+  border-radius: 28rpx;
+}
+
+.detail-topline {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8rpx;
+}
+
+.detail-price-chip {
+  padding: 8rpx 14rpx;
+  font-size: 20rpx;
+}
+
+.detail-title {
+  margin-top: 0;
+  font-size: 38rpx;
+  line-height: 1.14;
+}
+
+.detail-subtitle {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.5;
+}
+
+.detail-tag-row {
+  gap: 8rpx;
+  margin-top: 12rpx;
+}
+
+.detail-meta-chip {
+  padding: 8rpx 14rpx;
+  font-size: 20rpx;
+}
+
+.detail-highlight-row {
+  margin-top: 12rpx;
+}
+
+.detail-intro {
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  line-height: 1.58;
+}
+
+.detail-summary-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 14rpx;
+}
+
+.detail-stat-inline {
+  display: inline-flex;
+  align-items: center;
+  padding: 8rpx 12rpx;
+  border-radius: 999rpx;
+  background: rgba(45, 87, 217, 0.08);
+  border: 1rpx solid rgba(45, 87, 217, 0.12);
+}
+
+.detail-stat-inline-value {
+  color: var(--campus-text);
+  font-size: 22rpx;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.detail-stat-inline-label {
+  margin-left: 6rpx;
+  color: var(--campus-text-soft);
+  font-size: 19rpx;
+  line-height: 1;
+}
+
+.author-card {
+  margin-top: 14rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 26rpx;
+}
+
+.author-head {
+  align-items: center;
+}
+
+.avatar-has-image {
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 10rpx 20rpx rgba(43, 24, 34, 0.08);
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.detail-actions {
+  gap: 10rpx;
+  margin-top: 14rpx;
+}
+
+.action-chip {
+  min-height: 64rpx;
+  padding: 0 12rpx;
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22rpx;
+  line-height: 1;
 }
 </style>

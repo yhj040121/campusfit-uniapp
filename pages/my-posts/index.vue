@@ -1,44 +1,28 @@
 ﻿<template>
   <view class="page-shell posts-shell">
     <view v-if="!loggedIn" class="hero-card posts-hero">
-      <view class="hero-badge">需要登录</view>
-      <view class="hero-title">登录后查看我的发布</view>
-      <view class="hero-copy">这里会集中管理你已发布、审核中、已下架和被驳回的穿搭内容。</view>
-      <button class="btn-primary" style="margin-top:24rpx;" @click="goLogin">去登录</button>
+      <view class="hero-badge posts-hero-badge">需要登录</view>
+      <view class="hero-title posts-hero-title">登录后查看我的发布</view>
+      <view class="hero-copy posts-hero-copy">已发布、审核中和下架内容都会集中在这里。</view>
+      <button class="btn-primary posts-login-button" @click="goLogin">去登录</button>
     </view>
 
     <view v-else>
-      <view class="page-header">
-        <view class="campus-ribbon">内容管理台</view>
-        <view class="page-title">把每条发布当成一张可追踪的内容便签</view>
-        <view class="page-desc">查看审核状态、编辑内容，并管理上架与下架状态，让内容表现和导购转化更清楚。</view>
-      </view>
-
       <view class="hero-card posts-hero">
-        <view class="hero-badge">我的发布</view>
-        <view class="hero-title">内容状态一眼看清</view>
-        <view class="hero-copy">从已发布到审核中，再到下架与驳回，都会在同一块内容面板里管理。</view>
-        <view class="hero-metrics">
-          <view class="hero-metric">
-            <text class="hero-metric-value">{{ posts.length }}</text>
-            <text class="hero-metric-label">内容总数</text>
-          </view>
-          <view class="hero-metric">
-            <text class="hero-metric-value">{{ publishedCount }}</text>
-            <text class="hero-metric-label">已发布</text>
-          </view>
-          <view class="hero-metric">
-            <text class="hero-metric-value">{{ pendingCount }}</text>
-            <text class="hero-metric-label">审核中</text>
-          </view>
+        <view class="posts-hero-head">
+          <view class="hero-badge posts-hero-badge">我的发布</view>
+        </view>
+        <view class="hero-title posts-hero-title">内容状态一眼看清</view>
+        <view class="hero-copy posts-hero-copy">编辑、删除、上下架都在这一页处理。</view>
+        <view class="posts-hero-chips">
+          <view class="posts-hero-chip">{{ posts.length }} 全部</view>
+          <view class="posts-hero-chip">{{ publishedCount }} 已发布</view>
+          <view class="posts-hero-chip">{{ pendingCount }} 审核中</view>
         </view>
       </view>
 
       <view class="section-head" style="margin-top:18rpx;">
-        <view>
-          <view class="section-title" style="margin-top:0;">状态总览</view>
-          <view class="section-subtitle">快速查看不同审核状态下的内容数量</view>
-        </view>
+        <view class="section-title" style="margin-top:0;">状态总览</view>
         <view class="float-link" @click="refreshPosts">刷新列表</view>
       </view>
 
@@ -88,7 +72,7 @@
               <view class="status-chip" :class="statusClass(item.publishStatus)">{{ item.publishStatusText }}</view>
             </view>
             <view class="cover-title">{{ item.title }}</view>
-            <view class="cover-copy">{{ item.subtitle }}</view>
+            <view v-if="getDisplaySubtitle(item)" class="cover-copy">{{ getDisplaySubtitle(item) }}</view>
           </view>
 
           <view class="status-copy">{{ item.publishStatusDesc }}</view>
@@ -106,16 +90,25 @@
 
           <view class="btn-row post-actions">
             <button
-              class="btn-secondary"
-              :class="item.canShelfDown || item.canRestore ? 'btn-half' : 'btn-full'"
+              class="btn-secondary btn-half"
               :disabled="actionLoadingId === item.id"
               @click.stop="startEdit(item)"
             >
               编辑内容
             </button>
             <button
+              class="btn-ghost btn-half btn-delete"
+              :class="actionLoadingId === item.id ? 'btn-disabled' : ''"
+              :disabled="actionLoadingId === item.id"
+              @click.stop="confirmDelete(item)"
+            >
+              {{ actionLoadingId === item.id ? '处理中...' : '删除内容' }}
+            </button>
+          </view>
+          <view v-if="item.canShelfDown || item.canRestore" class="btn-row post-actions post-actions-secondary">
+            <button
               v-if="item.canShelfDown"
-              class="btn-ghost btn-half btn-warn"
+              class="btn-ghost btn-full btn-warn"
               :class="actionLoadingId === item.id ? 'btn-disabled' : ''"
               :disabled="actionLoadingId === item.id"
               @click.stop="confirmShelfDown(item)"
@@ -124,7 +117,7 @@
             </button>
             <button
               v-else-if="item.canRestore"
-              class="btn-ghost btn-half btn-success"
+              class="btn-ghost btn-full btn-success"
               :class="actionLoadingId === item.id ? 'btn-disabled' : ''"
               :disabled="actionLoadingId === item.id"
               @click.stop="confirmRestore(item)"
@@ -147,6 +140,7 @@
 <script>
 var api = require('../../common/api.js')
 var session = require('../../common/session.js')
+var postDisplay = require('../../common/post-display.js')
 
 var EDIT_POST_KEY = 'campusfit_edit_post_id'
 
@@ -253,6 +247,9 @@ export default {
       }
       this.goDetail(item.id)
     },
+    getDisplaySubtitle: function(item) {
+      return postDisplay.getDisplaySubtitle(item)
+    },
     goDetail: function(id) {
       uni.navigateTo({ url: '/pages/detail/index?id=' + id })
     },
@@ -268,6 +265,38 @@ export default {
       }
       uni.setStorageSync(EDIT_POST_KEY, item.id)
       uni.switchTab({ url: '/pages/publish/index' })
+    },
+    confirmDelete: function(item) {
+      var self = this
+      if (self.actionLoadingId) {
+        return
+      }
+      uni.showModal({
+        title: '删除确认',
+        content: '确认删除《' + item.title + '》吗？删除后图片、评论和关联信息都会一起移除，且不可恢复。',
+        confirmText: '确认删除',
+        cancelText: '取消',
+        success: function(result) {
+          if (result.confirm) {
+            self.deletePost(item)
+          }
+        }
+      })
+    },
+    deletePost: function(item) {
+      var self = this
+      self.actionLoadingId = item.id
+      api.deletePost(item.id)
+        .then(function() {
+          uni.showToast({ title: '已删除', icon: 'none' })
+          self.loadMine()
+        })
+        .catch(function(error) {
+          self.handleActionError(error, '删除失败')
+        })
+        .finally(function() {
+          self.actionLoadingId = ''
+        })
     },
     confirmShelfDown: function(item) {
       var self = this
@@ -420,6 +449,19 @@ export default {
   letter-spacing: 2rpx;
 }
 
+.btn-full {
+  width: 100%;
+}
+
+.btn-delete {
+  color: var(--campus-danger);
+  border-color: rgba(214, 79, 120, 0.18);
+}
+
+.post-actions-secondary {
+  margin-top: 12rpx;
+}
+
 .status-overview {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -470,8 +512,8 @@ export default {
   margin-top: 16rpx;
   padding: 14rpx 18rpx;
   border-radius: 20rpx;
-  background: rgba(87, 189, 240, 0.1);
-  color: #617482;
+  background: rgba(45, 87, 217, 0.08);
+  color: var(--campus-text-soft);
   font-size: 22rpx;
   line-height: 1.6;
 }
@@ -490,8 +532,8 @@ export default {
 }
 
 .status-chip-published {
-  background: rgba(87, 189, 240, 0.16);
-  color: #2d95c9;
+  background: rgba(201, 49, 91, 0.14);
+  color: var(--campus-primary);
 }
 
 .status-chip-pending {
@@ -529,5 +571,193 @@ export default {
 
 .empty-card {
   margin-top: 20rpx;
+}
+
+.posts-shell {
+  padding-top: 28rpx;
+}
+
+.campus-ribbon {
+  border: 1rpx solid rgba(43, 24, 34, 0.08);
+  background: rgba(255, 250, 245, 0.92);
+  color: var(--campus-secondary);
+  box-shadow: 0 14rpx 26rpx rgba(43, 24, 34, 0.08);
+}
+
+.hero-metric {
+  border: 1rpx solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.1));
+}
+
+.status-overview-card {
+  background:
+    linear-gradient(135deg, rgba(201, 49, 91, 0.05), transparent 34%),
+    linear-gradient(315deg, rgba(45, 87, 217, 0.05), transparent 38%),
+    rgba(255, 250, 245, 0.94);
+  border-color: rgba(43, 24, 34, 0.08);
+  box-shadow: 0 16rpx 30rpx rgba(43, 24, 34, 0.08);
+}
+
+.status-overview-label {
+  color: var(--campus-text-soft);
+  font-family: var(--campus-font-data);
+  letter-spacing: 2rpx;
+}
+
+.status-overview-value {
+  color: var(--campus-text);
+  font-family: var(--campus-font-data);
+}
+
+.post-card {
+  border-color: rgba(43, 24, 34, 0.08);
+}
+
+.status-copy {
+  border: 1rpx solid rgba(45, 87, 217, 0.08);
+  background: rgba(45, 87, 217, 0.08);
+  color: var(--campus-text-soft);
+}
+
+.post-meta {
+  border-top: 1rpx solid rgba(43, 24, 34, 0.08);
+}
+
+.status-chip-published {
+  background: rgba(201, 49, 91, 0.14);
+  color: var(--campus-primary);
+}
+
+.status-chip-pending {
+  background: rgba(222, 141, 69, 0.18);
+  color: #a35c19;
+}
+
+.status-chip-rejected {
+  background: rgba(201, 49, 91, 0.12);
+  color: #b12c53;
+}
+
+.status-chip-offline {
+  background: rgba(45, 87, 217, 0.1);
+  color: var(--campus-secondary);
+}
+
+.btn-warn {
+  background: rgba(222, 141, 69, 0.16);
+  color: #a35c19;
+}
+
+.btn-success {
+  background: rgba(45, 87, 217, 0.12);
+  color: var(--campus-secondary);
+}
+
+.posts-shell {
+  padding-top: 10rpx;
+}
+
+.posts-hero {
+  margin-top: 0;
+  padding: 18rpx 18rpx;
+  border-radius: 28rpx;
+}
+
+.posts-hero-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.posts-hero-badge {
+  padding: 8rpx 14rpx;
+  font-size: 18rpx;
+}
+
+.posts-hero-title {
+  margin-top: 10rpx;
+  font-size: 36rpx;
+  line-height: 1.14;
+}
+
+.posts-hero-copy {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.45;
+}
+
+.posts-hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 12rpx;
+}
+
+.posts-hero-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 10rpx 14rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 20rpx;
+  font-weight: 700;
+}
+
+.posts-login-button {
+  margin-top: 18rpx;
+}
+
+.section-head {
+  align-items: center;
+}
+
+.status-overview {
+  gap: 10rpx;
+  margin-top: 14rpx;
+}
+
+.status-overview-card {
+  padding: 16rpx 18rpx;
+  border-radius: 20rpx;
+  box-shadow: 0 12rpx 24rpx rgba(43, 24, 34, 0.06);
+}
+
+.status-overview-label {
+  font-size: 20rpx;
+}
+
+.status-overview-value {
+  margin-top: 8rpx;
+  font-size: 30rpx;
+}
+
+.post-card {
+  margin-top: 14rpx;
+}
+
+.post-cover {
+  min-height: 230rpx;
+}
+
+.status-copy {
+  margin-top: 12rpx;
+  padding: 12rpx 14rpx;
+  border-radius: 18rpx;
+  line-height: 1.55;
+}
+
+.post-actions {
+  margin-top: 14rpx;
+}
+
+.post-actions-secondary {
+  margin-top: 10rpx;
+}
+
+.empty-card {
+  margin-top: 14rpx;
 }
 </style>

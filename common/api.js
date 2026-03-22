@@ -17,15 +17,15 @@ function parseUploadResponse(rawData) {
   throw new Error(payload.message || '图片上传失败')
 }
 
-function uploadFileWithBaseUrl(baseUrl, filePath) {
+function uploadFileWithBaseUrl(baseUrl, filePath, apiPath, includeAuth) {
   return new Promise(function(resolve, reject) {
     var header = {}
     var token = session.getToken()
-    if (token) {
+    if (includeAuth !== false && token) {
       header.Authorization = 'Bearer ' + token
     }
     uni.uploadFile({
-      url: baseUrl + '/api/uploads/images',
+      url: baseUrl + apiPath,
       filePath: filePath,
       name: 'file',
       timeout: 20000,
@@ -48,16 +48,16 @@ function uploadFileWithBaseUrl(baseUrl, filePath) {
   })
 }
 
-function uploadPostImage(filePath) {
+function uploadFileByApiPath(filePath, apiPath, includeAuth) {
   return http.resolveBaseUrl(false)
     .then(function(baseUrl) {
-      return uploadFileWithBaseUrl(baseUrl, filePath)
+      return uploadFileWithBaseUrl(baseUrl, filePath, apiPath, includeAuth)
     })
     .catch(function(error) {
       uni.removeStorageSync('campusfit_base_url')
       return http.resolveBaseUrl(true)
         .then(function(baseUrl) {
-          return uploadFileWithBaseUrl(baseUrl, filePath)
+          return uploadFileWithBaseUrl(baseUrl, filePath, apiPath, includeAuth)
         })
         .catch(function() {
           throw error
@@ -65,11 +65,30 @@ function uploadPostImage(filePath) {
     })
 }
 
-function loginUser(phone, code) {
+function uploadPostImage(filePath) {
+  return uploadFileByApiPath(filePath, '/api/uploads/images', true)
+}
+
+function uploadAvatarImage(filePath) {
+  return uploadFileByApiPath(filePath, '/api/uploads/avatar', false)
+}
+
+function sendAuthCode(phone, scene) {
+  return http.request({
+    url: '/api/auth/send-code',
+    method: 'POST',
+    data: {
+      phone: phone,
+      scene: scene || 'auth'
+    }
+  })
+}
+
+function loginUser(phone, password, code) {
   return http.request({
     url: '/api/auth/login',
     method: 'POST',
-    data: { phone: phone, code: code }
+    data: { phone: phone, password: password, code: code }
   })
 }
 
@@ -247,17 +266,25 @@ function listComments(postId) {
   })
 }
 
-function createComment(postId, content) {
+function createComment(postId, payload) {
+  var safePayload = typeof payload === 'string' ? { content: payload } : (payload || {})
   return http.request({
     url: '/api/posts/' + postId + '/comments',
     method: 'POST',
-    data: { content: content }
+    data: safePayload
   })
 }
 
 function deleteComment(postId, commentId) {
   return http.request({
     url: '/api/posts/' + postId + '/comments/' + commentId + '/delete',
+    method: 'POST'
+  })
+}
+
+function toggleCommentLike(postId, commentId) {
+  return http.request({
+    url: '/api/posts/' + postId + '/comments/' + commentId + '/like',
     method: 'POST'
   })
 }
@@ -355,6 +382,20 @@ function listFeaturedActivities() {
   })
 }
 
+function getLatestAnnouncement() {
+  return http.request({
+    url: '/api/announcements/latest',
+    method: 'GET'
+  })
+}
+
+function getAnnouncementDetail(announcementId) {
+  return http.request({
+    url: '/api/announcements/' + announcementId,
+    method: 'GET'
+  })
+}
+
 function listMyActivities() {
   return http.request({
     url: '/api/activities/mine',
@@ -404,12 +445,28 @@ function markAllMessagesRead() {
   })
 }
 
+function deleteMessage(messageId) {
+  return http.request({
+    url: '/api/messages/' + messageId + '/delete',
+    method: 'POST'
+  })
+}
+
+function deleteReadMessages() {
+  return http.request({
+    url: '/api/messages/delete-read',
+    method: 'POST'
+  })
+}
+
 module.exports = {
+  sendAuthCode: sendAuthCode,
   loginUser: loginUser,
   registerUser: registerUser,
   getCurrentUser: getCurrentUser,
   logoutUser: logoutUser,
   uploadPostImage: uploadPostImage,
+  uploadAvatarImage: uploadAvatarImage,
   listRecommendations: listRecommendations,
   listMyPosts: listMyPosts,
   getPostForEdit: getPostForEdit,
@@ -432,6 +489,7 @@ module.exports = {
   listComments: listComments,
   createComment: createComment,
   deleteComment: deleteComment,
+  toggleCommentLike: toggleCommentLike,
   listLikeUsers: listLikeUsers,
   toggleLike: toggleLike,
   toggleFavorite: toggleFavorite,
@@ -445,6 +503,8 @@ module.exports = {
   getTagOptions: getTagOptions,
   listActivities: listActivities,
   listFeaturedActivities: listFeaturedActivities,
+  getLatestAnnouncement: getLatestAnnouncement,
+  getAnnouncementDetail: getAnnouncementDetail,
   listMyActivities: listMyActivities,
   getMyActivitySummary: getMyActivitySummary,
   toggleActivityJoin: toggleActivityJoin,
@@ -452,6 +512,8 @@ module.exports = {
   getUnreadMessageCount: getUnreadMessageCount,
   markMessageRead: markMessageRead,
   markAllMessagesRead: markAllMessagesRead,
+  deleteMessage: deleteMessage,
+  deleteReadMessages: deleteReadMessages,
   getActiveBaseUrl: http.getActiveBaseUrl,
   resolveBaseUrl: http.resolveBaseUrl
 }

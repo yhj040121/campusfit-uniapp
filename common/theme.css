@@ -350,6 +350,17 @@ button::after {
   box-shadow: 0 12rpx 22rpx rgba(73, 183, 237, 0.16);
 }
 
+.avatar-has-image {
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.avatar-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 .avatar.alt {
   background: linear-gradient(135deg, #ffb36c 0%, #ff8e79 100%);
 }
@@ -914,4 +925,1076 @@ button::after {
   background: rgba(255, 255, 255, 0.94);
   box-shadow: var(--campus-shadow-md);
   backdrop-filter: blur(20rpx);
+}
+
+/* Editorial lookbook redesign */
+:root {
+  --campus-bg-top: #fdf8f2;
+  --campus-bg-bottom: #f5ebe2;
+  --campus-surface: rgba(255, 250, 245, 0.92);
+  --campus-surface-strong: #fffaf6;
+  --campus-surface-soft: rgba(255, 250, 245, 0.78);
+  --campus-border: rgba(43, 24, 34, 0.1);
+  --campus-text: #2b1822;
+  --campus-text-soft: #74616a;
+  --campus-text-muted: #9b8790;
+  --campus-primary: #c9315b;
+  --campus-secondary: #2d57d9;
+  --campus-accent: #dd8b43;
+  --campus-danger: #d64f78;
+  --campus-success: #2d8a67;
+  --campus-shadow-sm: 0 16rpx 30rpx rgba(43, 24, 34, 0.08);
+  --campus-shadow-md: 0 24rpx 46rpx rgba(43, 24, 34, 0.12);
+  --campus-shadow-lg: 0 32rpx 68rpx rgba(43, 24, 34, 0.16);
+  --campus-font-body: "Avenir Next", "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", sans-serif;
+  --campus-font-display: "Georgia", "Songti SC", "STSong", serif;
+  --campus-font-data: "SFMono-Regular", "Consolas", monospace;
+}
+
+page {
+  background: #f7efe7;
+  color: var(--campus-text);
+  font-family: var(--campus-font-body);
+}
+
+.page-shell {
+  padding: 30rpx 24rpx 96rpx;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(201, 49, 91, 0.14), transparent 26%),
+    radial-gradient(circle at 88% 0%, rgba(45, 87, 217, 0.12), transparent 22%),
+    linear-gradient(180deg, var(--campus-bg-top) 0%, var(--campus-bg-bottom) 100%);
+}
+
+.page-shell::before,
+.page-shell::after {
+  border-radius: 36rpx;
+  filter: blur(12rpx);
+  opacity: 0.42;
+}
+
+.page-shell::before {
+  top: 42rpx;
+  right: -82rpx;
+  width: 220rpx;
+  height: 220rpx;
+  transform: rotate(16deg);
+  background: linear-gradient(135deg, rgba(201, 49, 91, 0.24), rgba(201, 49, 91, 0));
+}
+
+.page-shell::after {
+  bottom: 220rpx;
+  left: -96rpx;
+  width: 260rpx;
+  height: 260rpx;
+  transform: rotate(-14deg);
+  background: linear-gradient(135deg, rgba(45, 87, 217, 0.22), rgba(45, 87, 217, 0));
+}
+
+.page-title,
+.hero-title,
+.section-title,
+.text-main,
+.cover-title,
+.list-title,
+.editorial-title,
+.detail-title,
+.gallery-empty-title,
+.income-value,
+.feature-title,
+.hero-main-title {
+  font-family: var(--campus-font-display);
+}
+
+.page-title {
+  font-size: 54rpx;
+  line-height: 1.04;
+  letter-spacing: -1.2rpx;
+}
+
+.page-desc {
+  max-width: 640rpx;
+  margin-top: 14rpx;
+  line-height: 1.82;
+}
+
+.campus-ribbon,
+.hero-badge,
+.hero-kicker-pill,
+.cover-tag,
+.side-pill,
+.float-link,
+.chip,
+.chip-active,
+.chip-outline,
+.status-link,
+.note-stamp,
+.editorial-pill,
+.editorial-budget,
+.detail-price-chip,
+.upload-cover-badge {
+  font-family: var(--campus-font-body);
+  letter-spacing: 1rpx;
+}
+
+.campus-ribbon {
+  padding: 12rpx 22rpx;
+  background: rgba(255, 250, 245, 0.92);
+  color: var(--campus-secondary);
+  border: 1rpx solid rgba(43, 24, 34, 0.08);
+  box-shadow: 0 12rpx 24rpx rgba(43, 24, 34, 0.06);
+}
+
+.hero-card,
+.panel-card,
+.look-card,
+.list-card,
+.filter-summary-card,
+.feature-note,
+.detail-head-card,
+.detail-stat,
+.activity-binding-card,
+.sub-panel,
+.menu-item,
+.upload-item,
+.upload-add-card {
+  border: 1rpx solid rgba(43, 24, 34, 0.08);
+  box-shadow: var(--campus-shadow-sm);
+}
+
+.hero-card,
+.feature-note {
+  border-radius: 40rpx;
+}
+
+.hero-card {
+  background:
+    linear-gradient(135deg, rgba(201, 49, 91, 0.96) 0%, rgba(236, 99, 138, 0.94) 42%, rgba(45, 87, 217, 0.92) 100%);
+}
+
+.hero-card::after {
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 44rpx;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.hero-badge,
+.hero-card-pill-kicker {
+  background: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.94);
+}
+
+.hero-copy {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.hero-card-pill,
+.hero-metric,
+.profile-social-item {
+  border-radius: 28rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.1) 100%);
+  box-shadow: 0 12rpx 24rpx rgba(29, 16, 23, 0.08);
+}
+
+.hero-card-pill-value,
+.hero-metric-value,
+.profile-social-value,
+.metric-value,
+.product-price,
+.detail-stat-value,
+.income-value {
+  font-family: var(--campus-font-data);
+}
+
+.search-bar,
+.form-input,
+.form-textarea {
+  background: rgba(255, 251, 247, 0.96);
+  border: 1rpx solid rgba(43, 24, 34, 0.08);
+  box-shadow: 0 10rpx 18rpx rgba(43, 24, 34, 0.06);
+}
+
+.search-icon {
+  background: rgba(201, 49, 91, 0.1);
+  color: var(--campus-primary);
+}
+
+.chip {
+  background: rgba(255, 251, 247, 0.94);
+  border: 1rpx solid rgba(43, 24, 34, 0.08);
+  color: var(--campus-text-soft);
+}
+
+.chip-active {
+  background: linear-gradient(135deg, rgba(201, 49, 91, 0.16), rgba(45, 87, 217, 0.14));
+  color: var(--campus-text);
+  border-color: rgba(201, 49, 91, 0.18);
+  box-shadow: 0 12rpx 24rpx rgba(201, 49, 91, 0.12);
+}
+
+.chip-outline {
+  background: rgba(255, 251, 247, 0.84);
+}
+
+.panel-card,
+.look-card,
+.list-card,
+.filter-summary-card,
+.detail-head-card,
+.detail-stat,
+.menu-item,
+.upload-item {
+  border-radius: 32rpx;
+  background:
+    linear-gradient(135deg, rgba(201, 49, 91, 0.04), transparent 30%),
+    linear-gradient(315deg, rgba(45, 87, 217, 0.04), transparent 34%),
+    var(--campus-surface);
+}
+
+.look-cover,
+.editorial-photo,
+.gallery-slide,
+.upload-add-card {
+  border-radius: 30rpx;
+}
+
+.look-cover {
+  background:
+    linear-gradient(145deg, rgba(201, 49, 91, 0.14), rgba(45, 87, 217, 0.16));
+}
+
+.cover-tag,
+.editorial-pill,
+.detail-price-chip,
+.upload-cover-badge {
+  background: rgba(255, 250, 245, 0.92);
+  color: var(--campus-text);
+  border: 1rpx solid rgba(43, 24, 34, 0.08);
+}
+
+.editorial-budget {
+  background: rgba(43, 24, 34, 0.5);
+  color: #ffffff;
+}
+
+.editorial-empty {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 250, 245, 0.84) 44%, rgba(255, 250, 245, 0.96) 100%);
+}
+
+.avatar {
+  background: linear-gradient(135deg, #ee6287 0%, #345fe0 100%);
+  box-shadow: 0 12rpx 24rpx rgba(201, 49, 91, 0.16);
+}
+
+.avatar.alt {
+  background: linear-gradient(135deg, #de8d45 0%, #cf4e68 100%);
+}
+
+.avatar.soft {
+  background: linear-gradient(135deg, #8d9ff2 0%, #4f88d8 100%);
+}
+
+.meta-name,
+.text-main,
+.list-title {
+  color: var(--campus-text);
+}
+
+.meta-school,
+.stat-text,
+.list-copy,
+.list-meta,
+.text-copy,
+.summary-line,
+.upload-add-copy,
+.upload-tip,
+.upload-hint,
+.publish-inline-copy {
+  color: var(--campus-text-soft);
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-ghost,
+.action-chip {
+  min-height: 88rpx;
+  border-radius: 24rpx;
+  font-size: 28rpx;
+  font-weight: 700;
+  box-shadow: 0 16rpx 28rpx rgba(43, 24, 34, 0.08);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--campus-primary) 0%, #ef638a 44%, var(--campus-secondary) 100%);
+}
+
+.btn-secondary {
+  color: var(--campus-text);
+  border-color: rgba(43, 24, 34, 0.08);
+}
+
+.btn-ghost,
+.action-chip {
+  background: rgba(255, 250, 245, 0.92);
+  color: var(--campus-text);
+  border: 1rpx solid rgba(43, 24, 34, 0.08);
+}
+
+.action-chip-active,
+.side-pill-active,
+.switch-pill-active {
+  background: linear-gradient(135deg, var(--campus-primary) 0%, var(--campus-secondary) 100%);
+  color: #ffffff;
+}
+
+.metric-card,
+.grid-item,
+.product-card,
+.note-box,
+.activity-binding-card,
+.sub-panel,
+.fixed-input {
+  border-radius: 28rpx;
+  background: rgba(255, 250, 245, 0.92);
+  border: 1rpx solid rgba(43, 24, 34, 0.08);
+}
+
+.product-card {
+  background:
+    linear-gradient(135deg, rgba(201, 49, 91, 0.08), rgba(45, 87, 217, 0.08)),
+    rgba(255, 250, 245, 0.94);
+}
+
+.note-box {
+  background: rgba(255, 251, 247, 0.84);
+}
+
+.side-pill,
+.switch-pill {
+  background: rgba(45, 87, 217, 0.1);
+  color: var(--campus-secondary);
+  border: 1rpx solid rgba(45, 87, 217, 0.14);
+}
+
+.float-link,
+.search-enter,
+.income-action-arrow {
+  color: var(--campus-secondary);
+  font-weight: 700;
+}
+
+.icon-action {
+  background: rgba(255, 251, 247, 0.96);
+  border: 1rpx solid rgba(43, 24, 34, 0.08);
+  color: var(--campus-primary);
+}
+
+.status-banner {
+  border-radius: 30rpx;
+  border: 1rpx solid rgba(43, 24, 34, 0.08);
+  box-shadow: var(--campus-shadow-sm);
+}
+
+.status-banner-info {
+  background: rgba(245, 245, 255, 0.94);
+}
+
+.status-banner-success {
+  background: rgba(240, 251, 247, 0.94);
+}
+
+.status-banner-warning {
+  background: rgba(255, 245, 232, 0.94);
+}
+
+.status-banner-error {
+  background: rgba(255, 240, 244, 0.94);
+}
+
+.status-banner-title {
+  color: var(--campus-text);
+  font-family: var(--campus-font-display);
+}
+
+.skeleton-card {
+  border-radius: 34rpx;
+  background: rgba(255, 250, 245, 0.88);
+  border: 1rpx solid rgba(43, 24, 34, 0.08);
+}
+
+.skeleton-block,
+.skeleton-line {
+  background: linear-gradient(90deg, rgba(201, 49, 91, 0.08), rgba(45, 87, 217, 0.08));
+}
+
+.btn-disabled {
+  opacity: 0.58;
+  pointer-events: none;
+}
+
+/* Cross-page editorial polish */
+.auth-shell,
+.register-shell,
+.edit-profile-shell,
+.message-shell,
+.results-shell,
+.activity-shell,
+.incentive-shell,
+.my-activity-shell,
+.posts-shell,
+.settings-shell,
+.drafts-shell,
+.favorites-shell,
+.follows-shell,
+.likes-shell,
+.comments-shell,
+.tags-shell,
+.product-shell {
+  padding-top: 28rpx;
+}
+
+.auth-shell .auth-hero,
+.register-shell .register-hero,
+.message-shell .message-hero,
+.incentive-shell .incentive-hero,
+.my-activity-shell .my-activity-hero,
+.posts-shell .posts-hero,
+.splash-shell .splash-hero,
+.product-shell .product-hero,
+.results-shell .filter-summary-card,
+.activity-shell .activity-inline-card,
+.edit-profile-shell .edit-status-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-shell .auth-hero::before,
+.register-shell .register-hero::before,
+.message-shell .message-hero::before,
+.results-shell .filter-summary-card::before,
+.incentive-shell .incentive-hero::before,
+.my-activity-shell .my-activity-hero::before,
+.posts-shell .posts-hero::before,
+.activity-shell .activity-inline-card::before,
+.edit-profile-shell .edit-status-card::before {
+  position: absolute;
+  left: 28rpx;
+  top: 28rpx;
+  display: inline-flex;
+  align-items: center;
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.92);
+  font-family: var(--campus-font-data);
+  font-size: 18rpx;
+  letter-spacing: 2rpx;
+  z-index: 2;
+}
+
+.auth-shell .auth-hero::before {
+  content: "登录入口";
+}
+
+.register-shell .register-hero::before {
+  content: "注册引导";
+}
+
+.message-shell .message-hero::before {
+  content: "INBOX";
+}
+
+.results-shell .filter-summary-card::before {
+  content: "SORT STUDIO";
+  border-color: rgba(43, 24, 34, 0.08);
+  background: rgba(255, 250, 245, 0.92);
+  color: var(--campus-secondary);
+}
+
+.incentive-shell .incentive-hero::before {
+  content: "REWARD DESK";
+}
+
+.my-activity-shell .my-activity-hero::before {
+  content: "ACTIVITY LOG";
+}
+
+.posts-shell .posts-hero::before {
+  content: "CONTENT BOARD";
+}
+
+.activity-shell .activity-inline-card::before {
+  content: "PICKED";
+  border-color: rgba(43, 24, 34, 0.08);
+  background: rgba(255, 250, 245, 0.92);
+  color: var(--campus-secondary);
+}
+
+.edit-profile-shell .edit-status-card::before {
+  content: "EDIT STATUS";
+  border-color: rgba(43, 24, 34, 0.08);
+  background: rgba(255, 250, 245, 0.92);
+  color: var(--campus-secondary);
+}
+
+.auth-shell .auth-hero,
+.register-shell .register-hero {
+  padding-top: 96rpx;
+}
+
+.auth-shell .auth-panel,
+.register-shell .register-panel {
+  position: relative;
+  overflow: hidden;
+  margin-top: -10rpx;
+  padding-top: 110rpx;
+}
+
+.auth-shell .auth-panel::before,
+.register-shell .register-panel::before,
+.edit-profile-shell .edit-avatar-card::before,
+.edit-profile-shell .edit-identity-card::before,
+.edit-profile-shell .edit-campus-card::before,
+.edit-profile-shell .edit-signature-card::before {
+  position: absolute;
+  left: 28rpx;
+  top: 28rpx;
+  color: var(--campus-secondary);
+  font-family: var(--campus-font-data);
+  font-size: 18rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
+}
+
+.auth-shell .auth-panel::before {
+  content: "快捷登录";
+}
+
+.register-shell .register-panel::before {
+  content: "资料设置";
+}
+
+.edit-profile-shell .edit-avatar-card::before {
+  content: "AVATAR";
+}
+
+.edit-profile-shell .edit-identity-card::before {
+  content: "IDENTITY";
+}
+
+.edit-profile-shell .edit-campus-card::before {
+  content: "CAMPUS";
+}
+
+.edit-profile-shell .edit-signature-card::before {
+  content: "SIGNATURE";
+}
+
+.auth-shell .auth-panel::after,
+.register-shell .register-panel::after {
+  position: absolute;
+  left: 28rpx;
+  right: 28rpx;
+  top: 58rpx;
+  color: var(--campus-text-soft);
+  font-size: 22rpx;
+  line-height: 1.6;
+}
+
+.auth-shell .auth-panel::after {
+  content: "手机号、密码和验证码集中填写，登录流程更顺手。";
+}
+
+.register-shell .register-panel::after {
+  content: "头像、校园身份和账号安全信息集中在同一页完成，注册更清晰。";
+}
+
+.auth-shell .auth-panel-head,
+.register-shell .auth-panel-head {
+  margin-bottom: 24rpx;
+}
+
+.auth-shell .auth-hero-copy {
+  margin-top: 14rpx;
+  max-width: 88%;
+}
+
+.auth-shell .auth-hero-row {
+  margin-top: 22rpx;
+}
+
+.auth-shell .auth-code-row,
+.register-shell .auth-code-row {
+  padding: 8rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 251, 247, 0.72);
+  border: 1rpx solid rgba(43, 24, 34, 0.08);
+}
+
+.auth-shell .auth-code-button,
+.register-shell .auth-code-button {
+  min-height: 76rpx;
+  border-radius: 20rpx;
+}
+
+.auth-shell .auth-note,
+.register-shell .register-note {
+  margin-top: 22rpx;
+  border-left: 8rpx solid rgba(201, 49, 91, 0.18);
+}
+
+.register-shell .register-avatar-row,
+.edit-profile-shell .edit-avatar-row {
+  position: relative;
+  overflow: hidden;
+  border: 1rpx solid rgba(43, 24, 34, 0.08);
+  background:
+    linear-gradient(135deg, rgba(201, 49, 91, 0.06), transparent 32%),
+    linear-gradient(315deg, rgba(45, 87, 217, 0.06), transparent 36%),
+    rgba(255, 250, 245, 0.94);
+}
+
+.register-shell .register-avatar-shell,
+.edit-profile-shell .edit-avatar-shell {
+  background: linear-gradient(135deg, #ef6288 0%, #345fe0 100%);
+  box-shadow: 0 18rpx 30rpx rgba(201, 49, 91, 0.16);
+}
+
+.message-shell .message-card,
+.results-shell .bulletin-card,
+.activity-shell .activity-card,
+.incentive-shell .withdraw-request-item,
+.incentive-shell .settlement-item,
+.my-activity-shell .activity-item,
+.posts-shell .post-card,
+.comments-shell .comment-card,
+.drafts-shell .draft-card,
+.favorites-shell .favorite-card,
+.follows-shell .follow-card,
+.likes-shell .like-card {
+  position: relative;
+  overflow: hidden;
+  padding-top: 34rpx;
+}
+
+.message-shell .message-card::before,
+.results-shell .bulletin-card::before,
+.activity-shell .activity-card::before,
+.incentive-shell .withdraw-request-item::before,
+.incentive-shell .settlement-item::before,
+.my-activity-shell .activity-item::before,
+.posts-shell .post-card::before,
+.comments-shell .comment-card::before,
+.drafts-shell .draft-card::before,
+.favorites-shell .favorite-card::before,
+.follows-shell .follow-card::before,
+.likes-shell .like-card::before {
+  position: absolute;
+  left: 26rpx;
+  top: 18rpx;
+  color: var(--campus-secondary);
+  font-family: var(--campus-font-data);
+  font-size: 18rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
+}
+
+.message-shell .message-card::before {
+  content: "MESSAGE";
+}
+
+.results-shell .bulletin-card::before {
+  content: "MATCH";
+}
+
+.activity-shell .activity-card::before {
+  content: "TOPIC";
+}
+
+.incentive-shell .withdraw-request-item::before {
+  content: "REQUEST";
+}
+
+.incentive-shell .settlement-item::before {
+  content: "SETTLED";
+}
+
+.my-activity-shell .activity-item::before {
+  content: "MEMORY";
+}
+
+.posts-shell .post-card::before {
+  content: "POST";
+}
+
+.comments-shell .comment-card::before {
+  content: "COMMENT";
+}
+
+.drafts-shell .draft-card::before {
+  content: "DRAFT";
+}
+
+.favorites-shell .favorite-card::before {
+  content: "SAVE";
+}
+
+.follows-shell .follow-card::before {
+  content: "FOLLOW";
+}
+
+.likes-shell .like-card::before {
+  content: "LIKE";
+}
+
+.message-shell .mini-tag,
+.results-shell .mini-tag,
+.activity-shell .mini-tag,
+.incentive-shell .mini-tag,
+.my-activity-shell .mini-tag {
+  border: 1rpx solid rgba(45, 87, 217, 0.12);
+  background: rgba(45, 87, 217, 0.08);
+  color: var(--campus-secondary);
+}
+
+.results-shell .bulletin-cover,
+.activity-shell .activity-cover,
+.posts-shell .post-cover {
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.18), transparent 24%),
+    linear-gradient(145deg, rgba(201, 49, 91, 0.18), rgba(45, 87, 217, 0.18));
+}
+
+.results-shell .bulletin-meta,
+.message-shell .message-footer,
+.posts-shell .post-meta {
+  align-items: flex-end;
+}
+
+.edit-profile-shell .page-header {
+  margin-bottom: 18rpx;
+}
+
+.edit-profile-shell .panel-card {
+  position: relative;
+  overflow: hidden;
+  padding-top: 78rpx;
+}
+
+.edit-profile-shell .edit-status-card {
+  padding-top: 94rpx;
+  background:
+    linear-gradient(135deg, rgba(201, 49, 91, 0.08), transparent 32%),
+    linear-gradient(315deg, rgba(45, 87, 217, 0.08), transparent 36%),
+    rgba(255, 250, 245, 0.94);
+}
+
+.edit-profile-shell .edit-status-card .text-copy {
+  color: var(--campus-text);
+  line-height: 1.8;
+}
+
+.posts-shell .status-overview {
+  position: relative;
+  margin-top: 22rpx;
+  padding-top: 48rpx;
+}
+
+.posts-shell .status-overview::before {
+  content: "STATUS MATRIX";
+  position: absolute;
+  left: 4rpx;
+  top: 0;
+  color: var(--campus-secondary);
+  font-family: var(--campus-font-data);
+  font-size: 18rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
+}
+
+.settings-shell .panel-card,
+.tags-shell .panel-card {
+  position: relative;
+  overflow: hidden;
+  padding-top: 72rpx;
+}
+
+.settings-shell .panel-card::before,
+.tags-shell .panel-card::before {
+  position: absolute;
+  left: 26rpx;
+  top: 20rpx;
+  color: var(--campus-secondary);
+  font-family: var(--campus-font-data);
+  font-size: 18rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
+}
+
+.settings-shell .panel-card::before {
+  content: "SETTING";
+}
+
+.tags-shell .panel-card::before {
+  content: "TAG EDIT";
+}
+
+.splash-shell .splash-panel,
+.product-shell .hero-card {
+  border-radius: 36rpx;
+}
+
+@media (min-width: 720rpx) {
+  .comments-shell .comment-card,
+  .drafts-shell .draft-card,
+  .favorites-shell .favorite-card,
+  .follows-shell .follow-card,
+  .likes-shell .like-card {
+    padding-top: 38rpx;
+  }
+}
+
+/* Compact cleanup */
+.page-shell {
+  padding: 22rpx 20rpx 84rpx;
+}
+
+.page-header {
+  margin-bottom: 14rpx;
+}
+
+.page-title {
+  font-size: 42rpx;
+  line-height: 1.12;
+  letter-spacing: -0.8rpx;
+}
+
+.page-desc {
+  margin-top: 8rpx;
+  font-size: 23rpx;
+  line-height: 1.62;
+}
+
+.hero-card {
+  margin-bottom: 16rpx;
+  padding: 24rpx 22rpx;
+  border-radius: 32rpx;
+}
+
+.hero-badge,
+.campus-ribbon {
+  min-height: 40rpx;
+  padding: 8rpx 14rpx;
+  box-sizing: border-box;
+  font-size: 18rpx;
+  line-height: 1.25;
+}
+
+.hero-title {
+  margin-top: 12rpx;
+  font-size: 34rpx;
+  line-height: 1.16;
+}
+
+.hero-copy {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.52;
+}
+
+.hero-metrics,
+.hero-card-row {
+  gap: 8rpx;
+  margin-top: 12rpx;
+}
+
+.hero-metric,
+.hero-card-pill {
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 0;
+  padding: 10rpx 14rpx;
+  border-radius: 999rpx;
+}
+
+.hero-metric-value,
+.hero-card-pill-value,
+.hero-metric-label,
+.hero-card-pill-label {
+  display: inline-block;
+  font-size: 20rpx;
+  line-height: 1.15;
+}
+
+.hero-metric-label,
+.hero-card-pill-label {
+  margin-top: 0;
+  margin-left: 8rpx;
+}
+
+.panel-card,
+.look-card,
+.list-card,
+.filter-summary-card,
+.feature-note,
+.detail-head-card,
+.detail-stat,
+.activity-binding-card,
+.sub-panel,
+.menu-item,
+.upload-item,
+.upload-add-card,
+.status-banner,
+.fixed-input {
+  margin-bottom: 14rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 26rpx;
+}
+
+.section-head {
+  align-items: center;
+  margin: 18rpx 0 10rpx;
+}
+
+.section-title {
+  margin: 20rpx 0 10rpx;
+  font-size: 28rpx;
+}
+
+.section-subtitle {
+  margin-top: 2rpx;
+  margin-bottom: 0;
+  font-size: 20rpx;
+  line-height: 1.5;
+}
+
+.text-copy,
+.list-copy,
+.summary-line,
+.feature-copy {
+  font-size: 22rpx;
+  line-height: 1.6;
+}
+
+.chip,
+.chip-active,
+.chip-outline,
+.side-pill,
+.switch-pill,
+.mini-tag {
+  padding: 8rpx 14rpx;
+  font-size: 20rpx;
+}
+
+.btn-primary,
+.btn-secondary {
+  height: 76rpx;
+  min-height: 76rpx;
+  line-height: 76rpx;
+  border-radius: 20rpx;
+  font-size: 26rpx;
+}
+
+.btn-ghost,
+.action-chip {
+  min-height: 68rpx;
+  padding: 0 18rpx;
+  border-radius: 18rpx;
+  font-size: 24rpx;
+  line-height: 68rpx;
+}
+
+.grid-item,
+.metric-card,
+.product-card,
+.note-box {
+  border-radius: 24rpx;
+}
+
+.edit-profile-shell .page-header,
+.incentive-shell .page-header,
+.results-shell .page-header,
+.tags-shell .page-header {
+  display: none;
+}
+
+.auth-shell .auth-hero::before,
+.register-shell .register-hero::before,
+.message-shell .message-hero::before,
+.results-shell .filter-summary-card::before,
+.incentive-shell .incentive-hero::before,
+.my-activity-shell .my-activity-hero::before,
+.posts-shell .posts-hero::before,
+.activity-shell .activity-inline-card::before,
+.edit-profile-shell .edit-status-card::before,
+.auth-shell .auth-panel::before,
+.register-shell .register-panel::before,
+.auth-shell .auth-panel::after,
+.register-shell .register-panel::after,
+.edit-profile-shell .edit-avatar-card::before,
+.edit-profile-shell .edit-identity-card::before,
+.edit-profile-shell .edit-campus-card::before,
+.edit-profile-shell .edit-signature-card::before,
+.message-shell .message-card::before,
+.results-shell .bulletin-card::before,
+.activity-shell .activity-card::before,
+.incentive-shell .withdraw-request-item::before,
+.incentive-shell .settlement-item::before,
+.my-activity-shell .activity-item::before,
+.posts-shell .post-card::before,
+.posts-shell .status-overview::before,
+.comments-shell .comment-card::before,
+.drafts-shell .draft-card::before,
+.favorites-shell .favorite-card::before,
+.follows-shell .follow-card::before,
+.likes-shell .like-card::before,
+.settings-shell .panel-card::before,
+.tags-shell .panel-card::before {
+  content: none;
+  display: none;
+}
+
+.auth-shell .auth-hero,
+.register-shell .register-hero,
+.splash-shell .splash-hero,
+.product-shell .product-hero {
+  padding-top: 24rpx;
+}
+
+.auth-shell .auth-panel,
+.register-shell .register-panel,
+.edit-profile-shell .edit-status-card,
+.edit-profile-shell .edit-avatar-card,
+.edit-profile-shell .edit-identity-card,
+.edit-profile-shell .edit-campus-card,
+.edit-profile-shell .edit-signature-card,
+.activity-shell .activity-inline-card,
+.message-shell .message-card,
+.results-shell .filter-summary-card,
+.results-shell .bulletin-card,
+.activity-shell .activity-card,
+.incentive-shell .withdraw-request-item,
+.incentive-shell .settlement-item,
+.my-activity-shell .activity-item,
+.posts-shell .post-card,
+.posts-shell .status-overview,
+.comments-shell .comment-card,
+.drafts-shell .draft-card,
+.favorites-shell .favorite-card,
+.follows-shell .follow-card,
+.likes-shell .like-card,
+.settings-shell .panel-card,
+.tags-shell .panel-card {
+  padding-top: 20rpx;
+}
+
+.auth-shell .auth-panel,
+.register-shell .register-panel {
+  margin-top: 0;
+}
+
+.results-shell .filter-summary-card .summary-line:last-child {
+  display: none;
 }

@@ -49,7 +49,10 @@
         <view class="list-card follow-card" v-for="item in currentList" :key="item.userId || item.id">
           <view class="list-row">
             <view class="meta-left">
-              <view :class="['avatar', item.avatarClass]">{{ item.avatar }}</view>
+              <view :class="['avatar', item.avatarClass, item.avatarUrl ? 'avatar-has-image' : '']">
+                <image v-if="item.avatarUrl" class="avatar-image" :src="item.avatarUrl" mode="aspectFill"></image>
+                <text v-else>{{ item.avatar }}</text>
+              </view>
               <view>
                 <view class="meta-name">{{ item.name }}</view>
                 <view class="list-copy">{{ item.intro }}</view>
@@ -194,7 +197,19 @@ export default {
 </script>
 
 <style>
+.follows-shell {
+  padding-top: 10rpx;
+}
+
+.follows-shell .page-header {
+  display: none;
+}
+
+.follows-shell .section-head {
+  align-items: center;
+}
+
 .follow-card {
-  margin-top: 16rpx;
+  margin-top: 14rpx;
 }
 </style>

@@ -311,8 +311,9 @@ export default {
   align-items: center;
   padding: 10rpx 18rpx;
   border-radius: 999rpx;
-  background: rgba(87, 189, 240, 0.12);
-  color: var(--campus-primary);
+  border: 1rpx solid rgba(45, 87, 217, 0.12);
+  background: rgba(45, 87, 217, 0.08);
+  color: var(--campus-secondary);
   font-size: 22rpx;
 }
 
@@ -332,5 +333,34 @@ export default {
 .settlement-empty {
   margin-top: 12rpx;
   margin-bottom: 0;
+}
+
+.withdraw-card {
+  padding-top: 24rpx;
+  background:
+    linear-gradient(135deg, rgba(201, 49, 91, 0.07), transparent 30%),
+    linear-gradient(315deg, rgba(45, 87, 217, 0.07), transparent 36%),
+    rgba(255, 250, 245, 0.94);
+}
+
+.withdraw-amount {
+  font-size: 56rpx;
+  font-family: var(--campus-font-data);
+}
+
+.withdraw-request-item,
+.settlement-item {
+  border-color: rgba(43, 24, 34, 0.08);
+}
+
+.mini-tag {
+  border: 1rpx solid rgba(45, 87, 217, 0.12);
+  background: rgba(45, 87, 217, 0.08);
+  color: var(--campus-secondary);
+}
+
+.settlement-amount {
+  color: var(--campus-text);
+  font-family: var(--campus-font-data);
 }
 </style>

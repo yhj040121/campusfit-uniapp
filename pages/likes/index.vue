@@ -36,7 +36,10 @@
       <view class="list-card like-card" v-for="item in users" :key="item.userId || item.id">
         <view class="list-row">
           <view class="meta-left">
-            <view :class="['avatar', item.avatarClass]">{{ item.avatar }}</view>
+            <view :class="['avatar', item.avatarClass, item.avatarUrl ? 'avatar-has-image' : '']">
+              <image v-if="item.avatarUrl" class="avatar-image" :src="item.avatarUrl" mode="aspectFill"></image>
+              <text v-else>{{ item.avatar }}</text>
+            </view>
             <view>
               <view class="meta-name">{{ item.name }}</view>
               <view class="list-copy">{{ item.intro }}</view>
@@ -160,7 +163,19 @@ export default {
 </script>
 
 <style>
+.likes-shell {
+  padding-top: 10rpx;
+}
+
+.likes-shell .page-header {
+  display: none;
+}
+
+.likes-shell .section-head {
+  align-items: center;
+}
+
 .like-card {
-  margin-top: 16rpx;
+  margin-top: 14rpx;
 }
 </style>

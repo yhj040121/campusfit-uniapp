@@ -3,7 +3,7 @@
     <view v-if="!loggedIn" class="hero-card">
       <view class="hero-badge">需要登录</view>
       <view class="hero-title">登录后管理账号与偏好设置</view>
-      <view class="hero-copy">隐私、推送、推荐和账户信息都在这里统一管理，退出登录也会从这里完成。</view>
+      <view class="hero-copy">隐私、推送、推荐和消费提醒都会集中在这里，退出登录也会从这里完成。</view>
       <button class="btn-primary" style="margin-top:24rpx;" @click="goLogin">去登录</button>
     </view>
 
@@ -15,30 +15,12 @@
       </view>
 
       <view class="hero-card settings-hero">
-        <view class="hero-badge">账户设置</view>
-        <view class="hero-title">把账号状态和推送偏好都收紧管理</view>
-        <view class="hero-copy">这里既负责基础偏好切换，也承接退出登录、资料编辑和当前使用状态查看。</view>
+        <view class="hero-badge">偏好设置</view>
+        <view class="hero-title">把常用开关收在一个更轻的面板里</view>
+        <view class="hero-copy">这里只保留日常会用到的设置项，减少信息干扰。</view>
       </view>
 
-      <view class="panel-card">
-        <view class="setting-item">
-          <view class="setting-left">
-            <view class="setting-title">账号信息</view>
-            <view class="setting-copy">{{ accountLabel }}</view>
-          </view>
-          <view class="float-link" @click="goEdit">编辑资料</view>
-        </view>
-        <view class="divider-line"></view>
-        <view class="setting-item">
-          <view class="setting-left">
-            <view class="setting-title">使用状态</view>
-            <view class="setting-copy">{{ backendLabel }}</view>
-          </view>
-          <view class="float-link" @click="refreshBackend">刷新状态</view>
-        </view>
-      </view>
-
-      <view class="panel-card">
+      <view class="panel-card settings-list-card">
         <view class="setting-item" v-for="item in settings" :key="item.key">
           <view class="setting-left">
             <view class="setting-title">{{ item.title }}</view>
@@ -64,74 +46,45 @@
 <script>
 var api = require('../../common/api.js')
 var session = require('../../common/session.js')
-
-var SETTINGS_KEY = 'campusfit_local_settings'
-
-function defaultSettings() {
-  return [
-    { key: 'push', title: '消息推送', copy: '及时接收评论、点赞、激励与活动提醒', active: true },
-    { key: 'privacy', title: '隐私可见', copy: '控制校园信息与个人资料的展示范围', active: true },
-    { key: 'recommend', title: '个性化推荐', copy: '根据你的浏览和互动记录推荐内容', active: true },
-    { key: 'safe', title: '理性消费提醒', copy: '导购场景下展示预算与消费提示', active: true }
-  ]
-}
+var settingsStore = require('../../common/settings.js')
 
 export default {
   data: function() {
     return {
       loggedIn: session.isLoggedIn(),
-      accountLabel: '正在同步账号信息...',
-      backendLabel: '正在检查当前使用状态...',
-      settings: defaultSettings()
+      settings: settingsStore.getSettings()
     }
   },
   onShow: function() {
     this.loggedIn = session.isLoggedIn()
     this.loadSettings()
-    this.refreshAccount()
-    this.refreshBackend()
   },
   methods: {
     loadSettings: function() {
-      var stored = uni.getStorageSync(SETTINGS_KEY)
-      if (stored && stored.length) {
-        this.settings = stored
-      } else {
-        this.settings = defaultSettings()
-      }
+      this.settings = settingsStore.getSettings()
     },
     persistSettings: function() {
-      uni.setStorageSync(SETTINGS_KEY, this.settings)
-    },
-    refreshAccount: function() {
-      if (!this.loggedIn) {
-        this.accountLabel = '当前未登录'
-        return
-      }
-      var user = session.getUser() || {}
-      this.accountLabel = (user.nickname || '未命名用户') + ' | ' + (user.phone || '未绑定手机号')
-    },
-    refreshBackend: function() {
-      if (!this.loggedIn) {
-        this.backendLabel = '未登录，可先浏览公开内容'
-        return
-      }
-      this.backendLabel = '正在确认账号状态...'
-      var self = this
-      api.getCurrentUser()
-        .then(function() {
-          self.backendLabel = '账号状态正常，可继续浏览、发布和互动'
-        })
-        .catch(function() {
-          self.backendLabel = '当前状态暂时无法确认，不影响基础浏览'
-        })
+      this.settings = settingsStore.saveSettings(this.settings)
     },
     toggle: function(item) {
       item.active = !item.active
       this.persistSettings()
+      uni.showToast({ title: this.getToggleToast(item), icon: 'none' })
     },
-    goEdit: function() {
-      uni.navigateTo({ url: '/pages/edit-profile/index' })
+    getToggleToast: function(item) {
+      if (item.key === 'push') {
+        return item.active ? '消息提醒已恢复' : '消息红点与未读提醒已关闭'
+      }
+      if (item.key === 'privacy') {
+        return item.active ? '个人资料已恢复展示' : '个人资料已切换为隐藏'
+      }
+      if (item.key === 'recommend') {
+        return item.active ? '已恢复个性化推荐' : '首页将改为更基础的推荐方式'
+      }
+      if (item.key === 'safe') {
+        return item.active ? '理性消费提示已开启' : '理性消费提示已关闭'
+      }
+      return item.active ? '设置已开启' : '设置已关闭'
     },
     goLogin: function() {
       uni.navigateTo({ url: '/pages/login/index' })
@@ -141,8 +94,6 @@ export default {
       api.logoutUser().catch(function() { return null }).finally(function() {
         session.clearSession()
         self.loggedIn = false
-        self.refreshAccount()
-        self.refreshBackend()
         uni.showToast({ title: '已退出登录', icon: 'none' })
         setTimeout(function() {
           uni.switchTab({ url: '/pages/profile/index' })
@@ -154,15 +105,48 @@ export default {
 </script>
 
 <style>
+.settings-shell {
+  padding-top: 10rpx;
+}
+
+.settings-shell .page-header {
+  display: none;
+}
+
+.settings-hero {
+  margin-top: 0;
+  padding: 18rpx 18rpx;
+  border-radius: 28rpx;
+}
+
+.settings-hero .hero-badge {
+  padding: 8rpx 14rpx;
+  font-size: 18rpx;
+}
+
+.settings-hero .hero-title {
+  margin-top: 10rpx;
+  font-size: 36rpx;
+  line-height: 1.14;
+}
+
+.settings-hero .hero-copy {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.45;
+}
+
 .setting-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20rpx;
+  gap: 18rpx;
 }
 
 .setting-item + .setting-item {
-  margin-top: 26rpx;
+  margin-top: 0;
+  padding-top: 18rpx;
+  border-top: 1rpx solid rgba(43, 24, 34, 0.08);
 }
 
 .setting-left {
@@ -172,14 +156,31 @@ export default {
 
 .setting-title {
   color: var(--campus-text);
-  font-size: 27rpx;
+  font-size: 24rpx;
   font-weight: 700;
+  line-height: 1.3;
 }
 
 .setting-copy {
-  margin-top: 10rpx;
+  margin-top: 4rpx;
   color: var(--campus-text-soft);
-  font-size: 23rpx;
-  line-height: 1.7;
+  font-size: 20rpx;
+  line-height: 1.45;
+}
+
+.settings-list-card {
+  padding-top: 14rpx;
+  padding-bottom: 14rpx;
+}
+
+.settings-shell .switch-pill {
+  min-width: 108rpx;
+  padding: 12rpx 22rpx;
+  border-radius: 999rpx;
+  font-size: 21rpx;
+  font-weight: 700;
+  line-height: 1.2;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 </style>

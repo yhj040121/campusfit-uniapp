@@ -47,7 +47,7 @@
         <view class="look-cover bulletin-cover">
           <view class="cover-tag">{{ item.coverTag }}</view>
           <view class="cover-title">{{ item.title }}</view>
-          <view class="cover-copy">{{ item.subtitle }}</view>
+          <view v-if="getDisplaySubtitle(item)" class="cover-copy">{{ getDisplaySubtitle(item) }}</view>
           <view class="bulletin-pin"></view>
         </view>
         <view class="bulletin-tags">
@@ -58,7 +58,10 @@
         <view class="text-copy">{{ item.desc }}</view>
         <view class="meta-line bulletin-meta">
           <view class="meta-left">
-            <view :class="['avatar', item.avatarClass]">{{ item.avatar }}</view>
+            <view :class="['avatar', item.avatarClass, item.avatarUrl ? 'avatar-has-image' : '']">
+              <image v-if="item.avatarUrl" class="avatar-image" :src="item.avatarUrl" mode="aspectFill"></image>
+              <text v-else>{{ item.avatar }}</text>
+            </view>
             <view>
               <view class="meta-name">{{ item.user }}</view>
               <view class="meta-school">{{ item.school }}</view>
@@ -83,6 +86,8 @@
 
 <script>
 var api = require('../../common/api.js')
+var postDisplay = require('../../common/post-display.js')
+var settingsStore = require('../../common/settings.js')
 
 export default {
   data: function() {
@@ -135,6 +140,9 @@ export default {
     this.filters.scene = options && options.scene ? decodeURIComponent(options.scene) : ''
     this.filters.style = options && options.style ? decodeURIComponent(options.style) : ''
     this.filters.budget = options && options.budget ? decodeURIComponent(options.budget) : ''
+    if (!settingsStore.isEnabled('recommend')) {
+      this.sortType = 'latest'
+    }
     this.loadResults()
   },
   methods: {
@@ -163,6 +171,9 @@ export default {
     goDetail: function(id) {
       uni.navigateTo({ url: '/pages/detail/index?id=' + id })
     },
+    getDisplaySubtitle: function(item) {
+      return postDisplay.getDisplaySubtitle(item)
+    },
     goSearch: function() {
       uni.switchTab({ url: '/pages/search/index' })
     }
@@ -178,8 +189,9 @@ export default {
   margin-bottom: 12rpx;
   padding: 10rpx 18rpx;
   border-radius: 999rpx;
-  background: rgba(87, 189, 240, 0.12);
-  color: var(--campus-primary);
+  border: 1rpx solid rgba(45, 87, 217, 0.12);
+  background: rgba(45, 87, 217, 0.08);
+  color: var(--campus-secondary);
   font-size: 22rpx;
 }
 
@@ -201,6 +213,6 @@ export default {
   height: 22rpx;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 8rpx 16rpx rgba(73, 183, 237, 0.18);
+  box-shadow: 0 8rpx 16rpx rgba(201, 49, 91, 0.16);
 }
 </style>

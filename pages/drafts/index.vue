@@ -174,7 +174,28 @@ export default {
 </script>
 
 <style>
+.drafts-shell {
+  padding-top: 10rpx;
+}
+
+.drafts-shell .page-header {
+  display: none;
+}
+
+.drafts-shell .section-head {
+  align-items: center;
+}
+
 .draft-card {
-  margin-top: 18rpx;
+  margin-top: 14rpx;
+}
+
+.draft-card .chip-row {
+  gap: 8rpx;
+}
+
+.draft-card .chip {
+  padding: 8rpx 14rpx;
+  font-size: 20rpx;
 }
 </style>

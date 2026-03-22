@@ -42,7 +42,8 @@
 
       <view v-else-if="favorites.length">
         <view class="look-card favorite-card" v-for="item in favorites" :key="item.id">
-          <view class="look-cover" @click="goDetail(item.id)">
+          <view :class="['look-cover', item.displayCoverUrl ? 'has-media' : '']" @click="goDetail(item.id)">
+            <image v-if="item.displayCoverUrl" class="cover-media" :src="item.displayCoverUrl" mode="aspectFill"></image>
             <view class="cover-tag">{{ item.coverTag }}</view>
             <view class="cover-title">{{ item.title }}</view>
             <view class="cover-copy">{{ item.subtitle }}</view>
@@ -69,6 +70,45 @@
 <script>
 var api = require('../../common/api.js')
 var session = require('../../common/session.js')
+
+function resolveCoverImage(item) {
+  if (!item) {
+    return ''
+  }
+  if (item.coverImageUrl) {
+    return item.coverImageUrl
+  }
+  if (item.coverUrl) {
+    return item.coverUrl
+  }
+  if (item.imageUrl) {
+    return item.imageUrl
+  }
+  if (item.thumbnailUrl) {
+    return item.thumbnailUrl
+  }
+  if (item.posterUrl) {
+    return item.posterUrl
+  }
+  var sources = item.imageUrls || item.images || item.pictures || item.photos || []
+  if (Array.isArray(sources)) {
+    for (var i = 0; i < sources.length; i += 1) {
+      if (!sources[i]) {
+        continue
+      }
+      if (typeof sources[i] === 'string') {
+        return sources[i]
+      }
+      if (sources[i].url) {
+        return sources[i].url
+      }
+      if (sources[i].src) {
+        return sources[i].src
+      }
+    }
+  }
+  return ''
+}
 
 function isAuthError(error) {
   var message = ((error && error.message) || '').toLowerCase()
@@ -105,7 +145,11 @@ export default {
       self.listFailed = false
       api.listFavoritePosts()
         .then(function(list) {
-          self.favorites = list || []
+          self.favorites = (list || []).map(function(item) {
+            return Object.assign({}, item, {
+              displayCoverUrl: resolveCoverImage(item)
+            })
+          })
           self.statusText = '收藏内容已更新。'
         })
         .catch(function(error) {
@@ -185,11 +229,23 @@ export default {
 </script>
 
 <style>
+.favorites-shell {
+  padding-top: 10rpx;
+}
+
+.favorites-shell .page-header {
+  display: none;
+}
+
+.favorites-shell .section-head {
+  align-items: center;
+}
+
 .favorite-card {
-  margin-top: 18rpx;
+  margin-top: 14rpx;
 }
 
 .favorite-product {
-  margin-top: 18rpx;
+  margin-top: 14rpx;
 }
 </style>

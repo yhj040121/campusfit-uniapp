@@ -55,6 +55,12 @@
       }
     },
     {
+      "path": "pages/announcement/index",
+      "style": {
+        "navigationBarTitleText": "官方公告"
+      }
+    },
+    {
       "path": "pages/tags/index",
       "style": {
         "navigationBarTitleText": "选择标签"

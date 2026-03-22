@@ -1,58 +1,50 @@
 <template>
   <view class="page-shell search-shell">
-    <view class="page-header">
-      <view class="campus-ribbon">搜索灵感板</view>
-      <view class="page-title">按场景把校园穿搭筛得更干净</view>
-      <view class="page-desc">把“今天要去哪里”和“预算大概多少”说清楚，系统就能更快把适合你的内容翻出来。</view>
-    </view>
-
     <view class="hero-card search-hero">
-      <view class="hero-badge">快速检索</view>
-      <view class="hero-title">关键词 + 标签筛选</view>
-      <view class="hero-copy">适合先缩小范围，再去结果页做更精细的对比浏览。</view>
+      <view class="search-hero-head">
+        <view class="hero-badge search-hero-badge">快速搜索</view>
+      </view>
+      <view class="hero-title search-hero-title">先选场景，再搜关键词</view>
+      <view class="hero-copy search-hero-copy">缩小范围后再去结果页继续挑。</view>
       <view class="search-bar search-input-bar">
         <view class="search-icon">搜</view>
         <input class="search-input" v-model="keyword" placeholder="搜索场景、单品、博主或风格" />
+        <view class="search-submit-inline" @click="submitSearch">搜索</view>
       </view>
-      <button class="btn-primary search-submit" @click="submitSearch">立即搜索</button>
     </view>
 
-    <view class="filter-summary-card">
-      <view class="section-head" style="margin-top:0; align-items:flex-start;">
-        <view>
-          <view class="summary-kicker">当前筛选</view>
-          <view class="section-subtitle" style="margin-top:8rpx;">先把场景和预算缩小，再进入结果页继续挑选。</view>
-        </view>
+    <view class="filter-summary-card search-summary-card">
+      <view class="search-summary-head">
+        <view class="summary-kicker">当前筛选</view>
         <view class="float-link" @click="refreshFilters">刷新筛选</view>
       </view>
-      <view class="summary-line">关键词：{{ keyword || '未设置' }}</view>
-      <view class="summary-line">场景：{{ filters.scene || '不限' }}</view>
-      <view class="summary-line">风格：{{ filters.style || '不限' }}</view>
-      <view class="summary-line">预算：{{ filters.budget || '不限' }}</view>
+      <view v-if="summaryItems.length" class="chip-row search-summary-row">
+        <view class="search-summary-chip" v-for="item in summaryItems" :key="item">{{ item }}</view>
+      </view>
+      <view v-else class="summary-empty">还没开始筛选，先选场景或输入关键词。</view>
     </view>
 
     <view class="section-head">
       <view class="section-title">搜索记录</view>
-      <view class="section-subtitle">保留最近常用词</view>
+      <view class="section-subtitle search-section-meta">最近使用</view>
     </view>
-    <view class="chip-row">
+    <view class="chip-row history-row">
       <view class="chip chip-outline" v-for="item in history" :key="item" @click="useKeyword(item)">{{ item }}</view>
     </view>
 
     <view class="section-head">
       <view class="section-title">热门搜索</view>
-      <view class="section-subtitle">大家都在看什么</view>
+      <view class="section-subtitle search-section-meta">大家在看</view>
     </view>
-    <view class="chip-row">
+    <view class="chip-row hot-row">
       <view class="chip chip-active" v-for="item in hot" :key="item" @click="useKeyword(item)">{{ item }}</view>
     </view>
 
-    <view class="panel-card filter-panel">
+    <view class="panel-card filter-panel filter-panel-scene">
       <view class="filter-head">
         <view class="section-title" style="margin-top:0;">场景</view>
-        <view class="section-subtitle">先确定你要去哪里</view>
       </view>
-      <view class="chip-row">
+      <view class="chip-row filter-chip-row">
         <view
           v-for="item in sceneTags"
           :key="item"
@@ -64,12 +56,11 @@
       </view>
     </view>
 
-    <view class="panel-card filter-panel">
+    <view class="panel-card filter-panel filter-panel-style">
       <view class="filter-head">
         <view class="section-title" style="margin-top:0;">风格</view>
-        <view class="section-subtitle">决定整体氛围</view>
       </view>
-      <view class="chip-row">
+      <view class="chip-row filter-chip-row">
         <view
           v-for="item in styleTags"
           :key="item"
@@ -81,12 +72,11 @@
       </view>
     </view>
 
-    <view class="panel-card filter-panel">
+    <view class="panel-card filter-panel filter-panel-budget">
       <view class="filter-head">
         <view class="section-title" style="margin-top:0;">预算</view>
-        <view class="section-subtitle">保证可执行与理性消费</view>
       </view>
-      <view class="chip-row">
+      <view class="chip-row filter-chip-row">
         <view
           v-for="item in budgetTags"
           :key="item"
@@ -138,6 +128,22 @@ export default {
   computed: {
     canSearch: function() {
       return !!this.keyword || !!this.filters.scene || !!this.filters.style || !!this.filters.budget
+    },
+    summaryItems: function() {
+      var list = []
+      if (this.keyword) {
+        list.push('关键词 ' + this.keyword)
+      }
+      if (this.filters.scene) {
+        list.push('场景 ' + this.filters.scene)
+      }
+      if (this.filters.style) {
+        list.push('风格 ' + this.filters.style)
+      }
+      if (this.filters.budget) {
+        list.push('预算 ' + this.filters.budget)
+      }
+      return list
     }
   },
   methods: {
@@ -204,50 +210,79 @@ export default {
 
 <style scoped>
 .search-shell {
-  padding-top: 34rpx;
-}
-
-.campus-ribbon {
-  display: inline-flex;
-  align-items: center;
-  padding: 12rpx 20rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.84);
-  color: #4699cf;
-  font-size: 22rpx;
-  letter-spacing: 2rpx;
-  box-shadow: 0 12rpx 24rpx rgba(80, 150, 193, 0.1);
+  padding-top: 10rpx;
 }
 
 .search-hero {
-  margin-top: 22rpx;
+  margin-top: 0;
+  padding: 18rpx 18rpx;
+  border-radius: 28rpx;
+}
+
+.search-hero-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.search-hero-badge {
+  padding: 8rpx 14rpx;
+  font-size: 18rpx;
+}
+
+.search-hero-title {
+  margin-top: 10rpx;
+  font-size: 36rpx;
+  line-height: 1.14;
+}
+
+.search-hero-copy {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.4;
 }
 
 .search-input-bar {
-  margin-top: 24rpx;
+  margin-top: 16rpx;
+  gap: 12rpx;
+  padding: 10rpx 10rpx 10rpx 16rpx;
+  border-radius: 22rpx;
   background: rgba(255, 255, 255, 0.94);
 }
 
 .search-input {
   flex: 1;
-  font-size: 26rpx;
+  min-width: 0;
+  font-size: 24rpx;
   color: #233544;
 }
 
-.search-submit {
-  margin-top: 18rpx;
+.search-submit-inline {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92rpx;
+  height: 64rpx;
+  padding: 0 22rpx;
+  border-radius: 18rpx;
+  background: linear-gradient(135deg, rgba(201, 49, 91, 0.96), rgba(45, 87, 217, 0.92));
+  color: #ffffff;
+  font-size: 22rpx;
+  font-weight: 700;
 }
 
 .filter-summary-card {
-  margin-top: 18rpx;
+  margin-top: 14rpx;
 }
 
 .section-head,
 .filter-head {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
-  gap: 18rpx;
+  gap: 14rpx;
 }
 
 .note-stamp {
@@ -263,40 +298,100 @@ export default {
 }
 
 .filter-summary-card {
-  position: relative;
-  overflow: hidden;
-  padding: 26rpx 28rpx;
-  border-radius: 30rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 22rpx;
   background: rgba(255, 255, 255, 0.88);
   border: 1rpx dashed rgba(104, 153, 188, 0.26);
-  box-shadow: 0 14rpx 30rpx rgba(52, 114, 154, 0.08);
-}
-
-.filter-summary-card::before {
-  content: "";
-  position: absolute;
-  left: 28rpx;
-  top: -10rpx;
-  width: 118rpx;
-  height: 18rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 180, 107, 0.48);
+  box-shadow: 0 10rpx 22rpx rgba(52, 114, 154, 0.06);
 }
 
 .summary-kicker {
   color: #50a0d6;
-  font-size: 22rpx;
+  font-size: 20rpx;
   font-weight: 700;
   letter-spacing: 1rpx;
 }
 
-.summary-line {
-  margin-top: 12rpx;
-  color: #667b8b;
-  font-size: 24rpx;
+.search-summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
 }
 
 .filter-panel {
   margin-top: 18rpx;
+}
+
+.search-summary-card {
+  padding-top: 18rpx;
+}
+
+.search-summary-row {
+  gap: 10rpx;
+  margin-top: 12rpx;
+}
+
+.search-summary-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 10rpx 14rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 250, 245, 0.94);
+  border: 1rpx solid rgba(43, 24, 34, 0.08);
+  color: var(--campus-text-soft);
+  font-size: 20rpx;
+}
+
+.summary-empty {
+  margin-top: 12rpx;
+  color: var(--campus-text-muted);
+  font-size: 22rpx;
+  line-height: 1.5;
+}
+
+.search-section-meta {
+  color: var(--campus-text-muted);
+  font-size: 20rpx;
+}
+
+.history-row,
+.hot-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-right: 0;
+  margin-bottom: 0;
+}
+
+.history-row .chip,
+.hot-row .chip {
+  margin: 0;
+  min-height: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex: 0 0 auto;
+  padding: 12rpx 18rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  line-height: 1.35;
+}
+
+.filter-panel {
+  padding-top: 22rpx;
+}
+
+.filter-chip-row {
+  gap: 10rpx;
+}
+
+.filter-chip-row .chip {
+  margin-right: 0;
+  margin-bottom: 0;
+  min-height: 0;
+  padding: 12rpx 18rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
 }
 </style>

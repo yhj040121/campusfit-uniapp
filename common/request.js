@@ -18,6 +18,25 @@ function getActiveBaseUrl() {
   return activeBaseUrl || uni.getStorageSync('campusfit_base_url') || ''
 }
 
+function extractErrorMessage(response) {
+  var payload = response && response.data
+  if (payload && typeof payload === 'object' && payload.message) {
+    return payload.message
+  }
+  if (typeof payload === 'string') {
+    try {
+      var parsed = JSON.parse(payload)
+      if (parsed && parsed.message) {
+        return parsed.message
+      }
+    } catch (error) {
+      return payload
+    }
+    return payload
+  }
+  return ''
+}
+
 function rawRequest(baseUrl, options, silent) {
   return new Promise(function(resolve, reject) {
     var header = {
@@ -35,7 +54,8 @@ function rawRequest(baseUrl, options, silent) {
       header: header,
       success: function(response) {
         if (response.statusCode < 200 || response.statusCode >= 300) {
-          reject(new Error('HTTP ' + response.statusCode))
+          var errorMessage = extractErrorMessage(response) || ('HTTP ' + response.statusCode)
+          reject(new Error(errorMessage))
           return
         }
         var payload = response.data || {}

@@ -1,44 +1,29 @@
 <template>
   <view class="page-shell publish-shell">
     <view v-if="!loggedIn" class="hero-card publish-hero">
-      <view class="hero-badge">需要登录</view>
-      <view class="hero-title">登录后发布你的校园穿搭</view>
-      <view class="hero-copy">你的标题、描述、标签、活动绑定和导购链接会在这里一起完成，形成完整的内容发布闭环。</view>
-      <view class="guest-actions">
+      <view class="publish-hero-head">
+        <view class="hero-badge publish-hero-badge">需要登录</view>
+      </view>
+      <view class="hero-title publish-hero-title">登录后开始发布穿搭</view>
+      <view class="hero-copy publish-hero-copy">先上传图片，再整理标题、标签和导购信息。</view>
+      <view class="guest-actions publish-guest-actions">
         <button class="btn-primary" @click="goLogin">去登录</button>
         <button class="btn-ghost" @click="saveDraft">先存草稿</button>
       </view>
     </view>
 
     <view v-else>
-      <view class="page-header">
-        <view class="campus-ribbon">{{ mode === 'edit' ? '编辑内容' : '发布穿搭' }}</view>
-        <view class="page-title">{{ mode === 'edit' ? '继续完善这条已发布内容' : '把穿搭灵感整理成一条完整内容' }}</view>
-        <view class="page-desc">{{ mode === 'edit' ? '你可以继续修改标题、描述、标签、活动和商品链接。' : '从图片展示位到活动专题、预算标签与商品导购，这里会帮你把一次发布整理清楚。' }}</view>
-      </view>
-
       <view class="hero-card publish-hero">
-        <view class="meta-line publish-hero-top" style="margin-top:0; align-items:flex-start;">
-          <view>
-            <view class="hero-badge">{{ mode === 'edit' ? '编辑模式' : '创作工作台' }}</view>
-            <view class="hero-title publish-hero-title">{{ mode === 'edit' ? '当前正在修改已发布内容' : '标题 + 描述 + 标签 + 导购链接' }}</view>
-            <view class="hero-copy">{{ mode === 'edit' ? '编辑完成后会直接更新原内容，不会重复创建。' : '整理好基础信息后，就能快速发布一条适合校园场景浏览的穿搭内容。' }}</view>
-          </view>
-          <view v-if="mode === 'edit'" class="hero-float-link" @click="secondaryAction">退出编辑</view>
+        <view class="publish-hero-head">
+          <view class="hero-badge publish-hero-badge">{{ mode === 'edit' ? '继续编辑' : '发布概览' }}</view>
+          <view v-if="mode === 'edit'" class="publish-hero-link" @click="secondaryAction">退出</view>
         </view>
-        <view class="hero-metrics">
-          <view class="hero-metric">
-            <text class="hero-metric-value">{{ form.tags.length }}</text>
-            <text class="hero-metric-label">已选标签</text>
-          </view>
-          <view class="hero-metric">
-            <text class="hero-metric-value">{{ uploadedImageCount }}</text>
-            <text class="hero-metric-label">已上传图片</text>
-          </view>
-          <view class="hero-metric">
-            <text class="hero-metric-value">{{ selectedActivity ? '已绑定' : '未绑定' }}</text>
-            <text class="hero-metric-label">活动状态</text>
-          </view>
+        <view class="hero-title publish-hero-title">{{ mode === 'edit' ? '把这条内容补完整' : '先上传图，再补标题和标签' }}</view>
+        <view class="hero-copy publish-hero-copy">{{ mode === 'edit' ? '改完会直接更新原内容。' : '按顺序整理图片、描述、标签和导购信息。' }}</view>
+        <view class="publish-hero-chips">
+          <view class="publish-hero-chip">{{ uploadedImageCount }} 图</view>
+          <view class="publish-hero-chip">{{ form.tags.length }} 标签</view>
+          <view class="publish-hero-chip">{{ selectedActivity ? '已绑活动' : '未绑活动' }}</view>
         </view>
       </view>
 
@@ -51,7 +36,6 @@
         <view class="section-head">
           <view>
             <view class="section-title" style="margin-top:0;">内容图片</view>
-            <view class="section-subtitle">支持 jpg / jpeg / png / webp，单张最多 10MB，首张会自动作为封面图。</view>
           </view>
           <view class="upload-tip">{{ uploadedImageCount }}/9</view>
         </view>
@@ -79,16 +63,10 @@
           <view v-if="canChooseMoreImages" class="upload-add-card" @click="chooseImages">
             <view class="upload-add-mark">+</view>
             <view class="upload-add-title">添加图片</view>
-            <view class="upload-add-copy">还可上传 {{ remainingImageCount }} 张</view>
           </view>
         </view>
 
-        <view class="upload-hint">
-          <text v-if="!uploadedImageCount && !uploadingCount">先上传至少 1 张图片后再发布。</text>
-          <text v-else-if="uploadingCount">当前还有 {{ uploadingCount }} 张图片正在上传。</text>
-          <text v-else-if="failedImageCount">有 {{ failedImageCount }} 张图片上传失败，点击图片可重试。</text>
-          <text v-else>图片已准备就绪，首张会展示在列表封面位。</text>
-        </view>
+        <view v-if="!uploadedImageCount && !uploadingCount" class="upload-hint">先上传至少1张图片后再发布。</view>
       </view>
 
       <view class="panel-card">
@@ -137,6 +115,9 @@
         <view class="form-label">穿搭描述</view>
         <textarea class="form-textarea" v-model="form.desc" :placeholder="descPlaceholder" maxlength="200"></textarea>
 
+        <view class="form-label">{{ priceLabel }}</view>
+        <input class="form-input" v-model="form.price" type="digit" :placeholder="pricePlaceholder" />
+
         <view class="form-label">商品导购链接</view>
         <input class="form-input" v-model="form.link" :placeholder="linkPlaceholder" />
       </view>
@@ -173,14 +154,42 @@ var ACTIVE_DRAFT_KEY = 'campusfit_active_draft_id'
 var EDIT_POST_KEY = 'campusfit_edit_post_id'
 var MAX_IMAGE_COUNT = 9
 var MAX_FILE_SIZE = 10 * 1024 * 1024
+var DEFAULT_PUBLISH_TAGS = ['图书馆', '学院风', '100-150']
 
 function defaultForm() {
   return {
     title: '',
     desc: '',
+    price: '',
     link: '',
-    tags: ['早八', '清爽通勤', '100-150']
+    tags: DEFAULT_PUBLISH_TAGS.slice(0)
   }
+}
+
+function normalizePriceInput(value) {
+  if (value === null || value === undefined) {
+    return ''
+  }
+  return String(value).trim()
+}
+
+function buildProductPrice(value) {
+  var normalized = normalizePriceInput(value)
+  if (!normalized) {
+    return null
+  }
+  if (!/^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/.test(normalized)) {
+    return null
+  }
+  var amount = Number(normalized)
+  if (!isFinite(amount) || amount <= 0) {
+    return null
+  }
+  return Number(amount.toFixed(2))
+}
+
+function hasValidProductPrice(value) {
+  return buildProductPrice(value) !== null
 }
 
 function createImageId() {
@@ -239,6 +248,7 @@ function buildDraftPayload(vm) {
     desc: vm.form.desc,
     imageUrls: collectImageUrls(vm.images),
     tags: vm.form.tags,
+    productPrice: buildProductPrice(vm.form.price),
     productLink: vm.form.link,
     activityId: vm.selectedActivity ? vm.selectedActivity.id : ''
   }
@@ -248,6 +258,13 @@ function isAuthError(error) {
   var message = ((error && error.message) || '').toLowerCase()
   return message.indexOf('login') > -1 || message.indexOf('401') > -1 || message.indexOf('登录') > -1
 }
+
+function isDraftMissingError(error) {
+  var message = String((error && error.message) || '')
+  var lower = message.toLowerCase()
+  return message.indexOf('404') > -1 || message.indexOf('\u672a\u627e\u5230\u5bf9\u5e94\u8349\u7a3f') > -1 || (lower.indexOf('draft') > -1 && lower.indexOf('not found') > -1)
+}
+
 
 export default {
   data: function() {
@@ -299,12 +316,12 @@ export default {
     },
     submitLabel: function() {
       if (this.submitting) {
-        return this.mode === 'edit' ? '保存中...' : '发布中...'
+        return '提交中...'
       }
-      return this.mode === 'edit' ? '保存修改' : '立即发布'
+      return this.mode === 'edit' ? '提交修改审核' : '提交审核'
     },
     hasBasicFields: function() {
-      return !!(this.form.title && this.form.desc && this.form.link && this.form.tags && this.form.tags.length)
+      return !!(this.form.title && this.form.desc && hasValidProductPrice(this.form.price) && this.form.link && this.form.tags && this.form.tags.length)
     },
     isReadyToSubmit: function() {
       return this.hasBasicFields && this.uploadedImageCount > 0 && !this.pageLoading && !this.uploadingCount && !this.failedImageCount
@@ -332,7 +349,7 @@ export default {
         return '正在把草稿同步到你的账号...'
       }
       if (this.submitting) {
-        return this.mode === 'edit' ? '正在保存修改...' : '正在发布内容...'
+        return this.mode === 'edit' ? '正在提交修改审核...' : '正在提交内容审核...'
       }
       if (this.failedImageCount) {
         return '有 ' + this.failedImageCount + ' 张图片上传失败，请点击图片重试或删除后继续。'
@@ -344,18 +361,24 @@ export default {
         return '先上传至少 1 张图片，首张会作为内容封面。'
       }
       if (!this.hasBasicFields && this.currentDraftId && this.lastSavedAt) {
-        return '已恢复 ' + this.lastSavedAt + ' 保存的草稿，可继续补全后发布。'
+        return '已恢复 ' + this.lastSavedAt + ' 保存的草稿，可继续补全后提交审核。'
       }
       if (!this.hasBasicFields) {
-        return '还差一点点：补齐标题、描述、标签和导购链接即可发布。'
+        return '还差一点点：补齐标题、描述、标签、商品价格和导购链接即可提交审核。'
       }
-      return this.selectedActivity ? '信息已完整，带着活动专题一起发布吧。' : '信息已完整，可以直接发布。'
+      return this.selectedActivity ? '信息已完整，提交后会带着活动专题一起进入审核。' : '信息已完整，提交后会进入内容审核。'
     },
     titlePlaceholder: function() {
       return '例如：适合图书馆和早八的清爽蓝白穿搭'
     },
     descPlaceholder: function() {
       return '写一下这套穿搭适合什么场景、预算大概多少、搭配亮点是什么。'
+    },
+    priceLabel: function() {
+      return '商品价格'
+    },
+    pricePlaceholder: function() {
+      return '例如：129 或 129.90'
     },
     linkPlaceholder: function() {
       return '粘贴真实商品导购链接'
@@ -404,6 +427,22 @@ export default {
       this.syncActiveDraftId('')
       this.lastSavedAt = ''
     },
+    resetRecoveredDraftComposer: function() {
+      activityStore.clearSelectedActivity()
+      this.mode = 'create'
+      this.editingId = ''
+      this.images = []
+      this.form = defaultForm()
+      this.selectedActivity = null
+      this.pageLoading = false
+      this.lastSuccessText = ''
+      uni.removeStorageSync(LEGACY_DRAFT_KEY)
+      this.clearActiveDraftState()
+      this.resetPublishTags()
+    },
+    resetPublishTags: function() {
+      uni.setStorageSync('campusfit_publish_tags', DEFAULT_PUBLISH_TAGS.slice(0))
+    },
     setImagesFromUrls: function(imageUrls) {
       this.images = buildImageItems(imageUrls)
     },
@@ -440,6 +479,7 @@ export default {
       this.form = {
         title: draft.title || '',
         desc: draft.desc || '',
+        price: normalizePriceInput(draft.productPrice),
         link: draft.productLink || base.link,
         tags: hasListValue(draft.tags) ? draft.tags : base.tags
       }
@@ -457,7 +497,9 @@ export default {
     restoreActiveDraft: function(forceReload) {
       var draftId = uni.getStorageSync(ACTIVE_DRAFT_KEY) || ''
       if (!draftId) {
-        if (forceReload) {
+        if (this.currentDraftId) {
+          this.resetRecoveredDraftComposer()
+        } else if (forceReload) {
           this.clearActiveDraftState()
         }
         return Promise.resolve(null)
@@ -481,11 +523,14 @@ export default {
             self.loggedIn = false
             return
           }
-          if (uni.getStorageSync(ACTIVE_DRAFT_KEY) === draftId) {
-            uni.removeStorageSync(ACTIVE_DRAFT_KEY)
+          if (isDraftMissingError(error)) {
+            if (uni.getStorageSync(ACTIVE_DRAFT_KEY) === draftId) {
+              uni.removeStorageSync(ACTIVE_DRAFT_KEY)
+            }
+            self.resetRecoveredDraftComposer()
+          } else {
+            self.clearActiveDraftState()
           }
-          self.currentDraftId = ''
-          self.lastSavedAt = ''
           uni.showToast({ title: error.message || '暂时无法读取草稿。', icon: 'none' })
         })
         .finally(function() {
@@ -506,6 +551,34 @@ export default {
       this.lastSavedAt = ''
       this.restoreActiveDraft(true)
     },
+    clearComposerAfterSubmit: function() {
+      uni.removeStorageSync(EDIT_POST_KEY)
+      uni.removeStorageSync(LEGACY_DRAFT_KEY)
+      this.resetPublishTags()
+      this.clearActiveDraftState()
+      activityStore.clearSelectedActivity()
+      this.mode = 'create'
+      this.editingId = ''
+      this.images = []
+      this.form = defaultForm()
+      this.selectedActivity = null
+      this.pageLoading = false
+      this.lastSuccessText = ''
+    },
+    clearComposerAfterDraftSave: function() {
+      uni.removeStorageSync(EDIT_POST_KEY)
+      uni.removeStorageSync(LEGACY_DRAFT_KEY)
+      this.resetPublishTags()
+      this.clearActiveDraftState()
+      activityStore.clearSelectedActivity()
+      this.mode = 'create'
+      this.editingId = ''
+      this.images = []
+      this.form = defaultForm()
+      this.selectedActivity = null
+      this.pageLoading = false
+      this.lastSuccessText = '草稿已保存，发布页已清空，下次保存会新建一条草稿。'
+    },
     loadEditPost: function(postId) {
       var self = this
       self.pageLoading = true
@@ -517,6 +590,7 @@ export default {
           self.form = {
             title: post.title || '',
             desc: post.desc || '',
+            price: normalizePriceInput(post.productPrice),
             link: post.productLink || '',
             tags: hasListValue(post.tags) ? post.tags : defaultForm().tags
           }
@@ -704,10 +778,14 @@ export default {
         return
       }
       if (!session.isLoggedIn()) {
-        self.promptLogin('登录后才能把草稿同步到你的账号。')
+        self.promptLogin('\u767b\u5f55\u540e\u624d\u80fd\u628a\u8349\u7a3f\u540c\u6b65\u5230\u4f60\u7684\u8d26\u53f7\u3002')
         return
       }
-      if (!self.ensureImageQueueReady('保存草稿')) {
+      if (!self.ensureImageQueueReady('\u4fdd\u5b58\u8349\u7a3f')) {
+        return
+      }
+      if (self.form.price && !hasValidProductPrice(self.form.price)) {
+        uni.showToast({ title: '\u8bf7\u8f93\u5165\u6b63\u786e\u7684\u5546\u54c1\u4ef7\u683c', icon: 'none' })
         return
       }
       self.savingDraft = true
@@ -715,19 +793,23 @@ export default {
       var payload = buildDraftPayload(self)
       var request = self.currentDraftId ? api.updateDraft(self.currentDraftId, payload) : api.createDraft(payload)
       request
-        .then(function(draft) {
-          self.applyDraftData(draft)
-          self.lastSuccessText = '草稿已经同步到你的账号，可在草稿箱继续编辑。'
-          uni.showToast({ title: '已保存草稿', icon: 'none' })
+        .then(function() {
+          self.clearComposerAfterDraftSave()
+          uni.showToast({ title: '\u5df2\u4fdd\u5b58\u8349\u7a3f', icon: 'none' })
         })
         .catch(function(error) {
           if (isAuthError(error)) {
             session.clearSession()
             self.loggedIn = false
-            self.promptLogin('登录状态已失效，请重新登录后继续保存草稿。')
+            self.promptLogin('\u767b\u5f55\u72b6\u6001\u5df2\u5931\u6548\uff0c\u8bf7\u91cd\u65b0\u767b\u5f55\u540e\u7ee7\u7eed\u4fdd\u5b58\u8349\u7a3f\u3002')
             return
           }
-          uni.showToast({ title: error.message || '草稿保存失败', icon: 'none' })
+          if (isDraftMissingError(error)) {
+            self.clearActiveDraftState()
+            uni.showToast({ title: '\u539f\u8349\u7a3f\u5df2\u4e0d\u5b58\u5728\uff0c\u518d\u70b9\u4e00\u6b21\u4fdd\u5b58\u4f1a\u65b0\u5efa\u8349\u7a3f', icon: 'none' })
+            return
+          }
+          uni.showToast({ title: error.message || '\u8349\u7a3f\u4fdd\u5b58\u5931\u8d25', icon: 'none' })
         })
         .finally(function() {
           self.savingDraft = false
@@ -763,8 +845,8 @@ export default {
       if (!self.ensureImageQueueReady('发布内容')) {
         return
       }
-      if (!self.form.title || !self.form.desc || !self.form.link || !self.form.tags.length) {
-        uni.showToast({ title: '请先补齐标题、描述、标签和导购链接。', icon: 'none' })
+      if (!self.form.title || !self.form.desc || !hasValidProductPrice(self.form.price) || !self.form.link || !self.form.tags.length) {
+        uni.showToast({ title: '请先补齐标题、描述、标签、商品价格和导购链接。', icon: 'none' })
         return
       }
       if (!self.uploadedImageCount) {
@@ -785,27 +867,20 @@ export default {
       }
       request
         .then(function() {
-          if (self.mode !== 'edit') {
-            self.clearActiveDraftState()
-            uni.removeStorageSync(LEGACY_DRAFT_KEY)
-          }
-          activityStore.clearSelectedActivity()
-          self.selectedActivity = null
           if (self.mode === 'edit') {
-            uni.removeStorageSync(EDIT_POST_KEY)
-            self.lastSuccessText = '这条内容已经更新成功。'
-            uni.showToast({ title: '已保存修改', icon: 'none' })
-            self.mode = 'create'
-            self.editingId = ''
+            self.clearComposerAfterSubmit()
+            self.lastSuccessText = '修改已提交审核，可在我的发布查看进度。'
+            uni.showToast({ title: '已提交修改', icon: 'none' })
             setTimeout(function() {
-              uni.switchTab({ url: '/pages/profile/index' })
+              uni.navigateTo({ url: '/pages/my-posts/index' })
             }, 400)
             return
           }
-          self.lastSuccessText = '新的穿搭内容已经创建成功。'
-          uni.showToast({ title: '发布成功', icon: 'none' })
+          self.clearComposerAfterSubmit()
+          self.lastSuccessText = '内容已提交审核，可在我的发布查看进度。'
+          uni.showToast({ title: '已提交审核', icon: 'none' })
           setTimeout(function() {
-            uni.switchTab({ url: '/pages/index/index' })
+            uni.navigateTo({ url: '/pages/my-posts/index' })
           }, 400)
         })
         .catch(function(error) {
@@ -870,12 +945,72 @@ export default {
   margin-top: 24rpx;
 }
 
-.publish-hero-top {
+.publish-hero {
+  margin-top: 10rpx;
+  padding: 18rpx 18rpx;
+  border-radius: 28rpx;
+}
+
+.publish-hero-head {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
+  gap: 16rpx;
+}
+
+.publish-hero-badge {
+  padding: 8rpx 14rpx;
+  font-size: 18rpx;
+}
+
+.publish-hero-link {
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-family: var(--campus-font-data);
+  font-size: 20rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
 }
 
 .publish-hero-title {
-  max-width: 460rpx;
+  max-width: 100%;
+  margin-top: 10rpx;
+  font-size: 36rpx;
+  line-height: 1.14;
+}
+
+.publish-hero-copy {
+  margin-top: 8rpx;
+  max-width: 100%;
+  font-size: 22rpx;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.publish-hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 12rpx;
+}
+
+.publish-hero-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 10rpx 14rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 20rpx;
+  font-weight: 700;
+}
+
+.publish-guest-actions {
+  margin-top: 18rpx;
 }
 
 .publish-inline-tip {
@@ -883,17 +1018,17 @@ export default {
   align-items: center;
   justify-content: space-between;
   gap: 18rpx;
-  margin-top: 18rpx;
-  padding: 22rpx 24rpx;
-  border-radius: 24rpx;
+  margin-top: 14rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 20rpx;
   background: rgba(255, 255, 255, 0.86);
 }
 
 .publish-inline-copy {
   flex: 1;
   color: var(--campus-text-muted);
-  font-size: 24rpx;
-  line-height: 1.7;
+  font-size: 22rpx;
+  line-height: 1.5;
 }
 
 .publish-inline-tip-muted {
@@ -906,12 +1041,6 @@ export default {
 
 .publish-inline-tip-success {
   background: rgba(237, 248, 255, 0.96);
-}
-
-.hero-float-link {
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 24rpx;
-  font-weight: 600;
 }
 
 .upload-card,
@@ -997,7 +1126,7 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10rpx;
+  gap: 8rpx;
   border: 2rpx dashed rgba(89, 154, 191, 0.3);
   background:
     radial-gradient(circle at top, rgba(120, 222, 207, 0.28), transparent 58%),
@@ -1023,16 +1152,16 @@ export default {
   font-weight: 700;
 }
 
-.upload-add-copy,
-.upload-tip,
-.upload-hint {
+.upload-tip {
   color: var(--campus-text-muted);
   font-size: 22rpx;
 }
 
 .upload-hint {
   margin-top: 18rpx;
-  line-height: 1.7;
+  color: var(--campus-text-muted);
+  font-size: 22rpx;
+  line-height: 1.6;
 }
 
 .activity-binding-card {
@@ -1080,5 +1209,53 @@ export default {
 
 .form-textarea {
   min-height: 220rpx;
+}
+
+.publish-inline-tip {
+  position: sticky;
+  top: 16rpx;
+  z-index: 4;
+}
+
+.upload-card,
+.form-card {
+  position: relative;
+}
+
+.upload-card {
+  padding-top: 28rpx;
+}
+
+.form-card {
+  padding-top: 24rpx;
+}
+
+.upload-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 214rpx;
+}
+
+.upload-item {
+  min-height: 214rpx;
+}
+
+.upload-item:first-child {
+  grid-row: span 2;
+}
+
+.upload-item:first-child .upload-thumb {
+  height: 446rpx;
+}
+
+.upload-add-card {
+  grid-column: span 2;
+  min-height: 120rpx;
+}
+
+.activity-binding-card,
+.sub-panel {
+  background:
+    linear-gradient(135deg, rgba(201, 49, 91, 0.06), rgba(45, 87, 217, 0.05)),
+    rgba(255, 250, 245, 0.94);
 }
 </style>

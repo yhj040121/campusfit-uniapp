@@ -191,8 +191,119 @@ export default {
   align-items: center;
   padding: 10rpx 18rpx;
   border-radius: 999rpx;
-  background: rgba(87, 189, 240, 0.12);
-  color: var(--campus-primary);
+  border: 1rpx solid rgba(45, 87, 217, 0.12);
+  background: rgba(45, 87, 217, 0.08);
+  color: var(--campus-secondary);
   font-size: 22rpx;
+}
+
+.selected-activity-card {
+  padding-top: 28rpx;
+  background:
+    linear-gradient(135deg, rgba(201, 49, 91, 0.06), transparent 30%),
+    linear-gradient(315deg, rgba(45, 87, 217, 0.06), transparent 36%),
+    rgba(255, 250, 245, 0.94);
+}
+
+.activity-item {
+  border-color: rgba(43, 24, 34, 0.08);
+}
+
+.activity-info-row {
+  gap: 12rpx;
+}
+
+.mini-tag {
+  border: 1rpx solid rgba(45, 87, 217, 0.12);
+  background: rgba(45, 87, 217, 0.08);
+  color: var(--campus-secondary);
+}
+
+.my-activity-shell {
+  padding-top: 10rpx;
+}
+
+.my-activity-shell .page-header {
+  display: none;
+}
+
+.my-activity-hero {
+  margin-top: 0;
+  padding: 18rpx 18rpx;
+  border-radius: 28rpx;
+}
+
+.my-activity-hero .hero-badge {
+  padding: 8rpx 14rpx;
+  font-size: 18rpx;
+}
+
+.my-activity-hero .hero-title {
+  margin-top: 10rpx;
+  font-size: 36rpx;
+  line-height: 1.14;
+}
+
+.my-activity-hero .hero-copy {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  line-height: 1.45;
+}
+
+.my-activity-hero .hero-card-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 12rpx;
+}
+
+.my-activity-hero .hero-card-pill {
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 0;
+  padding: 10rpx 14rpx;
+  border-radius: 999rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.my-activity-hero .hero-card-pill-value,
+.my-activity-hero .hero-card-pill-label {
+  display: inline-block;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 20rpx;
+  line-height: 1;
+}
+
+.my-activity-hero .hero-card-pill-label {
+  margin-top: 0;
+  margin-left: 8rpx;
+}
+
+.selected-activity-card {
+  margin-top: 14rpx;
+  padding-top: 28rpx;
+}
+
+.selected-activity-card .section-subtitle {
+  display: none;
+}
+
+.selected-activity-card .btn-row {
+  margin-top: 14rpx;
+}
+
+.activity-item {
+  margin-top: 14rpx;
+}
+
+.activity-info-row {
+  gap: 8rpx;
+  margin-top: 14rpx;
+}
+
+.mini-tag {
+  padding: 8rpx 14rpx;
+  font-size: 20rpx;
 }
 </style>
