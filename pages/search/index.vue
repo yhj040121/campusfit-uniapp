@@ -1,90 +1,93 @@
 <template>
   <view class="page-shell search-shell">
-    <view class="hero-card search-hero">
-      <view class="search-hero-head">
-        <view class="hero-badge search-hero-badge">快速搜索</view>
+    <view class="search-entry-card">
+      <view class="search-entry-box">
+        <view class="search-entry-icon">搜</view>
+        <input
+          class="search-entry-input"
+          v-model="keyword"
+          placeholder="搜索校园趋势、内容或品牌"
+          confirm-type="search"
+          @confirm="submitSearch"
+        />
       </view>
-      <view class="hero-title search-hero-title">先选场景，再搜关键词</view>
-      <view class="hero-copy search-hero-copy">缩小范围后再去结果页继续挑。</view>
-      <view class="search-bar search-input-bar">
-        <view class="search-icon">搜</view>
-        <input class="search-input" v-model="keyword" placeholder="搜索场景、单品、博主或风格" />
-        <view class="search-submit-inline" @click="submitSearch">搜索</view>
-      </view>
+      <view class="search-entry-button" @click="submitSearch">搜索</view>
     </view>
 
-    <view class="filter-summary-card search-summary-card">
-      <view class="search-summary-head">
-        <view class="summary-kicker">当前筛选</view>
-        <view class="float-link" @click="refreshFilters">刷新筛选</view>
+    <view class="search-section-card">
+      <view class="search-section-head">
+        <view class="search-section-title">最近搜索</view>
+        <view v-if="history.length" class="search-section-action" @click="clearHistory">清空</view>
       </view>
-      <view v-if="summaryItems.length" class="chip-row search-summary-row">
-        <view class="search-summary-chip" v-for="item in summaryItems" :key="item">{{ item }}</view>
-      </view>
-      <view v-else class="summary-empty">还没开始筛选，先选场景或输入关键词。</view>
-    </view>
 
-    <view class="section-head">
-      <view class="section-title">搜索记录</view>
-      <view class="section-subtitle search-section-meta">最近使用</view>
-    </view>
-    <view class="chip-row history-row">
-      <view class="chip chip-outline" v-for="item in history" :key="item" @click="useKeyword(item)">{{ item }}</view>
-    </view>
-
-    <view class="section-head">
-      <view class="section-title">热门搜索</view>
-      <view class="section-subtitle search-section-meta">大家在看</view>
-    </view>
-    <view class="chip-row hot-row">
-      <view class="chip chip-active" v-for="item in hot" :key="item" @click="useKeyword(item)">{{ item }}</view>
-    </view>
-
-    <view class="panel-card filter-panel filter-panel-scene">
-      <view class="filter-head">
-        <view class="section-title" style="margin-top:0;">场景</view>
-      </view>
-      <view class="chip-row filter-chip-row">
-        <view
-          v-for="item in sceneTags"
-          :key="item"
-          :class="['chip', filters.scene === item ? 'chip-active' : 'chip-outline']"
-          @click="setFilter('scene', item)"
-        >
-          {{ item }}
+      <view v-if="history.length" class="search-chip-row">
+        <view v-for="item in history" :key="item" class="search-chip search-chip-history">
+          <view class="search-chip-text" @click="useKeyword(item)">{{ item }}</view>
+          <view class="search-chip-remove" @click.stop="removeHistoryItem(item)">×</view>
         </view>
       </view>
+      <view v-else class="search-empty-copy">还没有最近搜索，试着搜一个校园关键词吧。</view>
     </view>
 
-    <view class="panel-card filter-panel filter-panel-style">
-      <view class="filter-head">
-        <view class="section-title" style="margin-top:0;">风格</view>
+    <view class="search-section-card">
+      <view class="search-section-head">
+        <view class="search-section-title">热门搜索</view>
+        <view class="search-section-meta">大家都在看</view>
       </view>
-      <view class="chip-row filter-chip-row">
-        <view
-          v-for="item in styleTags"
-          :key="item"
-          :class="['chip', filters.style === item ? 'chip-active' : 'chip-outline']"
-          @click="setFilter('style', item)"
-        >
-          {{ item }}
-        </view>
+      <view class="search-chip-row">
+        <view class="search-chip search-chip-hot" v-for="item in hot" :key="item" @click="useKeyword(item)">{{ item }}</view>
       </view>
     </view>
 
-    <view class="panel-card filter-panel filter-panel-budget">
-      <view class="filter-head">
-        <view class="section-title" style="margin-top:0;">预算</view>
-      </view>
-      <view class="chip-row filter-chip-row">
-        <view
-          v-for="item in budgetTags"
-          :key="item"
-          :class="['chip', filters.budget === item ? 'chip-active' : 'chip-outline']"
-          @click="setFilter('budget', item)"
-        >
-          {{ item }}
+    <view class="search-filter-card">
+      <view class="search-filter-title">精准筛选</view>
+      <view class="search-filter-copy">先挑场景、风格和预算，再带着条件进入搜索结果页。</view>
+
+      <view class="search-filter-group">
+        <view class="search-filter-label">场景</view>
+        <view class="search-chip-row">
+          <view
+            v-for="item in sceneTags"
+            :key="'scene-' + item"
+            :class="['search-chip', filters.scene === item ? 'search-chip-active' : 'search-chip-soft']"
+            @click="setFilter('scene', item)"
+          >
+            {{ item }}
+          </view>
         </view>
+      </view>
+
+      <view class="search-filter-group">
+        <view class="search-filter-label">风格</view>
+        <view class="search-chip-row">
+          <view
+            v-for="item in styleTags"
+            :key="'style-' + item"
+            :class="['search-chip', filters.style === item ? 'search-chip-active' : 'search-chip-soft']"
+            @click="setFilter('style', item)"
+          >
+            {{ item }}
+          </view>
+        </view>
+      </view>
+
+      <view class="search-filter-group">
+        <view class="search-filter-label">预算</view>
+        <view class="search-chip-row">
+          <view
+            v-for="item in budgetTags"
+            :key="'budget-' + item"
+            :class="['search-chip', filters.budget === item ? 'search-chip-active' : 'search-chip-soft']"
+            @click="setFilter('budget', item)"
+          >
+            {{ item }}
+          </view>
+        </view>
+      </view>
+
+      <view class="search-filter-actions">
+        <view class="search-filter-action search-filter-action-light" @click="resetFilters">重置条件</view>
+        <view class="search-filter-action search-filter-action-primary" @click="submitSearch">带条件搜索</view>
       </view>
     </view>
   </view>
@@ -100,7 +103,12 @@ function defaultHistory() {
 }
 
 function defaultHot() {
-  return ['春季校园', '学院风', '平价穿搭', '图书馆穿搭']
+  return ['校园健身', '学院风', '平价穿搭', '户外运动']
+}
+
+function normalizeText(value) {
+  if (value === null || value === undefined) return ''
+  return String(value).replace(/\s+/g, ' ').trim()
 }
 
 export default {
@@ -112,8 +120,6 @@ export default {
       sceneTags: ['早八', '图书馆', '社团活动', '约会'],
       styleTags: ['学院风', '极简', '运动休闲', '甜酷'],
       budgetTags: ['50-100', '100-150', '150-200', '200+'],
-      tagLoading: false,
-      tagFailed: false,
       filters: {
         scene: '',
         style: '',
@@ -125,273 +131,100 @@ export default {
     this.restoreHistory()
     this.loadTagOptions()
   },
-  computed: {
-    canSearch: function() {
-      return !!this.keyword || !!this.filters.scene || !!this.filters.style || !!this.filters.budget
-    },
-    summaryItems: function() {
-      var list = []
-      if (this.keyword) {
-        list.push('关键词 ' + this.keyword)
-      }
-      if (this.filters.scene) {
-        list.push('场景 ' + this.filters.scene)
-      }
-      if (this.filters.style) {
-        list.push('风格 ' + this.filters.style)
-      }
-      if (this.filters.budget) {
-        list.push('预算 ' + this.filters.budget)
-      }
-      return list
-    }
-  },
   methods: {
     restoreHistory: function() {
       var stored = uni.getStorageSync(SEARCH_HISTORY_KEY)
-      if (stored && stored.length) {
-        this.history = stored
-      }
+      if (Array.isArray(stored)) this.history = stored
     },
     saveHistory: function(keyword) {
-      if (!keyword) {
-        return
-      }
+      var safeKeyword = normalizeText(keyword)
+      if (!safeKeyword) return
       var list = this.history.slice(0)
-      var index = list.indexOf(keyword)
-      if (index > -1) {
-        list.splice(index, 1)
-      }
-      list.unshift(keyword)
+      var index = list.indexOf(safeKeyword)
+      if (index > -1) list.splice(index, 1)
+      list.unshift(safeKeyword)
       this.history = list.slice(0, 8)
       uni.setStorageSync(SEARCH_HISTORY_KEY, this.history)
     },
+    removeHistoryItem: function(keyword) {
+      var list = this.history.filter(function(item) {
+        return item !== keyword
+      })
+      this.history = list
+      uni.setStorageSync(SEARCH_HISTORY_KEY, list)
+    },
+    clearHistory: function() {
+      this.history = []
+      uni.setStorageSync(SEARCH_HISTORY_KEY, [])
+      uni.showToast({ title: '已清空最近搜索', icon: 'none' })
+    },
     loadTagOptions: function() {
       var self = this
-      self.tagLoading = true
-      self.tagFailed = false
       api.getTagOptions()
         .then(function(data) {
           self.sceneTags = data.sceneTags || self.sceneTags
           self.styleTags = data.styleTags || self.styleTags
           self.budgetTags = data.budgetTags || self.budgetTags
-          self.tagFailed = false
         })
-        .catch(function() {
-          self.tagFailed = true
-        })
-        .finally(function() {
-          self.tagLoading = false
-        })
+        .catch(function() {})
     },
     useKeyword: function(word) {
       this.keyword = word
+      this.submitSearch()
     },
     setFilter: function(type, value) {
       this.filters[type] = this.filters[type] === value ? '' : value
     },
+    resetFilters: function() {
+      this.filters = {
+        scene: '',
+        style: '',
+        budget: ''
+      }
+      uni.showToast({ title: '已重置筛选条件', icon: 'none' })
+    },
     submitSearch: function() {
-      this.saveHistory(this.keyword)
+      var safeKeyword = normalizeText(this.keyword)
+      this.saveHistory(safeKeyword)
       var query = [
-        'keyword=' + encodeURIComponent(this.keyword || ''),
+        'keyword=' + encodeURIComponent(safeKeyword || ''),
         'scene=' + encodeURIComponent(this.filters.scene || ''),
         'style=' + encodeURIComponent(this.filters.style || ''),
         'budget=' + encodeURIComponent(this.filters.budget || '')
       ].join('&')
       uni.navigateTo({ url: '/pages/results/index?' + query })
-    },
-    refreshFilters: function() {
-      this.loadTagOptions()
-      uni.showToast({ title: '正在刷新筛选项', icon: 'none' })
     }
   }
 }
 </script>
 
 <style scoped>
-.search-shell {
-  padding-top: 10rpx;
-}
-
-.search-hero {
-  margin-top: 0;
-  padding: 18rpx 18rpx;
-  border-radius: 28rpx;
-}
-
-.search-hero-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16rpx;
-}
-
-.search-hero-badge {
-  padding: 8rpx 14rpx;
-  font-size: 18rpx;
-}
-
-.search-hero-title {
-  margin-top: 10rpx;
-  font-size: 36rpx;
-  line-height: 1.14;
-}
-
-.search-hero-copy {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  line-height: 1.4;
-}
-
-.search-input-bar {
-  margin-top: 16rpx;
-  gap: 12rpx;
-  padding: 10rpx 10rpx 10rpx 16rpx;
-  border-radius: 22rpx;
-  background: rgba(255, 255, 255, 0.94);
-}
-
-.search-input {
-  flex: 1;
-  min-width: 0;
-  font-size: 24rpx;
-  color: #233544;
-}
-
-.search-submit-inline {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 92rpx;
-  height: 64rpx;
-  padding: 0 22rpx;
-  border-radius: 18rpx;
-  background: linear-gradient(135deg, rgba(201, 49, 91, 0.96), rgba(45, 87, 217, 0.92));
-  color: #ffffff;
-  font-size: 22rpx;
-  font-weight: 700;
-}
-
-.filter-summary-card {
-  margin-top: 14rpx;
-}
-
-.section-head,
-.filter-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14rpx;
-}
-
-.note-stamp {
-  display: inline-flex;
-  align-items: center;
-  padding: 10rpx 18rpx;
-  border-radius: 999rpx;
-  background: rgba(67, 198, 157, 0.14);
-  color: #34a77f;
-  font-size: 20rpx;
-  font-weight: 700;
-  letter-spacing: 2rpx;
-}
-
-.filter-summary-card {
-  padding: 18rpx 20rpx;
-  border-radius: 22rpx;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1rpx dashed rgba(104, 153, 188, 0.26);
-  box-shadow: 0 10rpx 22rpx rgba(52, 114, 154, 0.06);
-}
-
-.summary-kicker {
-  color: #50a0d6;
-  font-size: 20rpx;
-  font-weight: 700;
-  letter-spacing: 1rpx;
-}
-
-.search-summary-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12rpx;
-}
-
-.filter-panel {
-  margin-top: 18rpx;
-}
-
-.search-summary-card {
-  padding-top: 18rpx;
-}
-
-.search-summary-row {
-  gap: 10rpx;
-  margin-top: 12rpx;
-}
-
-.search-summary-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 10rpx 14rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 250, 245, 0.94);
-  border: 1rpx solid rgba(43, 24, 34, 0.08);
-  color: var(--campus-text-soft);
-  font-size: 20rpx;
-}
-
-.summary-empty {
-  margin-top: 12rpx;
-  color: var(--campus-text-muted);
-  font-size: 22rpx;
-  line-height: 1.5;
-}
-
-.search-section-meta {
-  color: var(--campus-text-muted);
-  font-size: 20rpx;
-}
-
-.history-row,
-.hot-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10rpx;
-  margin-right: 0;
-  margin-bottom: 0;
-}
-
-.history-row .chip,
-.hot-row .chip {
-  margin: 0;
-  min-height: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  flex: 0 0 auto;
-  padding: 12rpx 18rpx;
-  border-radius: 999rpx;
-  font-size: 22rpx;
-  line-height: 1.35;
-}
-
-.filter-panel {
-  padding-top: 22rpx;
-}
-
-.filter-chip-row {
-  gap: 10rpx;
-}
-
-.filter-chip-row .chip {
-  margin-right: 0;
-  margin-bottom: 0;
-  min-height: 0;
-  padding: 12rpx 18rpx;
-  border-radius: 999rpx;
-  font-size: 22rpx;
-}
+.search-shell { min-height: 100vh; padding-top: calc(var(--status-bar-height) + 18rpx); padding-bottom: calc(120rpx + env(safe-area-inset-bottom)); background: radial-gradient(circle at 10% 0%, rgba(255,213,103,0.16), transparent 24%), radial-gradient(circle at 92% 2%, rgba(68,165,255,0.14), transparent 28%), linear-gradient(180deg, #f7f8fa 0%, #f5f6f7 48%, #f8f3eb 100%); }
+.search-shell::before { top: 90rpx; right: -70rpx; width: 220rpx; height: 220rpx; background: radial-gradient(circle, rgba(68,165,255,0.16) 0%, rgba(68,165,255,0) 72%); }
+.search-shell::after { bottom: 120rpx; left: -90rpx; width: 260rpx; height: 260rpx; background: radial-gradient(circle, rgba(177,239,216,0.22) 0%, rgba(177,239,216,0) 72%); }
+.search-entry-card { display: grid; grid-template-columns: minmax(0, 1fr) 128rpx; gap: 12rpx; margin-bottom: 22rpx; }
+.search-entry-box { display: flex; align-items: center; height: 82rpx; padding: 0 22rpx; border-radius: 28rpx; background: rgba(255,255,255,0.82); box-shadow: 0 16rpx 30rpx rgba(44,47,48,0.06); backdrop-filter: blur(22rpx); }
+.search-entry-icon { width: 34rpx; height: 34rpx; border-radius: 999rpx; display: flex; align-items: center; justify-content: center; background: rgba(0,94,159,0.08); color: #005e9f; font-size: 18rpx; font-weight: 800; margin-right: 12rpx; flex-shrink: 0; }
+.search-entry-input { flex: 1; min-width: 0; color: #2c2f30; font-size: 26rpx; font-weight: 700; }
+.search-entry-button { display: flex; align-items: center; justify-content: center; border-radius: 28rpx; background: linear-gradient(135deg, #005e9f 0%, #44a5ff 100%); color: #edf3ff; font-size: 24rpx; font-weight: 700; box-shadow: 0 16rpx 28rpx rgba(0,94,159,0.18); }
+.search-section-card,.search-filter-card { margin-bottom: 18rpx; padding: 26rpx; border-radius: 30rpx; background: rgba(255,255,255,0.82); box-shadow: 0 18rpx 42rpx rgba(44,47,48,0.05); backdrop-filter: blur(20rpx); }
+.search-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12rpx; margin-bottom: 16rpx; }
+.search-section-title,.search-filter-title { color: #1f2937; font-size: 30rpx; font-weight: 800; }
+.search-section-action { min-width: 76rpx; height: 44rpx; padding: 0 14rpx; border-radius: 999rpx; display: flex; align-items: center; justify-content: center; background: rgba(0,94,159,0.08); color: #005e9f; font-size: 20rpx; font-weight: 700; }
+.search-section-meta,.search-filter-copy,.search-empty-copy { color: #7c7f88; font-size: 22rpx; line-height: 1.6; }
+.search-chip-row { display: flex; flex-wrap: wrap; gap: 12rpx; }
+.search-chip { min-height: 56rpx; padding: 0 22rpx; border-radius: 999rpx; display: inline-flex; align-items: center; justify-content: center; font-size: 22rpx; font-weight: 700; }
+.search-chip-soft,.search-chip-hot { background: rgba(239,241,242,0.92); color: #595c5d; border: 1rpx solid rgba(171,173,174,0.18); }
+.search-chip-hot { background: rgba(255,255,255,0.9); color: #596579; }
+.search-chip-active { background: linear-gradient(135deg, #005e9f 0%, #44a5ff 100%); color: #edf3ff; box-shadow: 0 14rpx 24rpx rgba(0,94,159,0.16); }
+.search-chip-history { padding-right: 10rpx; background: rgba(239,241,242,0.92); color: #596579; border: 1rpx solid rgba(171,173,174,0.18); }
+.search-chip-text { padding-left: 6rpx; padding-right: 10rpx; }
+.search-chip-remove { width: 36rpx; height: 36rpx; border-radius: 999rpx; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.82); color: #8a8d91; font-size: 22rpx; font-weight: 700; }
+.search-filter-copy { margin-top: 8rpx; }
+.search-filter-group { margin-top: 20rpx; }
+.search-filter-label { margin-bottom: 12rpx; color: #1f2937; font-size: 24rpx; font-weight: 700; }
+.search-filter-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12rpx; margin-top: 24rpx; }
+.search-filter-action { height: 72rpx; border-radius: 999rpx; display: flex; align-items: center; justify-content: center; font-size: 24rpx; font-weight: 700; }
+.search-filter-action-light { background: rgba(224,227,228,0.72); color: #595c5d; }
+.search-filter-action-primary { background: linear-gradient(135deg, #005e9f 0%, #44a5ff 100%); color: #edf3ff; box-shadow: 0 18rpx 28rpx rgba(0,94,159,0.18); }
 </style>

@@ -1,49 +1,33 @@
 <template>
   <view class="page-shell register-shell">
-    <view class="hero-card register-hero">
-      <view class="hero-badge">注册账号</view>
-      <view class="hero-title">先建立一张完整的校园身份卡</view>
-      <view class="hero-copy">这一步会一次性完成头像、昵称、学校、密码和固定验证码确认。注册成功后会直接进入你的个人主页。</view>
-      <view class="hero-card-row">
-        <view class="hero-card-pill">
-          <text class="hero-card-pill-value">1</text>
-          <text class="hero-card-pill-label">头像上传</text>
-        </view>
-        <view class="hero-card-pill">
-          <text class="hero-card-pill-value">2</text>
-          <text class="hero-card-pill-label">校园资料</text>
-        </view>
-        <view class="hero-card-pill">
-          <text class="hero-card-pill-value">3</text>
-          <text class="hero-card-pill-label">密码设置</text>
-        </view>
-      </view>
+    <view class="auth-header">
+      <view class="auth-brand">注册账号</view>
+      <view class="auth-title">注册 青搭</view>
+      <!-- <view class="auth-subtitle">只需填写核心信息，其他资料可稍后补充。</view> -->
     </view>
 
     <view class="panel-card register-panel">
-      <view class="auth-kicker">资料设置</view>
-      <view class="text-main auth-main-title">注册你的 CampusFit 账号</view>
-	  
-      <view class="register-avatar-row">
-        <view class="register-avatar-shell" @click="chooseAvatar">
-          <image v-if="avatarUrl" class="register-avatar-image" :src="avatarUrl" mode="aspectFill"></image>
-          <view v-else class="register-avatar-fallback">{{ avatarPreviewText }}</view>
-        </view>
-        <view class="register-avatar-copy">
-          <view class="register-avatar-title">上传头像</view>
-          <view class="register-avatar-desc">建议上传一张清晰头像，后续会显示在个人主页、评论区和关注列表里。</view>
-          <button class="btn-ghost register-avatar-button" :loading="avatarUploading" @click="chooseAvatar">{{ avatarUrl ? '重新上传' : '选择头像' }}</button>
-        </view>
-      </view>
+      <view class="register-section-label">核心信息</view>
 
       <view class="form-label">手机号</view>
-      <input class="form-input" v-model="phone" maxlength="11" placeholder="请输入 11 位手机号" />
+      <input
+        class="form-input register-input"
+        v-model="phone"
+        maxlength="11"
+        placeholder="请输入 11 位手机号"
+      />
 
       <view class="form-label auth-field-gap">验证码</view>
       <view class="auth-code-row">
-        <input class="form-input auth-code-input" v-model="code" maxlength="6" placeholder="请输入短信验证码" />
+        <input
+          class="form-input auth-code-input"
+          v-model="code"
+          maxlength="6"
+          placeholder="请输入验证码"
+        />
+        <view class="auth-code-divider"></view>
         <button
-          class="btn-ghost auth-code-button"
+          class="auth-code-button"
           :disabled="sendingCode || countdown > 0"
           :loading="sendingCode"
           @click="sendCode"
@@ -53,25 +37,118 @@
       </view>
 
       <view class="form-label auth-field-gap">昵称</view>
-      <input class="form-input" v-model="nickname" maxlength="20" placeholder="给自己起一个穿搭昵称" />
-
-      <view class="form-label auth-field-gap">学校</view>
-      <input class="form-input" v-model="schoolName" maxlength="40" placeholder="例如：浙江农林大学" />
-
-      <view class="form-label auth-field-gap">年级</view>
-      <input class="form-input" v-model="gradeName" maxlength="20" placeholder="例如：大三" />
+      <input
+        class="form-input register-input"
+        v-model="nickname"
+        maxlength="20"
+        placeholder="请输入昵称"
+      />
 
       <view class="form-label auth-field-gap">密码</view>
-      <input class="form-input" v-model="password" password maxlength="20" placeholder="请输入 6-20 位密码" />
+      <input
+        class="form-input register-input"
+        v-model="password"
+        password
+        maxlength="20"
+        placeholder="请输入 6-20 位密码"
+      />
 
       <view class="form-label auth-field-gap">确认密码</view>
-      <input class="form-input" v-model="confirmPassword" password maxlength="20" placeholder="请再次输入密码" />
+      <input
+        class="form-input register-input"
+        v-model="confirmPassword"
+        password
+        maxlength="20"
+        placeholder="请再次输入密码"
+      />
 
-      <view class="form-label auth-field-gap">个性签名</view>
-      <textarea class="form-textarea" v-model="signature" maxlength="60" placeholder="一句话介绍你的穿搭偏好、预算观或校园日常"></textarea>
+      <view class="register-optional-toggle" @click="toggleOptionalFields">
+        <view class="register-optional-main">
+          <view class="register-optional-title">补充个人资料</view>
+          <view class="register-optional-copy">头像、性别、邮箱、学校、居住地等</view>
+        </view>
+        <view class="register-optional-action">{{ showOptionalFields ? '收起' : '选填' }}</view>
+      </view>
 
-      <button class="btn-primary auth-submit" :loading="loading" @click="finish">完成注册</button>
-      <button class="btn-secondary auth-secondary" @click="goLogin">已有账号，去登录</button>
+      <view v-if="showOptionalFields" class="register-optional-fields">
+        <view class="register-avatar-row">
+          <view class="register-avatar-shell" @click="chooseAvatar">
+            <image v-if="avatarUrl" class="register-avatar-image" :src="avatarUrl" mode="aspectFill"></image>
+            <view v-else class="register-avatar-fallback">{{ avatarPreviewText }}</view>
+          </view>
+          <view class="register-avatar-copy">
+            <view class="register-avatar-title">头像</view>
+            <view class="register-avatar-desc">上传后会用于个人主页和互动场景展示。</view>
+          </view>
+          <button class="register-avatar-button" :loading="avatarUploading" @click="chooseAvatar">
+            {{ avatarUrl ? '重新上传' : '上传头像' }}
+          </button>
+        </view>
+
+        <view class="form-label auth-field-gap">性别</view>
+        <view class="register-gender-row">
+          <view
+            class="register-gender-pill"
+            :class="gender === 'male' ? 'register-gender-pill-active' : ''"
+            @click="toggleGender('male')"
+          >
+            男
+          </view>
+          <view
+            class="register-gender-pill"
+            :class="gender === 'female' ? 'register-gender-pill-active' : ''"
+            @click="toggleGender('female')"
+          >
+            女
+          </view>
+        </view>
+
+        <view class="form-label auth-field-gap">邮箱</view>
+        <input
+          class="form-input register-input"
+          v-model="email"
+          maxlength="120"
+          placeholder="请输入常用邮箱"
+        />
+
+        <view class="form-label auth-field-gap">学校</view>
+        <input
+          class="form-input register-input"
+          v-model="schoolName"
+          maxlength="40"
+          placeholder="请输入学校名称"
+        />
+
+        <view class="form-label auth-field-gap">年级</view>
+        <input
+          class="form-input register-input"
+          v-model="gradeName"
+          maxlength="20"
+          placeholder="请输入年级"
+        />
+
+        <view class="form-label auth-field-gap">居住地</view>
+        <input
+          class="form-input register-input"
+          v-model="locationName"
+          maxlength="60"
+          placeholder="例如：杭州 临安"
+        />
+
+        <view class="form-label auth-field-gap">个性签名</view>
+        <textarea
+          class="form-textarea register-textarea"
+          v-model="signature"
+          maxlength="60"
+          placeholder="简单介绍一下自己"
+        ></textarea>
+      </view>
+
+      <button class="btn-primary auth-submit" :loading="loading" @click="finish">注册并进入</button>
+
+      <view class="auth-footer">
+        <text class="auth-footer-link" @click="goLogin">已有账号，去登录</text>
+      </view>
     </view>
   </view>
 </template>
@@ -88,15 +165,19 @@ export default {
       sendingCode: false,
       countdown: 0,
       codeTimer: null,
+      showOptionalFields: false,
       phone: '',
       code: '',
       nickname: '',
-      schoolName: '',
-      gradeName: '',
       password: '',
       confirmPassword: '',
-      signature: '',
-      avatarUrl: ''
+      avatarUrl: '',
+      gender: '',
+      email: '',
+      schoolName: '',
+      gradeName: '',
+      locationName: '',
+      signature: ''
     }
   },
   computed: {
@@ -106,9 +187,9 @@ export default {
     },
     sendCodeText: function() {
       if (this.countdown > 0) {
-        return this.countdown + 's 后重发'
+        return this.countdown + 's'
       }
-      return this.sendingCode ? '发送中...' : '发送验证码'
+      return this.sendingCode ? '发送中' : '发送验证码'
     }
   },
   onLoad: function(options) {
@@ -118,6 +199,9 @@ export default {
     this.clearCodeTimer()
   },
   methods: {
+    toggleOptionalFields: function() {
+      this.showOptionalFields = !this.showOptionalFields
+    },
     clearCodeTimer: function() {
       if (this.codeTimer) {
         clearInterval(this.codeTimer)
@@ -151,17 +235,24 @@ export default {
         return
       }
       self.sendingCode = true
-      setTimeout(function() {
-        self.startCountdown(60)
-        uni.showToast({ title: '验证码已发送，请输入 040121', icon: 'none' })
-        self.sendingCode = false
-      }, 350)
+      api.sendAuthCode(self.phone, 'register')
+        .then(function(payload) {
+          self.startCountdown(payload && payload.retryAfterSeconds)
+          uni.showToast({ title: '验证码已发送', icon: 'none' })
+        })
+        .catch(function(error) {
+          uni.showToast({ title: error.message || '验证码发送失败', icon: 'none' })
+        })
+        .finally(function() {
+          self.sendingCode = false
+        })
     },
     chooseAvatar: function() {
       var self = this
       if (self.avatarUploading) {
         return
       }
+      self.showOptionalFields = true
       uni.chooseImage({
         count: 1,
         sizeType: ['compressed', 'original'],
@@ -189,10 +280,18 @@ export default {
         }
       })
     },
+    toggleGender: function(value) {
+      this.showOptionalFields = true
+      this.gender = this.gender === value ? '' : value
+    },
     finish: function() {
       var self = this
       if (!/^1\d{10}$/.test(self.phone)) {
         uni.showToast({ title: '请输入正确手机号', icon: 'none' })
+        return
+      }
+      if (!self.code) {
+        uni.showToast({ title: '请输入验证码', icon: 'none' })
         return
       }
       if (!self.nickname) {
@@ -207,10 +306,11 @@ export default {
         uni.showToast({ title: '两次输入的密码不一致', icon: 'none' })
         return
       }
-      if (!self.code) {
-        uni.showToast({ title: '请输入验证码 040121', icon: 'none' })
+      if (self.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(self.email)) {
+        uni.showToast({ title: '邮箱格式不正确', icon: 'none' })
         return
       }
+
       self.loading = true
       api.registerUser({
         phone: self.phone,
@@ -218,10 +318,13 @@ export default {
         password: self.password,
         confirmPassword: self.confirmPassword,
         nickname: self.nickname,
-        schoolName: self.schoolName,
-        gradeName: self.gradeName,
-        signature: self.signature,
-        avatarUrl: self.avatarUrl
+        avatarUrl: self.avatarUrl,
+        gender: self.gender || undefined,
+        email: self.email || undefined,
+        schoolName: self.schoolName || undefined,
+        gradeName: self.gradeName || undefined,
+        locationName: self.locationName || undefined,
+        signature: self.signature || undefined
       })
         .then(function(payload) {
           session.saveSession(payload)
@@ -253,60 +356,191 @@ export default {
         })
     },
     goLogin: function() {
-      uni.navigateTo({ url: '/pages/login/index?phone=' + encodeURIComponent(this.phone || '') })
+      uni.navigateTo({
+        url: '/pages/login/index?mode=password&phone=' + encodeURIComponent(this.phone || '')
+      })
     }
   }
 }
 </script>
 
-<style>
+<style scoped>
 .register-shell {
-  padding-bottom: 44rpx;
+  min-height: 100vh;
+  padding: 28rpx 28rpx 100rpx;
+  background: #f6f8fb;
 }
 
-.register-hero {
-  margin-bottom: 18rpx;
+.register-shell::before,
+.register-shell::after {
+  display: none;
 }
 
-.register-panel {
-  margin-top: 18rpx;
+.auth-header {
+  padding: 18rpx 6rpx 28rpx;
 }
 
-.auth-kicker {
+.auth-brand {
+  display: inline-flex;
+  align-items: center;
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  background: rgba(37, 99, 235, 0.08);
   color: var(--campus-primary);
   font-size: 22rpx;
   font-weight: 700;
-  letter-spacing: 2rpx;
 }
 
-.auth-main-title {
-  margin-top: 12rpx;
+.auth-title {
+  margin-top: 22rpx;
+  color: #101828;
+  font-size: 52rpx;
+  font-weight: 700;
+  line-height: 1.18;
 }
 
 .auth-subtitle {
-  margin-bottom: 0;
+  margin-top: 12rpx;
+  color: #667085;
+  font-size: 26rpx;
+  line-height: 1.6;
+}
+
+.register-panel {
+  padding: 28rpx;
+  border-radius: 32rpx;
+  border: 1rpx solid rgba(16, 24, 40, 0.06);
+  background: #ffffff;
+  box-shadow: 0 12rpx 36rpx rgba(16, 24, 40, 0.06);
+}
+
+.register-section-label {
+  margin-bottom: 8rpx;
+  color: #1570ef;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.auth-field-gap {
+  margin-top: 18rpx;
+}
+
+.register-input,
+.register-textarea {
+  margin-top: 8rpx;
+  border-color: #d0d5dd;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.auth-code-row {
+  display: flex;
+  align-items: center;
+  margin-top: 8rpx;
+  padding: 10rpx;
+  border: 1rpx solid #d0d5dd;
+  border-radius: 24rpx;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.auth-code-input {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0 18rpx 0 12rpx;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.auth-code-divider {
+  width: 1rpx;
+  height: 44rpx;
+  background: #e4e7ec;
+  flex-shrink: 0;
+}
+
+.auth-code-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 188rpx;
+  min-height: 68rpx;
+  margin: 0;
+  margin-left: 14rpx;
+  border-radius: 18rpx;
+  background: #1570ef;
+  color: #ffffff;
+  font-size: 24rpx;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.auth-code-button[disabled] {
+  opacity: 0.64;
+}
+
+.register-optional-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-top: 24rpx;
+  padding: 24rpx 0;
+  border-top: 1rpx solid #eaecf0;
+  border-bottom: 1rpx solid #eaecf0;
+}
+
+.register-optional-main {
+  flex: 1;
+}
+
+.register-optional-title {
+  color: #101828;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.register-optional-copy {
+  margin-top: 8rpx;
+  color: #667085;
+  font-size: 22rpx;
+  line-height: 1.6;
+}
+
+.register-optional-action {
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  background: #f2f4f7;
+  color: #344054;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.register-optional-fields {
+  padding-top: 6rpx;
 }
 
 .register-avatar-row {
   display: flex;
   align-items: center;
-  gap: 24rpx;
-  margin-top: 22rpx;
-  padding: 22rpx;
-  border-radius: 28rpx;
-  background:
-    linear-gradient(135deg, rgba(201, 49, 91, 0.06), transparent 32%),
-    linear-gradient(315deg, rgba(45, 87, 217, 0.06), transparent 36%),
-    rgba(255, 250, 245, 0.94);
+  gap: 18rpx;
+  margin-top: 18rpx;
+  padding: 22rpx 0;
+  border-bottom: 1rpx solid #eaecf0;
 }
 
 .register-avatar-shell {
-  width: 132rpx;
-  height: 132rpx;
-  border-radius: 38rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 28rpx;
   overflow: hidden;
-  background: linear-gradient(135deg, #ef6288 0%, #345fe0 100%);
-  box-shadow: 0 16rpx 30rpx rgba(201, 49, 91, 0.16);
+  background: #1570ef;
+  color: #ffffff;
 }
 
 .register-avatar-image {
@@ -315,84 +549,97 @@ export default {
 }
 
 .register-avatar-fallback {
-  width: 100%;
-  height: 100%;
   color: #ffffff;
-  text-align: center;
-  line-height: 132rpx;
-  font-size: 48rpx;
+  font-size: 36rpx;
   font-weight: 700;
 }
 
 .register-avatar-copy {
   flex: 1;
+  min-width: 0;
 }
 
 .register-avatar-title {
-  color: var(--campus-text);
+  color: #101828;
   font-size: 28rpx;
   font-weight: 700;
 }
 
 .register-avatar-desc {
-  margin-top: 10rpx;
-  color: var(--campus-text-soft);
+  margin-top: 8rpx;
+  color: #667085;
   font-size: 22rpx;
-  line-height: 1.7;
+  line-height: 1.6;
 }
 
 .register-avatar-button {
-  margin-top: 16rpx;
-}
-
-.auth-field-gap {
-  margin-top: 18rpx;
-}
-
-.auth-code-row {
   display: flex;
   align-items: center;
-  gap: 16rpx;
-}
-
-.auth-code-input {
-  flex: 1;
-  min-width: 0;
-}
-
-.auth-code-button {
-  width: 220rpx;
+  justify-content: center;
+  min-width: 164rpx;
+  min-height: 72rpx;
   margin: 0;
   padding: 0 18rpx;
-  flex-shrink: 0;
-}
-
-.auth-code-button[disabled] {
-  opacity: 0.72;
-}
-
-.register-note {
-  margin-top: 22rpx;
-}
-
-.auth-note-title {
-  color: var(--campus-text);
-  font-size: 24rpx;
-  font-weight: 700;
-}
-
-.auth-note-line {
-  margin-top: 10rpx;
-  color: var(--campus-text-soft);
+  border: 1rpx solid #d0d5dd;
+  border-radius: 18rpx;
+  background: #ffffff;
+  color: #344054;
   font-size: 22rpx;
-  line-height: 1.7;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.register-gender-row {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 8rpx;
+}
+
+.register-gender-pill {
+  min-width: 120rpx;
+  padding: 20rpx 0;
+  border: 1rpx solid #d0d5dd;
+  border-radius: 18rpx;
+  color: #344054;
+  font-size: 26rpx;
+  font-weight: 700;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.register-gender-pill-active {
+  border-color: #1570ef;
+  background: rgba(21, 112, 239, 0.08);
+  color: #1570ef;
 }
 
 .auth-submit {
+  margin-top: 28rpx;
+  background: #1570ef;
+  box-shadow: none;
+}
+
+.auth-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   margin-top: 24rpx;
 }
 
-.auth-secondary {
-  margin-top: 14rpx;
+.auth-footer-link {
+  color: #1570ef;
+  font-size: 24rpx;
+  line-height: 1;
+}
+
+@media (max-width: 360px) {
+  .register-avatar-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .register-avatar-button {
+    width: 100%;
+  }
 }
 </style>

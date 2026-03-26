@@ -3,6 +3,18 @@ var session = require('./session.js')
 
 var activeBaseUrl = ''
 var resolvingPromise = null
+var PING_OPTIONS = [
+  {
+    url: '/api/health',
+    method: 'GET',
+    timeout: 1800
+  },
+  {
+    url: '/api/posts/recommendations',
+    method: 'GET',
+    timeout: 2500
+  }
+]
 
 function unique(list) {
   var result = []
@@ -77,25 +89,30 @@ function rawRequest(baseUrl, options, silent) {
 }
 
 function ping(baseUrl) {
-  return rawRequest(baseUrl, {
-    url: '/api/health',
-    method: 'GET',
-    timeout: 1500
-  }, true).then(function() {
-    return baseUrl
-  })
+  function tryNext(index) {
+    if (index >= PING_OPTIONS.length) {
+      return Promise.reject(new Error('Backend ping failed'))
+    }
+    return rawRequest(baseUrl, PING_OPTIONS[index], true)
+      .then(function() {
+        return baseUrl
+      })
+      .catch(function() {
+        return tryNext(index + 1)
+      })
+  }
+  return tryNext(0)
 }
 
 function resolveBaseUrl(forceRefresh) {
-  if (!forceRefresh && getActiveBaseUrl()) {
-    activeBaseUrl = getActiveBaseUrl()
+  if (!forceRefresh && activeBaseUrl) {
     return Promise.resolve(activeBaseUrl)
   }
   if (!forceRefresh && resolvingPromise) {
     return resolvingPromise
   }
   var stored = uni.getStorageSync('campusfit_base_url')
-  var candidates = unique((stored ? [stored] : []).concat(config.getBaseUrlCandidates()))
+  var candidates = unique(config.getBaseUrlCandidates().concat(stored ? [stored] : []))
   resolvingPromise = new Promise(function(resolve, reject) {
     function tryNext(index) {
       if (index >= candidates.length) {

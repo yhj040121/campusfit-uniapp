@@ -68,7 +68,7 @@
           <view class="section-head" style="margin-top:0;">
             <view>
               <view class="section-title" style="margin-top:0;">提现申请</view>
-              <view class="section-subtitle">首版采用平台审核后线下打款的模式，先把申请与进度跑通</view>
+              <!-- <view class="section-subtitle">首版采用平台审核后线下打款的模式，先把申请与进度跑通</view> -->
             </view>
             <view class="float-link" @click="loadCenter(true)">刷新</view>
           </view>
@@ -362,5 +362,160 @@ export default {
 .settlement-amount {
   color: var(--campus-text);
   font-family: var(--campus-font-data);
+}
+
+.incentive-shell {
+  min-height: 100vh;
+  padding-top: 12rpx;
+  padding-bottom: calc(88rpx + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at top left, rgba(253, 210, 167, 0.24), transparent 34%),
+    radial-gradient(circle at top right, rgba(68, 165, 255, 0.16), transparent 28%),
+    linear-gradient(180deg, #f8fbff 0%, #f5f6f7 46%, #eef4fa 100%);
+}
+
+.incentive-shell .page-header {
+  display: none;
+}
+
+.incentive-shell .hero-card {
+  position: relative;
+  overflow: hidden;
+  margin-top: 0;
+  border-radius: 32rpx;
+  background: linear-gradient(135deg, #1e74bf 0%, #3f8fe1 52%, #6aaef8 100%);
+  box-shadow: 0 24rpx 52rpx rgba(23, 76, 132, 0.16);
+}
+
+.incentive-shell .hero-card::after {
+  content: '';
+  position: absolute;
+  right: -72rpx;
+  top: -56rpx;
+  width: 220rpx;
+  height: 220rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  filter: blur(16rpx);
+}
+
+.incentive-shell .hero-badge,
+.incentive-shell .hero-title,
+.incentive-shell .hero-copy,
+.incentive-shell .hero-card-pill-value,
+.incentive-shell .hero-card-pill-label {
+  position: relative;
+  z-index: 1;
+}
+
+.incentive-shell .hero-badge {
+  background: rgba(255, 255, 255, 0.16);
+  color: #eef6ff;
+}
+
+.incentive-shell .hero-title {
+  color: #ffffff;
+}
+
+.incentive-shell .hero-copy {
+  color: rgba(238, 246, 255, 0.84);
+}
+
+.incentive-shell .hero-card-pill {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.incentive-shell .status-item,
+.incentive-shell .panel-card,
+.incentive-shell .list-card {
+  border-radius: 32rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 24rpx 52rpx rgba(25, 52, 87, 0.07);
+  backdrop-filter: blur(24rpx);
+}
+
+.incentive-shell .status-item {
+  padding: 24rpx 22rpx;
+}
+
+.incentive-shell .status-item-label {
+  color: #6a788a;
+  font-size: 22rpx;
+}
+
+.incentive-shell .status-item-value {
+  margin-top: 10rpx;
+  color: #223247;
+  font-size: 34rpx;
+  font-weight: 700;
+  font-family: var(--campus-font-data);
+}
+
+.incentive-shell .withdraw-card {
+  padding-top: 28rpx;
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.incentive-shell .withdraw-amount {
+  color: #223247;
+  font-size: 56rpx;
+}
+
+.incentive-shell .text-copy,
+.incentive-shell .list-copy,
+.incentive-shell .section-subtitle {
+  color: #6a788a;
+}
+
+.incentive-shell .float-link,
+.incentive-shell .mini-tag,
+.incentive-shell .side-pill {
+  border-color: rgba(68, 165, 255, 0.18);
+  background: rgba(68, 165, 255, 0.1);
+  color: #1f63ac;
+}
+
+.incentive-shell .side-pill-active {
+  background: linear-gradient(90deg, #005e9f 0%, #44a5ff 100%);
+  color: #edf3ff;
+  border-color: transparent;
+  box-shadow: 0 14rpx 28rpx rgba(0, 94, 159, 0.16);
+}
+
+.incentive-shell .withdraw-note {
+  border-radius: 24rpx;
+  border: 2rpx solid rgba(191, 208, 226, 0.28);
+  background: rgba(245, 248, 252, 0.92);
+  color: #6a788a;
+}
+
+.incentive-shell .btn-primary {
+  background: linear-gradient(90deg, #005e9f 0%, #44a5ff 100%);
+  color: #edf3ff;
+  border-color: transparent;
+  box-shadow: 0 18rpx 34rpx rgba(0, 94, 159, 0.16);
+}
+
+.incentive-shell .btn-primary.btn-disabled {
+  opacity: 0.68;
+  box-shadow: none;
+}
+
+.incentive-shell .btn-secondary {
+  background: rgba(68, 165, 255, 0.1);
+  color: #1f63ac;
+  border-color: transparent;
+}
+
+.incentive-shell .settlement-amount {
+  color: #223247;
+}
+
+.incentive-shell .settlement-empty {
+  background: rgba(245, 248, 252, 0.92);
+  border-color: rgba(191, 208, 226, 0.28);
+  box-shadow: none;
 }
 </style>

@@ -212,4 +212,90 @@ export default {
 .follow-card {
   margin-top: 14rpx;
 }
+
+.follows-shell {
+  min-height: 100vh;
+  padding-top: 12rpx;
+  padding-bottom: calc(88rpx + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at top left, rgba(253, 210, 167, 0.24), transparent 34%),
+    radial-gradient(circle at top right, rgba(68, 165, 255, 0.16), transparent 28%),
+    linear-gradient(180deg, #f8fbff 0%, #f5f6f7 46%, #eef4fa 100%);
+}
+
+.follows-shell .section-head {
+  margin-top: 0 !important;
+  padding: 30rpx 28rpx;
+  border-radius: 32rpx;
+  background: linear-gradient(135deg, #1e74bf 0%, #3f8fe1 52%, #6aaef8 100%);
+  box-shadow: 0 24rpx 52rpx rgba(23, 76, 132, 0.16);
+}
+
+.follows-shell .section-title,
+.follows-shell .section-subtitle {
+  color: #ffffff;
+}
+
+.follows-shell .section-subtitle {
+  opacity: 0.82;
+}
+
+.follows-shell .float-link {
+  padding: 14rpx 22rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.16);
+  color: #eef6ff;
+}
+
+.follows-shell .chip-row {
+  margin-top: 16rpx;
+}
+
+.follows-shell .chip {
+  border-color: rgba(68, 165, 255, 0.18);
+  background: rgba(255, 255, 255, 0.82);
+  color: #6a788a;
+}
+
+.follows-shell .chip-active {
+  background: linear-gradient(90deg, #005e9f 0%, #44a5ff 100%);
+  color: #edf3ff;
+  border-color: transparent;
+  box-shadow: 0 14rpx 28rpx rgba(0, 94, 159, 0.16);
+}
+
+.follows-shell .chip-outline {
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.follows-shell .follow-card,
+.follows-shell .panel-card,
+.follows-shell .status-banner {
+  border-radius: 32rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 24rpx 52rpx rgba(25, 52, 87, 0.07);
+  backdrop-filter: blur(24rpx);
+}
+
+.follows-shell .follow-card {
+  margin-top: 16rpx;
+}
+
+.follows-shell .list-copy {
+  color: #6a788a;
+}
+
+.follows-shell .side-pill {
+  border-color: rgba(68, 165, 255, 0.18);
+  background: rgba(68, 165, 255, 0.1);
+  color: #1f63ac;
+}
+
+.follows-shell .side-pill-active {
+  background: linear-gradient(90deg, #005e9f 0%, #44a5ff 100%);
+  color: #edf3ff;
+  border-color: transparent;
+  box-shadow: 0 14rpx 28rpx rgba(0, 94, 159, 0.16);
+}
 </style>

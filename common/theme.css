@@ -1,20 +1,22 @@
 :root {
-  --campus-bg-top: #f8fcff;
-  --campus-bg-bottom: #edf5fb;
-  --campus-surface: rgba(255, 255, 255, 0.92);
+  --campus-bg-top: #f7f9fc;
+  --campus-bg-bottom: #eef2f8;
+  --campus-surface: rgba(255, 255, 255, 0.94);
   --campus-surface-strong: #ffffff;
-  --campus-surface-soft: rgba(255, 255, 255, 0.68);
-  --campus-border: rgba(109, 154, 190, 0.14);
-  --campus-text: #203142;
-  --campus-text-soft: #61788a;
-  --campus-text-muted: #87a0b1;
-  --campus-primary: #4ca9e6;
-  --campus-secondary: #43c69d;
-  --campus-accent: #ffb46b;
+  --campus-surface-soft: rgba(248, 250, 253, 0.9);
+  --campus-border: rgba(140, 155, 177, 0.18);
+  --campus-border-strong: rgba(37, 99, 235, 0.16);
+  --campus-text: #1f2a37;
+  --campus-text-soft: #586274;
+  --campus-text-muted: #98a2b3;
+  --campus-primary: #2563eb;
+  --campus-primary-deep: #165dcb;
+  --campus-secondary: #0c7bdc;
+  --campus-accent: #8fe6c2;
   --campus-danger: #ee6c80;
-  --campus-shadow-sm: 0 14rpx 28rpx rgba(55, 114, 152, 0.08);
-  --campus-shadow-md: 0 20rpx 40rpx rgba(55, 114, 152, 0.12);
-  --campus-shadow-lg: 0 26rpx 56rpx rgba(55, 114, 152, 0.16);
+  --campus-shadow-sm: 0 10rpx 24rpx rgba(15, 23, 42, 0.06);
+  --campus-shadow-md: 0 16rpx 36rpx rgba(15, 23, 42, 0.08);
+  --campus-shadow-lg: 0 26rpx 64rpx rgba(15, 23, 42, 0.12);
 }
 
 page {
@@ -24,11 +26,11 @@ page {
 .page-shell {
   position: relative;
   min-height: 100vh;
-  padding: 28rpx 24rpx 84rpx;
+  padding: 24rpx 24rpx 100rpx;
   box-sizing: border-box;
   background:
-    radial-gradient(circle at 12% 8%, rgba(112, 214, 255, 0.24), transparent 26%),
-    radial-gradient(circle at 88% 0%, rgba(111, 224, 181, 0.24), transparent 24%),
+    radial-gradient(circle at 12% 8%, rgba(37, 99, 235, 0.08), transparent 26%),
+    radial-gradient(circle at 88% 0%, rgba(12, 123, 220, 0.08), transparent 24%),
     linear-gradient(180deg, var(--campus-bg-top) 0%, var(--campus-bg-bottom) 100%);
 }
 
@@ -42,19 +44,19 @@ page {
 }
 
 .page-shell::before {
-  top: 36rpx;
+  top: 28rpx;
   right: -90rpx;
-  width: 240rpx;
-  height: 240rpx;
-  background: radial-gradient(circle, rgba(120, 224, 198, 0.28) 0%, rgba(120, 224, 198, 0) 72%);
+  width: 220rpx;
+  height: 220rpx;
+  background: radial-gradient(circle, rgba(141, 188, 255, 0.22) 0%, rgba(141, 188, 255, 0) 72%);
 }
 
 .page-shell::after {
-  bottom: 220rpx;
+  bottom: 210rpx;
   left: -110rpx;
   width: 280rpx;
   height: 280rpx;
-  background: radial-gradient(circle, rgba(88, 186, 245, 0.18) 0%, rgba(88, 186, 245, 0) 74%);
+  background: radial-gradient(circle, rgba(12, 123, 220, 0.09) 0%, rgba(12, 123, 220, 0) 74%);
 }
 
 .page-shell > * {
@@ -97,10 +99,10 @@ button::after {
   overflow: hidden;
   margin-bottom: 22rpx;
   padding: 34rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.45);
+  border: 1rpx solid rgba(255, 255, 255, 0.55);
   border-radius: 38rpx;
   background:
-    linear-gradient(140deg, rgba(73, 182, 237, 0.92) 0%, rgba(90, 210, 189, 0.92) 100%);
+    linear-gradient(135deg, #0f5fd7 0%, #0f7ddf 52%, #1ba7ff 100%);
   box-shadow: var(--campus-shadow-lg);
 }
 
@@ -163,8 +165,8 @@ button::after {
   align-items: center;
   height: 88rpx;
   padding: 0 24rpx;
-  border: 1rpx solid rgba(120, 166, 201, 0.14);
-  border-radius: 999rpx;
+  border: 1rpx solid rgba(140, 155, 177, 0.14);
+  border-radius: 28rpx;
   background: rgba(255, 255, 255, 0.96);
   box-shadow: var(--campus-shadow-sm);
   backdrop-filter: blur(18rpx);
@@ -175,7 +177,7 @@ button::after {
   height: 46rpx;
   margin-right: 16rpx;
   border-radius: 23rpx;
-  background: rgba(76, 169, 230, 0.12);
+  background: rgba(37, 99, 235, 0.08);
   color: var(--campus-primary);
   text-align: center;
   line-height: 46rpx;
@@ -208,10 +210,10 @@ button::after {
 }
 
 .chip-active {
-  background: linear-gradient(135deg, #58bdf0 0%, #67d9af 100%);
+  background: linear-gradient(135deg, #1f6bff 0%, #2aa8ff 100%);
   color: #ffffff;
   border-color: transparent;
-  box-shadow: 0 12rpx 24rpx rgba(73, 183, 237, 0.18);
+  box-shadow: 0 12rpx 24rpx rgba(37, 99, 235, 0.18);
 }
 
 .chip-outline {
@@ -420,8 +422,8 @@ button::after {
   margin-top: 16rpx;
   padding: 0 22rpx;
   border-radius: 24rpx;
-  background: rgba(244, 249, 252, 0.96);
-  border: 1rpx solid rgba(109, 154, 190, 0.12);
+  background: rgba(247, 249, 252, 0.96);
+  border: 1rpx solid rgba(140, 155, 177, 0.14);
   color: var(--campus-text);
   font-size: 26rpx;
   box-sizing: border-box;
@@ -448,10 +450,10 @@ button::after {
 .btn-primary {
   height: 86rpx;
   line-height: 86rpx;
-  background: linear-gradient(135deg, #58bdf0 0%, #36c597 100%);
+  background: linear-gradient(135deg, #1f6bff 0%, #2aa8ff 100%);
   color: #ffffff;
   font-size: 28rpx;
-  box-shadow: 0 16rpx 28rpx rgba(73, 183, 237, 0.2);
+  box-shadow: 0 16rpx 28rpx rgba(37, 99, 235, 0.24);
 }
 
 .btn-secondary {
@@ -459,14 +461,14 @@ button::after {
   line-height: 84rpx;
   background: rgba(255, 255, 255, 0.94);
   color: var(--campus-primary);
-  border: 2rpx solid rgba(87, 189, 240, 0.2);
+  border: 2rpx solid rgba(37, 99, 235, 0.14);
   font-size: 28rpx;
 }
 
 .btn-ghost {
   height: 76rpx;
   line-height: 76rpx;
-  background: rgba(87, 189, 240, 0.12);
+  background: rgba(37, 99, 235, 0.08);
   color: var(--campus-primary);
   font-size: 26rpx;
 }

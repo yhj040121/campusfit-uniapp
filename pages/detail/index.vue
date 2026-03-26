@@ -1,202 +1,252 @@
-<template>
+﻿<template>
   <view class="page-shell detail-shell">
-    <view class="detail-stage">
-      <view class="gallery-card">
-        <view class="gallery-head">
-          <view class="gallery-kicker">{{ post.coverTag || 'LOOKBOOK' }}</view>
-          <view class="gallery-count">{{ galleryCountLabel }}</view>
+    <view class="detail-topbar">
+      <view class="detail-topbar-side">
+        <view class="detail-icon-button" @click="goBack">
+          <text class="detail-icon-text">←</text>
         </view>
-
-        <swiper
-          class="gallery-swiper"
-          circular
-          :current="galleryCurrent"
-          @change="handleGalleryChange"
-        >
-          <swiper-item v-for="(item, index) in galleryImages" :key="item + '-' + index">
-            <view class="gallery-slide" @tap="previewGallery(index)">
-              <image v-if="item" class="gallery-image" :src="item" mode="aspectFill"></image>
-              <view v-else class="gallery-empty">
-                <view class="gallery-empty-kicker">OOTD</view>
-                <view class="gallery-empty-title">{{ post.title }}</view>
-                <view class="gallery-empty-copy">{{ post.subtitle }}</view>
-              </view>
-            </view>
-          </swiper-item>
-        </swiper>
-
-        <view class="gallery-hint">TAP TO ZOOM / SWIPE TO BROWSE</view>
-
-        <scroll-view
-          v-if="galleryImages.length > 1"
-          class="thumb-strip"
-          scroll-x="true"
-          scroll-with-animation="true"
-        >
-          <view class="thumb-row">
-            <view
-              v-for="(item, index) in galleryImages"
-              :key="'thumb-' + index"
-              :class="['thumb-item', galleryCurrent === index ? 'thumb-item-active' : '']"
-              @tap="setGalleryCurrent(index)"
-            >
-              <image class="thumb-image" :src="item" mode="aspectFill"></image>
-            </view>
-          </view>
-        </scroll-view>
       </view>
 
-      <view class="detail-head-card">
-        <view class="detail-topline">
-          <view class="detail-price-chip">{{ post.price }}</view>
-        </view>
-        <view class="detail-title">{{ post.title }}</view>
-        <view v-if="getDisplaySubtitle(post)" class="detail-subtitle">{{ getDisplaySubtitle(post) }}</view>
-        <view class="detail-tag-row">
-          <view class="detail-meta-chip">{{ post.scene }}</view>
-          <view class="detail-meta-chip">{{ post.style }}</view>
-          <view class="detail-meta-chip">预算 {{ post.budget }}</view>
-        </view>
-        <view class="chip-row detail-highlight-row" v-if="post.highlights && post.highlights.length">
-          <view class="chip chip-active" v-for="item in post.highlights" :key="item">{{ item }}</view>
-        </view>
-        <view class="detail-intro">{{ post.desc }}</view>
-        <view class="detail-summary-row">
-          <view class="detail-stat-inline">
-            <text class="detail-stat-inline-value">{{ post.likes }}</text>
-            <text class="detail-stat-inline-label">点赞</text>
+      <view class="detail-topbar-title">穿搭详情</view>
+
+      <view class="detail-topbar-side detail-topbar-side-right">
+        <view class="detail-icon-button" @click="sharePost">
+          <view class="detail-share-glyph">
+            <view class="detail-share-line detail-share-line-top"></view>
+            <view class="detail-share-line detail-share-line-bottom"></view>
+            <view class="detail-share-node detail-share-node-left"></view>
+            <view class="detail-share-node detail-share-node-top"></view>
+            <view class="detail-share-node detail-share-node-bottom"></view>
           </view>
-          <view class="detail-stat-inline">
-            <text class="detail-stat-inline-value">{{ post.comments }}</text>
-            <text class="detail-stat-inline-label">评论</text>
-          </view>
-          <view class="detail-stat-inline">
-            <text class="detail-stat-inline-value">{{ post.saves }}</text>
-            <text class="detail-stat-inline-label">收藏</text>
-          </view>
+        </view>
+        <view class="detail-avatar-button">
+          <image
+            v-if="authorAvatarUrl"
+            class="detail-avatar-button-image"
+            :src="authorAvatarUrl"
+            mode="aspectFill"
+          ></image>
+          <text v-else>{{ authorAvatarText }}</text>
         </view>
       </view>
     </view>
 
-    <view class="panel-card author-card">
-      <view class="author-head">
-        <view class="meta-left">
+    <view class="detail-hero">
+      <swiper
+        class="detail-hero-swiper"
+        circular
+        :current="galleryCurrent"
+        @change="handleGalleryChange"
+      >
+        <swiper-item v-for="(item, index) in galleryImages" :key="item + '-' + index">
+          <view class="detail-hero-slide" @tap="previewGallery(index)">
+            <image v-if="item" class="detail-hero-image" :src="item" mode="aspectFill"></image>
+            <view v-else class="detail-hero-empty">
+              <view class="detail-hero-empty-title">{{ post.title || '无' }}</view>
+              <view class="detail-hero-empty-copy">{{ post.desc || '无' }}</view>
+            </view>
+          </view>
+        </swiper-item>
+      </swiper>
+      <view class="detail-hero-count">{{ galleryCountLabel }}</view>
+    </view>
+
+    <view class="detail-main-card">
+      <view class="detail-author-row">
+        <view class="detail-author-main">
           <view :class="['avatar', post.avatarClass, authorAvatarUrl ? 'avatar-has-image' : '']">
             <image v-if="authorAvatarUrl" class="avatar-image" :src="authorAvatarUrl" mode="aspectFill"></image>
             <text v-else>{{ authorAvatarText }}</text>
           </view>
-          <view>
-            <view class="meta-name">{{ post.user }}</view>
-            <view class="meta-school">{{ post.school }}</view>
+          <view class="detail-author-copy">
+            <view class="detail-author-name">{{ post.user || '无' }}</view>
+            <view class="detail-author-school">{{ post.school || '无' }}</view>
           </view>
         </view>
+
         <view
-          :class="['side-pill', followed ? 'side-pill-active' : '', actionLoading ? 'btn-disabled' : '']"
+          :class="['detail-follow-button', followed ? 'detail-follow-button-active' : '', actionLoading ? 'detail-disabled' : '']"
           @click="toggleFollowAction"
         >
           {{ followLabel }}
         </view>
       </view>
 
-      <view class="action-row detail-actions">
-        <view
-          :class="['action-chip', liked ? 'action-chip-active' : '', actionLoading ? 'btn-disabled' : '']"
-          @click="toggleLikeAction"
-        >
-          {{ liked ? '已点赞' : '点赞' }}
-        </view>
-        <view
-          :class="['action-chip', saved ? 'action-chip-active' : '', actionLoading ? 'btn-disabled' : '']"
-          @click="toggleFavoriteAction"
-        >
-          {{ saved ? '已收藏' : '收藏' }}
-        </view>
-        <view class="action-chip" @click="goComments">评论</view>
-        <view class="action-chip" @click="sharePost">分享</view>
+      <view class="detail-main-title">{{ post.title || '无' }}</view>
+      <view v-if="getDisplaySubtitle(post)" class="detail-main-subtitle">{{ getDisplaySubtitle(post) }}</view>
+      <view class="detail-meta-row">
+        <view class="detail-meta-item">发布时间 {{ post.publishTime || '无' }}</view>
       </view>
+
+      <view v-if="post.scene || post.style || post.budget" class="detail-tag-row">
+        <view v-if="post.scene" class="detail-tag detail-tag-scene">{{ post.scene }}</view>
+        <view v-if="post.style" class="detail-tag detail-tag-style">{{ post.style }}</view>
+        <view v-if="post.budget" class="detail-tag detail-tag-budget">预算 {{ post.budget }}</view>
+      </view>
+      <view v-else class="detail-tag-row">
+        <view class="detail-tag detail-tag-muted">无</view>
+      </view>
+
+      <view class="detail-main-desc">{{ post.desc || '无' }}</view>
+
+      <view v-if="detailFailed" class="detail-state-text">当前未获取到真实详情数据</view>
+      <view v-else-if="detailLoading" class="detail-state-text">正在加载详情</view>
     </view>
 
-    <view v-if="currentActivity" class="panel-card detail-activity-card">
-      <view class="section-head detail-panel-head">
-        <view>
-          <view class="section-title detail-panel-title">所属活动</view>
-          <view class="section-subtitle detail-panel-subtitle">这条内容正在参与校园专题活动</view>
-        </view>
-        <view class="note-stamp">ACTIVITY</view>
+    <view
+      v-if="currentActivity"
+      class="detail-section-card detail-activity-card detail-activity-card-clickable"
+      @click="goActivityCenter"
+    >
+      <view class="detail-card-thumb detail-card-thumb-activity">
+        <view class="detail-activity-glyph">活</view>
       </view>
-      <view class="list-title">{{ currentActivity.title }}</view>
-      <view class="list-copy">{{ currentActivity.summary }}</view>
-      <view class="chip-row detail-panel-chips">
-        <view class="chip chip-active">{{ currentActivity.period }}</view>
-        <view class="chip chip-outline">{{ currentActivity.status }}</view>
+
+      <view class="detail-card-main">
+        <view class="detail-card-kicker">{{ currentActivity.badge || '关联活动' }}</view>
+        <view class="detail-card-title detail-card-title-compact">{{ currentActivity.title || '无' }}</view>
+        <view class="detail-card-meta">{{ currentActivity.period || currentActivity.progressText || currentActivity.statusCopy || currentActivity.status || '无' }}</view>
       </view>
-      <view class="note-box">参与说明：{{ currentActivity.participation }}</view>
-      <view class="note-box">活动奖励：{{ currentActivity.reward }}</view>
-      <view class="btn-row">
-        <button class="btn-secondary btn-half" @click="goActivityCenter">查看活动</button>
-        <button
-          class="btn-primary btn-half"
-          :disabled="activityActionLoading"
-          :class="activityActionLoading ? 'btn-disabled' : ''"
-          @click="toggleJoinActivity"
-        >
-          {{ currentActivity.joined ? '退出活动' : '报名活动' }}
-        </button>
+
+      <view class="detail-card-arrow">›</view>
+    </view>
+    <view v-else class="detail-section-card detail-inline-empty">无</view>
+
+    <view v-if="hasProductLink" class="detail-section-card detail-product-card" @click="goProduct">
+      <view class="detail-card-thumb detail-card-thumb-product">
+        <image v-if="productCoverUrl" class="detail-card-thumb-image" :src="productCoverUrl" mode="aspectFill"></image>
+        <view v-else class="detail-card-thumb-placeholder">商品</view>
       </view>
+
+      <view class="detail-card-main">
+        <view class="detail-card-kicker detail-card-kicker-light">推荐</view>
+        <view class="detail-card-title detail-card-title-light">{{ post.product || '无' }}</view>
+        <view class="detail-card-meta detail-card-meta-light">{{ productMetaText }}</view>
+      </view>
+
+      <view class="detail-product-buy" @click.stop="goProduct">去购买</view>
     </view>
 
-    <view class="panel-card guide-card">
-      <view class="section-head detail-panel-head">
+    <view id="detailComments" class="detail-section-card detail-comments-card">
+      <view class="detail-section-head detail-section-head-comments">
         <view>
-          <view class="section-title detail-panel-title">导购信息</view>
-          <view class="section-subtitle detail-panel-subtitle">从穿搭灵感直接进入商品参考</view>
+          <view class="detail-section-title">全部评论</view>
         </view>
-        <view class="note-stamp">GUIDE</view>
+        <view class="detail-section-link">共 {{ totalCommentCount }} 条评论</view>
       </view>
-      <view class="list-title">{{ post.product }}</view>
-      <view class="list-copy">{{ post.platform }}</view>
-      <view class="detail-price">{{ post.price }}</view>
-      <view v-if="showSafeReminder" class="note-box">理性消费提示：{{ post.guideTip }}</view>
-      <view class="note-box">激励说明：{{ post.profit }}</view>
-      <view class="btn-row">
-        <button class="btn-secondary btn-half" @click="goLikes">查看点赞</button>
-        <button class="btn-primary btn-half" @click="goProduct">查看商品</button>
-      </view>
-    </view>
 
-    <view class="panel-card comment-preview-card">
-      <view class="section-head detail-panel-head">
-        <view>
-          <view class="section-title detail-panel-title">评论预览</view>
-          <view class="section-subtitle detail-panel-subtitle">先看看大家在关注什么，再进入完整评论区</view>
-        </view>
-        <view class="float-link" @click="goComments">全部评论</view>
-      </view>
-      <view v-if="previewComments.length">
-        <view class="preview-item" v-for="item in previewComments" :key="item.id">
-          <view :class="['avatar', item.avatarClass, item.avatarUrl ? 'avatar-has-image' : '']">
-            <image v-if="item.avatarUrl" class="avatar-image" :src="item.avatarUrl" mode="aspectFill"></image>
-            <text v-else>{{ item.avatar }}</text>
-          </view>
-          <view class="preview-body">
-            <view class="preview-name-row">
-              <view class="meta-name">{{ item.name }}</view>
-              <view class="meta-school">{{ item.time }}</view>
+      <view v-if="allComments.length">
+        <view class="detail-comment-block" v-for="item in allComments" :key="item.id">
+          <view class="detail-comment-item">
+            <view :class="['avatar', item.avatarClass, item.avatarUrl ? 'avatar-has-image' : '']">
+              <image v-if="item.avatarUrl" class="avatar-image" :src="item.avatarUrl" mode="aspectFill"></image>
+              <text v-else>{{ item.avatar || item.name || '评' }}</text>
             </view>
-            <view class="text-copy">
-              <text v-if="item.replyToName" class="preview-reply-prefix">回复 {{ item.replyToName }}：</text>
-              <text>{{ item.text }}</text>
-            </view>
-            <view class="preview-action-row">
-              <view class="preview-action" @click="togglePreviewCommentLike(item)">
-                {{ item.liked ? '已赞' : '点赞' }} {{ item.likes || 0 }}
+
+            <view class="detail-comment-body">
+              <view class="detail-comment-head">
+                <view class="detail-comment-name">{{ item.name || '无' }}</view>
+                <view class="detail-comment-time">{{ item.time || '无' }}</view>
               </view>
-              <view class="preview-action" @click="replyPreviewComment(item)">回复</view>
+
+              <view class="detail-comment-text">
+                <text v-if="item.replyToName" class="detail-comment-reply">回复 {{ item.replyToName }}：</text>
+                <text>{{ item.text || item.content || '无' }}</text>
+              </view>
+
+              <view class="detail-comment-actions">
+                <view class="detail-comment-action" @click="togglePreviewCommentLike(item)">
+                  {{ item.liked ? '已赞' : '点赞' }} {{ formatCount(item.likes || 0) }}
+                </view>
+                <view class="detail-comment-action" @click="setReplyTarget(item)">
+                  {{ item.replies && item.replies.length ? ('回复 ' + item.replies.length) : '回复' }}
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view v-if="item.replies && item.replies.length" class="detail-reply-list">
+            <view class="detail-reply-card" v-for="reply in item.replies" :key="reply.id">
+              <view :class="['avatar', reply.avatarClass, reply.avatarUrl ? 'avatar-has-image' : '']">
+                <image v-if="reply.avatarUrl" class="avatar-image" :src="reply.avatarUrl" mode="aspectFill"></image>
+                <text v-else>{{ reply.avatar || reply.name || '回' }}</text>
+              </view>
+
+              <view class="detail-comment-body">
+                <view class="detail-comment-head">
+                  <view class="detail-comment-name">{{ reply.name || '无' }}</view>
+                  <view class="detail-comment-time">{{ reply.time || '无' }}</view>
+                </view>
+
+                <view class="detail-comment-text">
+                  <text v-if="reply.replyToName" class="detail-comment-reply">回复 {{ reply.replyToName }}：</text>
+                  <text>{{ reply.text || reply.content || '无' }}</text>
+                </view>
+
+                <view class="detail-comment-actions">
+                  <view class="detail-comment-action" @click="togglePreviewCommentLike(reply)">
+                    {{ reply.liked ? '已赞' : '点赞' }} {{ formatCount(reply.likes || 0) }}
+                  </view>
+                  <view class="detail-comment-action" @click="setReplyTarget(reply)">回复</view>
+                </view>
+              </view>
             </view>
           </view>
         </view>
       </view>
-      <view v-else class="text-copy">还没有评论，快来留下第一条建议吧。</view>
+      <view v-else class="detail-empty-text">无</view>
+
+      <view id="detailCommentComposer" class="detail-comment-composer">
+        <view class="detail-composer-head">
+          <view class="detail-composer-title">{{ replyTarget ? ('回复 ' + replyTarget.name) : '写评论' }}</view>
+          <view v-if="replyTarget" class="detail-composer-clear" @click="clearReplyTarget">取消回复</view>
+        </view>
+
+        <textarea
+          v-model="draft"
+          class="detail-composer-textarea"
+          maxlength="120"
+          :placeholder="draftPlaceholder"
+        ></textarea>
+
+        <view
+          :class="['detail-composer-submit', submitting ? 'detail-disabled' : '']"
+          @click="submitComment"
+        >
+          {{ submitting ? '发送中' : (replyTarget ? '发送回复' : '发送评论') }}
+        </view>
+      </view>
+    </view>
+
+    <view class="detail-bottom-bar">
+      <view
+        :class="['detail-bottom-item', liked ? 'detail-bottom-item-active' : '', actionLoading ? 'detail-disabled' : '']"
+        @click="toggleLikeAction"
+      >
+        <text class="detail-bottom-icon">{{ liked ? '♥' : '♡' }}</text>
+        <text class="detail-bottom-text">{{ formatCount(post.likes) }}</text>
+      </view>
+
+      <view
+        :class="['detail-bottom-item', saved ? 'detail-bottom-item-active' : '', actionLoading ? 'detail-disabled' : '']"
+        @click="toggleFavoriteAction"
+      >
+        <text class="detail-bottom-icon">{{ saved ? '★' : '☆' }}</text>
+        <text class="detail-bottom-text">{{ formatCount(post.saves) }}</text>
+      </view>
+
+      <view class="detail-bottom-item" @click="goComments">
+        <text class="detail-bottom-icon">评</text>
+        <text class="detail-bottom-text">{{ formatCount(totalCommentCount) }}</text>
+      </view>
+
+      <view class="detail-bottom-item detail-bottom-item-share" @click="sharePost">
+        <view class="detail-send-glyph">
+          <view class="detail-send-wing"></view>
+          <view class="detail-send-tail"></view>
+        </view>
+        <text class="detail-bottom-text">分享</text>
+      </view>
     </view>
   </view>
 </template>
@@ -211,9 +261,9 @@ var settingsStore = require('../../common/settings.js')
 function pickFirstText(value, fallback) {
   var text = String(value || '').trim()
   if (!text) {
-    return fallback || 'C'
+    return fallback || '青'
   }
-  return text.slice(0, 1).toUpperCase()
+  return text.slice(0, 1)
 }
 
 function resolveAuthorAvatarUrl(post, isMine) {
@@ -251,14 +301,13 @@ function buildShareMetaLine(post) {
     segments.push(detail.style)
   }
   if (detail.budget) {
-    segments.push('\u9884\u7b97 ' + detail.budget)
+    segments.push('预算 ' + detail.budget)
   }
-  return segments.join(' \u00b7 ')
+  return segments.join(' · ')
 }
-
 function buildShareCopyText(post, link) {
   var detail = post || {}
-  var lines = [detail.title || 'CampusFit \u7a7f\u642d\u5206\u4eab']
+  var lines = [(detail.title && String(detail.title).trim()) || '穿搭分享']
   var metaLine = buildShareMetaLine(detail)
   if (metaLine) {
     lines.push(metaLine)
@@ -274,10 +323,10 @@ function buildShareCopyText(post, link) {
     productLine.push(detail.price)
   }
   if (productLine.length) {
-    lines.push('\u5546\u54c1\uff1a' + productLine.join(' \u00b7 '))
+    lines.push('商品：' + productLine.join(' · '))
   }
   if (link) {
-    lines.push('\u5546\u54c1\u94fe\u63a5\uff1a' + link)
+    lines.push('商品链接：' + link)
   }
   return lines.join('\n')
 }
@@ -292,37 +341,53 @@ function getCurrentShareUrl(postId) {
   return ''
 }
 
+function formatCountValue(value) {
+  var count = Number(value || 0)
+  if (!count) {
+    return '0'
+  }
+  if (count >= 10000) {
+    return (count / 10000).toFixed(count >= 100000 ? 0 : 1) + '万'
+  }
+  if (count >= 1000) {
+    return (count / 1000).toFixed(count >= 10000 ? 0 : 1) + '千'
+  }
+  return String(count)
+}
+
 function emptyPost(id) {
   return {
-    id: id,
-    coverTag: '\u6821\u56ed\u63a8\u8350',
-    title: '\u6b63\u5728\u52a0\u8f7d\u7a7f\u642d\u8be6\u60c5',
-    subtitle: '\u7a0d\u7b49\u4e00\u4e0b\uff0c\u6211\u4eec\u6b63\u5728\u6574\u7406\u8fd9\u6761\u5185\u5bb9\u7684\u6838\u5fc3\u4eae\u70b9\u3002',
-    desc: '\u7cfb\u7edf\u4f1a\u540c\u6b65\u7a7f\u642d\u63cf\u8ff0\u3001\u573a\u666f\u6807\u7b7e\u3001\u5bfc\u8d2d\u4fe1\u606f\u548c\u4e92\u52a8\u72b6\u6001\uff0c\u65b9\u4fbf\u4f60\u7ee7\u7eed\u6d4f\u89c8\u548c\u64cd\u4f5c\u3002',
+    id: id || '',
+    coverTag: '',
+    title: '无',
+    subtitle: '',
+    publishTime: '',
+    desc: '无',
     coverImageUrl: '',
     imageUrls: [],
-    authorId: 0,
-    user: 'CampusFit',
-    avatar: 'C',
+    authorId: '',
+    user: '无',
+    avatar: '青',
     avatarUrl: '',
     avatarClass: 'soft',
-    school: '\u6821\u56ed\u7a7f\u642d\u793e',
+    school: '无',
     mine: false,
     liked: false,
     favorited: false,
     followed: false,
-    scene: '\u56fe\u4e66\u9986',
-    style: '\u6e05\u723d\u901a\u52e4',
-    budget: '100-150',
+    scene: '',
+    style: '',
+    budget: '',
     likes: 0,
     comments: 0,
     saves: 0,
     shares: 0,
-    price: '\u9884\u7b97 100-150',
-    product: '\u6d45\u84dd\u9488\u7ec7\u5f00\u886b\u4e0e\u767e\u8936\u534a\u88d9',
-    platform: '\u6dd8\u5b9d / \u5929\u732b',
-    profit: '\u5546\u5bb6\u63a8\u5e7f\u8d39\u4f1a\u6309\u5e73\u53f0\u89c4\u5219\u62c6\u5206\u4e3a\u670d\u52a1\u8d39\u548c\u6fc0\u52b1\u6c60\uff0c\u521b\u4f5c\u8005\u6fc0\u52b1\u4e3b\u8981\u53c2\u8003\u4e92\u52a8\u3001\u8d28\u91cf\u4e0e\u5408\u89c4\u8868\u73b0\u3002',
-    guideTip: '\u8bf7\u7ed3\u5408\u9884\u7b97\u3001\u4f7f\u7528\u9891\u7387\u548c\u573a\u666f\u9700\u6c42\u7406\u6027\u9009\u8d2d\u3002',
+    price: '无',
+    product: '无',
+    platform: '无',
+    productLink: '',
+    profit: '无',
+    guideTip: '',
     activity: null,
     highlights: [],
     commentsPreview: []
@@ -331,20 +396,56 @@ function emptyPost(id) {
 
 function isAuthError(error) {
   var message = ((error && error.message) || '').toLowerCase()
-  return message.indexOf('login') > -1 || message.indexOf('401') > -1 || message.indexOf('\u767b\u5f55') > -1
+  return message.indexOf('login') > -1 || message.indexOf('401') > -1 || message.indexOf('登录') > -1
+}
+
+function updateCommentTree(list, commentId, updater) {
+  var changed = false
+  var next = (list || []).map(function(item) {
+    var current = item
+    if (current && String(current.id) === String(commentId)) {
+      changed = true
+      return updater(current)
+    }
+    if (current && current.replies && current.replies.length) {
+      var nextReplies = updateCommentTree(current.replies, commentId, updater)
+      if (nextReplies !== current.replies) {
+        changed = true
+        return Object.assign({}, current, { replies: nextReplies })
+      }
+    }
+    return current
+  })
+  return changed ? next : list
+}
+
+function countCommentTree(list) {
+  var total = 0
+  var source = list || []
+  for (var i = 0; i < source.length; i += 1) {
+    total += 1
+    if (source[i] && source[i].replies && source[i].replies.length) {
+      total += countCommentTree(source[i].replies)
+    }
+  }
+  return total
 }
 
 export default {
   data: function() {
     return {
-      postId: 'look1',
-      post: emptyPost('look1'),
+      postId: '',
+      post: emptyPost(''),
       liked: false,
       saved: false,
       followed: false,
       isMine: false,
       currentActivity: null,
-      previewComments: [],
+      allComments: [],
+      commentsLoading: false,
+      draft: '',
+      replyTarget: null,
+      submitting: false,
       detailLoading: false,
       detailFailed: false,
       actionLoading: false,
@@ -352,16 +453,16 @@ export default {
       shareLoading: false,
       shareLink: '',
       galleryCurrent: 0,
-      settingMap: settingsStore.getSettingMap(),
-      statusText: '\u6b63\u5728\u51c6\u5907\u8be6\u60c5\u5185\u5bb9...'
+      detailRequested: false,
+      settingMap: settingsStore.getSettingMap()
     }
   },
   computed: {
     followLabel: function() {
       if (this.isMine) {
-        return '\u6211\u7684\u5185\u5bb9'
+        return '我的内容'
       }
-      return this.followed ? '\u5df2\u5173\u6ce8' : '\u5173\u6ce8'
+      return this.followed ? '已关注' : '关注'
     },
     galleryImages: function() {
       var source = []
@@ -390,71 +491,135 @@ export default {
       return resolveAuthorAvatarUrl(this.post, this.isMine)
     },
     authorAvatarText: function() {
-      return pickFirstText((this.post && this.post.avatar) || (this.post && this.post.user), 'C')
+      return pickFirstText((this.post && this.post.avatar) || (this.post && this.post.user), '青')
+    },
+    hasProductLink: function() {
+      return !!(this.post && this.post.productLink && String(this.post.productLink).trim())
+    },
+    productCoverUrl: function() {
+      return this.galleryImages[0] || postDisplay.getDisplayCoverUrl(this.post) || ''
+    },
+    productMetaText: function() {
+      var parts = []
+      if (this.post && this.post.price) {
+        parts.push(this.post.price)
+      } else if (this.post && this.post.budget) {
+        parts.push('预算 ' + this.post.budget)
+      }
+      if (this.post && this.post.platform) {
+        parts.push(this.post.platform)
+      }
+      return parts.length ? parts.join(' · ') : '无'
+    },
+    totalCommentCount: function() {
+      var total = countCommentTree(this.allComments)
+      if (total) {
+        return total
+      }
+      return Number((this.post && this.post.comments) || 0)
+    },
+    draftPlaceholder: function() {
+      return this.replyTarget ? ('回复 ' + this.replyTarget.name + '...') : '写下你的评论...'
     }
   },
   onShareAppMessage: function() {
     return {
-      title: (this.post && this.post.title) || 'CampusFit \u7a7f\u642d\u5206\u4eab',
-      path: '/pages/detail/index?id=' + ((this.post && this.post.id) || this.postId || 'look1'),
+      title: (this.post && this.post.title) || '穿搭分享',
+      path: '/pages/detail/index?id=' + ((this.post && this.post.id) || this.postId || ''),
       imageUrl: (this.galleryImages && this.galleryImages[0]) || (this.post && this.post.coverImageUrl) || ''
     }
   },
   onShareTimeline: function() {
     return {
-      title: (this.post && this.post.title) || 'CampusFit \u7a7f\u642d\u5206\u4eab',
-      query: 'id=' + ((this.post && this.post.id) || this.postId || 'look1'),
+      title: (this.post && this.post.title) || '穿搭分享',
+      query: 'id=' + ((this.post && this.post.id) || this.postId || ''),
       imageUrl: (this.galleryImages && this.galleryImages[0]) || (this.post && this.post.coverImageUrl) || ''
     }
   },
   onLoad: function(options) {
-    this.postId = (options && options.id) || 'look1'
+    this.postId = (options && options.id) || ''
     this.post = emptyPost(this.postId)
     this.loadDetail()
   },
   onShow: function() {
     this.settingMap = settingsStore.getSettingMap()
-    if (this.postId) {
+    if (this.postId && !this.detailRequested) {
       this.loadDetail()
     }
   },
   methods: {
+    formatCount: function(value) {
+      return formatCountValue(value)
+    },
+    goBack: function() {
+      var pages = typeof getCurrentPages === 'function' ? getCurrentPages() : []
+      if (pages && pages.length > 1) {
+        uni.navigateBack({ delta: 1 })
+        return
+      }
+      uni.switchTab({ url: '/pages/index/index' })
+    },
     loadDetail: function() {
       var self = this
+      if (!self.postId) {
+        self.post = emptyPost('')
+        self.currentActivity = null
+        self.allComments = []
+        self.detailFailed = true
+        self.detailLoading = false
+        self.detailRequested = false
+        return
+      }
+      self.detailRequested = true
       self.detailLoading = true
       self.detailFailed = false
       self.shareLink = ''
-      self.statusText = '\u6b63\u5728\u540c\u6b65\u8fd9\u6761\u7a7f\u642d\u7684\u8be6\u60c5\u4fe1\u606f\u3002'
       api.getPostDetail(self.postId)
         .then(function(detail) {
-          self.post = detail
-          self.liked = !!detail.liked
-          self.saved = !!detail.favorited
-          self.followed = !!detail.followed
-          self.isMine = !!detail.mine
-          self.currentActivity = detail.activity || null
-          self.previewComments = detail.commentsPreview || []
+          var merged = Object.assign({}, emptyPost(self.postId), detail || {})
+          self.post = merged
+          self.liked = !!merged.liked
+          self.saved = !!merged.favorited
+          self.followed = !!merged.followed
+          self.isMine = !!merged.mine
+          self.currentActivity = merged.activity || null
           self.galleryCurrent = 0
-          self.statusText = '\u5185\u5bb9\u5df2\u66f4\u65b0\uff0c\u53ef\u4ee5\u7ee7\u7eed\u67e5\u770b\u5bfc\u8d2d\u3001\u8bc4\u8bba\u548c\u6d3b\u52a8\u4fe1\u606f\u3002'
           self.detailFailed = false
+          self.loadComments()
         })
         .catch(function() {
           self.post = emptyPost(self.postId)
           self.currentActivity = null
-          self.previewComments = []
+          self.allComments = []
           self.galleryCurrent = 0
-          self.statusText = '\u6682\u65f6\u65e0\u6cd5\u83b7\u53d6\u6700\u65b0\u8be6\u60c5\uff0c\u5f53\u524d\u5c55\u793a\u9ed8\u8ba4\u5185\u5bb9\u3002'
           self.detailFailed = true
+          self.detailRequested = false
         })
         .finally(function() {
           self.detailLoading = false
         })
     },
+    loadComments: function() {
+      var self = this
+      if (!self.postId) {
+        self.allComments = []
+        return
+      }
+      self.commentsLoading = true
+      api.listComments(self.postId)
+        .then(function(list) {
+          self.allComments = list || []
+          self.post.comments = countCommentTree(self.allComments)
+        })
+        .catch(function() {
+          self.allComments = []
+        })
+        .finally(function() {
+          self.commentsLoading = false
+        })
+    },
     handleGalleryChange: function(event) {
       this.galleryCurrent = (event && event.detail && typeof event.detail.current === 'number') ? event.detail.current : 0
-    },
-    setGalleryCurrent: function(index) {
-      this.galleryCurrent = index
     },
     previewGallery: function(index) {
       var images = this.galleryImages
@@ -468,11 +633,11 @@ export default {
     },
     toggleLikeAction: function() {
       var self = this
-      if (self.actionLoading) {
+      if (self.actionLoading || !self.post.id) {
         return
       }
       if (!session.isLoggedIn()) {
-        self.promptLogin('\u767b\u5f55\u540e\u624d\u80fd\u70b9\u8d5e\u8fd9\u6761\u5185\u5bb9\u3002')
+        self.promptLogin('登录后才能点赞这条内容。')
         return
       }
       self.actionLoading = true
@@ -480,10 +645,10 @@ export default {
         .then(function(result) {
           self.liked = !!result.active
           self.post.likes = result.count
-          uni.showToast({ title: self.liked ? '\u5df2\u70b9\u8d5e' : '\u5df2\u53d6\u6d88\u70b9\u8d5e', icon: 'none' })
+          uni.showToast({ title: self.liked ? '已点赞' : '已取消点赞', icon: 'none' })
         })
         .catch(function(error) {
-          self.handleActionError(error, '\u70b9\u8d5e\u72b6\u6001\u66f4\u65b0\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002')
+          self.handleActionError(error, '点赞状态更新失败，请稍后重试。')
         })
         .finally(function() {
           self.actionLoading = false
@@ -491,11 +656,11 @@ export default {
     },
     toggleFavoriteAction: function() {
       var self = this
-      if (self.actionLoading) {
+      if (self.actionLoading || !self.post.id) {
         return
       }
       if (!session.isLoggedIn()) {
-        self.promptLogin('\u767b\u5f55\u540e\u624d\u80fd\u6536\u85cf\u8fd9\u6761\u5185\u5bb9\u3002')
+        self.promptLogin('登录后才能收藏这条内容。')
         return
       }
       self.actionLoading = true
@@ -503,10 +668,10 @@ export default {
         .then(function(result) {
           self.saved = !!result.active
           self.post.saves = result.count
-          uni.showToast({ title: self.saved ? '\u5df2\u6536\u85cf' : '\u5df2\u53d6\u6d88\u6536\u85cf', icon: 'none' })
+          uni.showToast({ title: self.saved ? '已收藏' : '已取消收藏', icon: 'none' })
         })
         .catch(function(error) {
-          self.handleActionError(error, '\u6536\u85cf\u72b6\u6001\u66f4\u65b0\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002')
+          self.handleActionError(error, '收藏状态更新失败，请稍后重试。')
         })
         .finally(function() {
           self.actionLoading = false
@@ -514,25 +679,25 @@ export default {
     },
     toggleFollowAction: function() {
       var self = this
-      if (self.actionLoading) {
+      if (self.actionLoading || !self.post.authorId) {
         return
       }
       if (self.isMine) {
-        uni.showToast({ title: '\u8fd9\u662f\u4f60\u81ea\u5df1\u7684\u5185\u5bb9\u3002', icon: 'none' })
+        uni.showToast({ title: '这是你自己的内容。', icon: 'none' })
         return
       }
       if (!session.isLoggedIn()) {
-        self.promptLogin('\u767b\u5f55\u540e\u624d\u80fd\u5173\u6ce8\u8fd9\u4f4d\u540c\u5b66\u3002')
+        self.promptLogin('登录后才能关注这位同学。')
         return
       }
       self.actionLoading = true
       api.toggleFollow(self.post.authorId)
         .then(function(result) {
           self.followed = !!result.active
-          uni.showToast({ title: self.followed ? '\u5df2\u5173\u6ce8' : '\u5df2\u53d6\u6d88\u5173\u6ce8', icon: 'none' })
+          uni.showToast({ title: self.followed ? '已关注' : '已取消关注', icon: 'none' })
         })
         .catch(function(error) {
-          self.handleActionError(error, '\u5173\u6ce8\u72b6\u6001\u66f4\u65b0\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002')
+          self.handleActionError(error, '关注状态更新失败，请稍后重试。')
         })
         .finally(function() {
           self.actionLoading = false
@@ -540,11 +705,11 @@ export default {
     },
     toggleJoinActivity: function() {
       var self = this
-      if (!self.currentActivity || self.activityActionLoading) {
+      if (!self.currentActivity || !self.currentActivity.id || self.activityActionLoading) {
         return
       }
       if (!session.isLoggedIn()) {
-        self.promptLogin('\u767b\u5f55\u540e\u624d\u80fd\u62a5\u540d\u6216\u9000\u51fa\u6d3b\u52a8\u3002')
+        self.promptLogin('登录后才能报名或退出活动。')
         return
       }
       self.activityActionLoading = true
@@ -555,10 +720,10 @@ export default {
           if (selected && selected.id === updated.id) {
             activityStore.selectActivity(updated)
           }
-          uni.showToast({ title: updated.joined ? '\u5df2\u62a5\u540d\u6d3b\u52a8' : '\u5df2\u9000\u51fa\u6d3b\u52a8', icon: 'none' })
+          uni.showToast({ title: updated.joined ? '已报名活动' : '已退出活动', icon: 'none' })
         })
         .catch(function(error) {
-          self.handleActionError(error, '\u6d3b\u52a8\u72b6\u6001\u66f4\u65b0\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5\u3002')
+          self.handleActionError(error, '活动状态更新失败，请稍后重试。')
         })
         .finally(function() {
           self.activityActionLoading = false
@@ -567,17 +732,17 @@ export default {
     handleActionError: function(error, fallbackMessage) {
       if (isAuthError(error)) {
         session.clearSession()
-        this.promptLogin('\u767b\u5f55\u72b6\u6001\u5df2\u5931\u6548\uff0c\u8bf7\u91cd\u65b0\u767b\u5f55\u3002')
+        this.promptLogin('登录状态已失效，请重新登录。')
         return
       }
       uni.showToast({ title: error.message || fallbackMessage, icon: 'none' })
     },
     promptLogin: function(message) {
       uni.showModal({
-        title: '\u9700\u8981\u767b\u5f55',
+        title: '需要登录',
         content: message,
-        confirmText: '\u53bb\u767b\u5f55',
-        cancelText: '\u7a0d\u540e',
+        confirmText: '去登录',
+        cancelText: '稍后',
         success: function(result) {
           if (result.confirm) {
             uni.navigateTo({ url: '/pages/login/index' })
@@ -587,6 +752,9 @@ export default {
     },
     resolveShareLink: function() {
       var self = this
+      if (!self.post.id) {
+        return Promise.resolve('')
+      }
       if (self.shareLink) {
         return Promise.resolve(self.shareLink)
       }
@@ -608,7 +776,7 @@ export default {
         uni.setClipboardData({
           data: text,
           success: function() {
-            uni.showToast({ title: successMessage || '\u5df2\u590d\u5236', icon: 'none' })
+            uni.showToast({ title: successMessage || '已复制', icon: 'none' })
             resolve()
           },
           fail: function(error) {
@@ -620,10 +788,10 @@ export default {
     openNativeShare: function(link) {
       var self = this
       if (!self.canUseNativeShare()) {
-        return Promise.reject(new Error('native-share-unavailable'))
+        return Promise.reject(new Error('当前环境不支持系统分享'))
       }
       var payload = {
-        title: (self.post && self.post.title) || 'CampusFit \u7a7f\u642d\u5206\u4eab',
+        title: (self.post && self.post.title) || '穿搭分享',
         text: buildShareCopyText(self.post, link)
       }
       var currentUrl = getCurrentShareUrl(self.post && self.post.id)
@@ -642,12 +810,12 @@ export default {
       var itemList = []
       var actions = []
       if (self.canUseNativeShare()) {
-        itemList.push('\u7cfb\u7edf\u5206\u4eab')
+        itemList.push('系统分享')
         actions.push('native')
       }
-      itemList.push('\u590d\u5236\u5206\u4eab\u6587\u6848')
+      itemList.push('复制分享文案')
       actions.push('copy-text')
-      itemList.push('\u590d\u5236\u5546\u54c1\u94fe\u63a5')
+      itemList.push('复制商品链接')
       actions.push('copy-link')
 
       uni.showActionSheet({
@@ -667,19 +835,19 @@ export default {
                     if (error && error.name === 'AbortError') {
                       return
                     }
-                    return self.copyShareContent(shareText, '\u5f53\u524d\u73af\u5883\u4e0d\u652f\u6301\u7cfb\u7edf\u5206\u4eab\uff0c\u5df2\u590d\u5236\u6587\u6848')
+                    return self.copyShareContent(shareText, '当前环境不支持系统分享，已复制文案')
                   })
               }
               if (action === 'copy-link') {
                 if (link) {
-                  return self.copyShareContent(link, '\u5546\u54c1\u94fe\u63a5\u5df2\u590d\u5236')
+                  return self.copyShareContent(link, '商品链接已复制')
                 }
-                return self.copyShareContent(shareText, '\u6682\u65e0\u5546\u54c1\u94fe\u63a5\uff0c\u5df2\u590d\u5236\u5206\u4eab\u6587\u6848')
+                return self.copyShareContent(shareText, '暂无商品链接，已复制分享文案')
               }
-              return self.copyShareContent(shareText, '\u5206\u4eab\u6587\u6848\u5df2\u590d\u5236')
+              return self.copyShareContent(shareText, '分享文案已复制')
             })
             .catch(function(error) {
-              uni.showToast({ title: (error && error.message) || '\u5206\u4eab\u6682\u65f6\u4e0d\u53ef\u7528', icon: 'none' })
+              uni.showToast({ title: (error && error.message) || '分享暂时不可用', icon: 'none' })
             })
             .finally(function() {
               self.shareLoading = false
@@ -688,56 +856,104 @@ export default {
       })
     },
     goActivityCenter: function() {
-      uni.navigateTo({ url: '/pages/activity/index' })
+      if (!this.currentActivity || !this.currentActivity.id) {
+        return
+      }
+      uni.navigateTo({ url: '/pages/activity-detail/index?id=' + encodeURIComponent(this.currentActivity.id) })
     },
     goComments: function() {
-      uni.navigateTo({ url: '/pages/comments/index?id=' + this.post.id })
+      uni.pageScrollTo({
+        selector: '#detailCommentComposer',
+        duration: 280
+      })
     },
-    togglePreviewCommentLike: function(item) {
+    setReplyTarget: function(item) {
+      if (!item) {
+        return
+      }
+      this.replyTarget = {
+        id: item.id,
+        name: item.name || item.user || '该评论'
+      }
+      this.goComments()
+    },
+    clearReplyTarget: function() {
+      this.replyTarget = null
+    },
+    submitComment: function() {
       var self = this
-      if (!item || self.actionLoading) {
+      var content = String(self.draft || '').trim()
+      if (self.submitting) {
         return
       }
       if (!session.isLoggedIn()) {
-        self.promptLogin('\u767b\u5f55\u540e\u624d\u80fd\u70b9\u8d5e\u8bc4\u8bba\u3002')
+        self.promptLogin('发表评论前请先登录。')
+        return
+      }
+      if (!self.post.id) {
+        uni.showToast({ title: '当前帖子不可评论', icon: 'none' })
+        return
+      }
+      if (!content) {
+        uni.showToast({ title: '请输入评论内容', icon: 'none' })
+        return
+      }
+      self.submitting = true
+      api.createComment(self.post.id, {
+        content: content,
+        replyToCommentId: self.replyTarget ? self.replyTarget.id : ''
+      })
+        .then(function() {
+          self.draft = ''
+          self.replyTarget = null
+          uni.showToast({ title: '评论已发送', icon: 'none' })
+          self.loadComments()
+        })
+        .catch(function(error) {
+          self.handleActionError(error, '评论发送失败，请稍后再试。')
+        })
+        .finally(function() {
+          self.submitting = false
+        })
+    },
+    togglePreviewCommentLike: function(item) {
+      var self = this
+      if (!item || self.actionLoading || !self.post.id || !item.id) {
+        return
+      }
+      if (!session.isLoggedIn()) {
+        self.promptLogin('登录后才能点赞评论。')
         return
       }
       self.actionLoading = true
       api.toggleCommentLike(self.post.id, item.id)
         .then(function(result) {
-          for (var i = 0; i < self.previewComments.length; i += 1) {
-            if (self.previewComments[i] && self.previewComments[i].id === item.id) {
-              self.previewComments.splice(i, 1, Object.assign({}, self.previewComments[i], {
-                liked: !!result.active,
-                likes: result.count
-              }))
-              break
-            }
-          }
-          uni.showToast({ title: result.active ? '\u5df2\u70b9\u8d5e\u8bc4\u8bba' : '\u5df2\u53d6\u6d88\u70b9\u8d5e', icon: 'none' })
+          self.allComments = updateCommentTree(self.allComments, item.id, function(current) {
+            return Object.assign({}, current, {
+              liked: !!result.active,
+              likes: result.count
+            })
+          })
+          uni.showToast({ title: result.active ? '已点赞评论' : '已取消点赞', icon: 'none' })
         })
         .catch(function(error) {
-          self.handleActionError(error, '\u8bc4\u8bba\u70b9\u8d5e\u5931\u8d25\uff0c\u8bf7\u7a0d\u540e\u518d\u8bd5\u3002')
+          self.handleActionError(error, '评论点赞失败，请稍后再试。')
         })
         .finally(function() {
           self.actionLoading = false
         })
     },
-    replyPreviewComment: function(item) {
-      if (!item) {
+    goLikes: function() {
+      if (!this.post.id) {
         return
       }
-      uni.navigateTo({ url: '/pages/comments/index?id=' + this.post.id + '&replyCommentId=' + item.id })
-    },
-    goLikes: function() {
       uni.navigateTo({ url: '/pages/likes/index?id=' + this.post.id })
     },
     goProduct: function() {
+      if (!this.post.id || !this.hasProductLink) {
+        return
+      }
       uni.navigateTo({ url: '/pages/product-jump/index?id=' + this.post.id })
-    },
-    refreshDetail: function() {
-      this.loadDetail()
-      uni.showToast({ title: '\u8be6\u60c5\u5df2\u5237\u65b0', icon: 'none' })
     },
     getDisplaySubtitle: function(item) {
       return postDisplay.getDisplaySubtitle(item)
@@ -745,507 +961,247 @@ export default {
   }
 }
 </script>
-
 <style>
 .detail-shell {
-  padding-bottom: 44rpx;
+  min-height: 100vh;
+  padding-bottom: calc(168rpx + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at top left, rgba(255, 209, 102, 0.16), transparent 28%),
+    linear-gradient(180deg, #f4f7fb 0%, #ffffff 54%);
 }
 
-.detail-stage {
+.detail-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(var(--status-bar-height) + 16rpx) 24rpx 16rpx;
+}
+
+.detail-topbar-title {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--status-bar-height) + 28rpx);
+  transform: translateX(-50%);
+  color: #1f2f47;
+  font-size: 34rpx;
+  font-weight: 800;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.detail-topbar-side {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  min-width: 120rpx;
+}
+
+.detail-topbar-side-right {
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.detail-icon-button,
+.detail-avatar-button {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12rpx 28rpx rgba(15, 23, 42, 0.12);
+  color: #2457c6;
+  backdrop-filter: blur(12rpx);
+}
+
+.detail-icon-text {
+  font-size: 30rpx;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.detail-share-glyph {
+  position: relative;
+  width: 28rpx;
+  height: 28rpx;
+}
+
+.detail-share-line {
+  position: absolute;
+  left: 8rpx;
+  width: 14rpx;
+  height: 3rpx;
+  border-radius: 999rpx;
+  background: #707070;
+  transform-origin: left center;
+}
+
+.detail-share-line-top {
+  top: 8rpx;
+  transform: rotate(-30deg);
+}
+
+.detail-share-line-bottom {
+  top: 18rpx;
+  transform: rotate(30deg);
+}
+
+.detail-share-node {
+  position: absolute;
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 999rpx;
+  background: #707070;
+}
+
+.detail-share-node-left {
+  left: 2rpx;
+  top: 10rpx;
+}
+
+.detail-share-node-top {
+  right: 2rpx;
+  top: 2rpx;
+}
+
+.detail-share-node-bottom {
+  right: 2rpx;
+  bottom: 2rpx;
+}
+
+.detail-avatar-button {
+  overflow: hidden;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.detail-avatar-button-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.detail-hero {
+  position: relative;
+}
+
+.detail-hero-swiper {
+  height: 920rpx;
+}
+
+.detail-hero-slide,
+.detail-hero-empty {
+  width: 100%;
+  height: 100%;
+}
+
+.detail-hero-slide {
+  overflow: hidden;
+  border-radius: 0 0 44rpx 44rpx;
+  background: #eef3f9;
+}
+
+.detail-hero-image {
+  width: 100%;
+  height: 100%;
+}
+
+.detail-hero-empty {
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 22rpx;
+  justify-content: flex-end;
+  padding: 180rpx 38rpx 54rpx;
+  background:
+    linear-gradient(180deg, rgba(34, 86, 199, 0.14) 0%, rgba(34, 86, 199, 0.04) 100%),
+    linear-gradient(135deg, #f3efe7 0%, #f7fbff 100%);
 }
 
-.gallery-card,
-.detail-head-card {
-  padding: 24rpx;
-  border-radius: 34rpx;
-  border: 1rpx solid rgba(109, 154, 190, 0.14);
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: var(--campus-shadow-md);
+.detail-hero-empty-title {
+  color: #1f2f47;
+  font-size: 44rpx;
+  font-weight: 800;
+  line-height: 1.22;
 }
 
-.gallery-head,
-.detail-label-row,
-.author-head,
-.preview-name-row {
+.detail-hero-empty-copy {
+  margin-top: 16rpx;
+  color: #667085;
+  font-size: 26rpx;
+  line-height: 1.7;
+}
+
+.detail-hero-count {
+  position: absolute;
+  right: 28rpx;
+  bottom: 24rpx;
+  z-index: 5;
+  min-width: 104rpx;
+  height: 50rpx;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.4);
+  color: #ffffff;
+  font-size: 22rpx;
+  font-weight: 700;
+  backdrop-filter: blur(12rpx);
+}
+
+.detail-main-card {
+  position: relative;
+  z-index: 6;
+  margin: -72rpx 24rpx 0;
+  padding: 30rpx 28rpx 26rpx;
+  border-radius: 40rpx;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 24rpx 56rpx rgba(15, 23, 42, 0.12);
+}
+
+.detail-author-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 18rpx;
 }
 
-.gallery-kicker,
-.detail-label {
-  display: inline-flex;
+.detail-author-main {
+  display: flex;
   align-items: center;
-  padding: 10rpx 18rpx;
-  border-radius: 999rpx;
-  border: 1rpx solid rgba(45, 87, 217, 0.12);
-  background: rgba(45, 87, 217, 0.08);
-  color: var(--campus-secondary);
-  font-size: 21rpx;
-  font-weight: 700;
-  letter-spacing: 2rpx;
-}
-
-.gallery-count {
-  padding: 10rpx 18rpx;
-  border-radius: 999rpx;
-  background: rgba(32, 49, 66, 0.08);
-  color: var(--campus-text);
-  font-size: 22rpx;
-  font-weight: 600;
-}
-
-.gallery-swiper {
-  height: 820rpx;
-  margin-top: 18rpx;
-}
-
-.gallery-slide,
-.gallery-empty {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  border-radius: 28rpx;
-}
-
-.gallery-slide {
-  background:
-    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.2), transparent 26%),
-    linear-gradient(140deg, rgba(255, 239, 231, 0.96) 0%, rgba(238, 244, 255, 0.96) 100%);
-}
-
-.gallery-image {
-  width: 100%;
-  height: 100%;
-}
-
-.gallery-empty {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  padding: 34rpx;
-  background: linear-gradient(160deg, rgba(201, 49, 91, 0.18) 0%, rgba(45, 87, 217, 0.2) 100%);
-  box-sizing: border-box;
-}
-
-.gallery-empty-kicker {
-  color: rgba(32, 49, 66, 0.64);
-  font-size: 22rpx;
-  letter-spacing: 3rpx;
-}
-
-.gallery-empty-title {
-  margin-top: 18rpx;
-  color: var(--campus-text);
-  font-size: 42rpx;
-  font-weight: 700;
-  line-height: 1.22;
-}
-
-.gallery-empty-copy {
-  margin-top: 12rpx;
-  color: var(--campus-text-soft);
-  font-size: 24rpx;
-  line-height: 1.74;
-}
-
-.gallery-hint {
-  margin-top: 16rpx;
-  color: var(--campus-text-muted);
-  font-size: 20rpx;
-  letter-spacing: 2rpx;
-}
-
-.thumb-strip {
-  margin-top: 20rpx;
-  white-space: nowrap;
-}
-
-.thumb-row {
-  display: inline-flex;
-  gap: 14rpx;
-}
-
-.thumb-item {
-  width: 136rpx;
-  height: 176rpx;
-  padding: 4rpx;
-  border-radius: 24rpx;
-  box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.72);
-}
-
-.thumb-item-active {
-  background: linear-gradient(135deg, #ef6288 0%, #345fe0 100%);
-  box-shadow: 0 12rpx 24rpx rgba(201, 49, 91, 0.18);
-}
-
-.thumb-image {
-  width: 100%;
-  height: 100%;
-  border-radius: 20rpx;
-}
-
-.detail-head-card {
-  padding: 30rpx;
-}
-
-.detail-price-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 12rpx 20rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 180, 107, 0.16);
-  color: #b86a1f;
-  font-size: 22rpx;
-  font-weight: 600;
-}
-
-.detail-title {
-  margin-top: 18rpx;
-  color: var(--campus-text);
-  font-size: 44rpx;
-  font-weight: 700;
-  line-height: 1.22;
-}
-
-.detail-subtitle {
-  margin-top: 12rpx;
-  color: var(--campus-text-soft);
-  font-size: 26rpx;
-  line-height: 1.74;
-}
-
-.detail-tag-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-  margin-top: 20rpx;
-}
-
-.detail-meta-chip {
-  padding: 12rpx 18rpx;
-  border-radius: 999rpx;
-  background: rgba(76, 169, 230, 0.1);
-  color: #4a9acf;
-  font-size: 22rpx;
-  font-weight: 600;
-}
-
-.detail-highlight-row {
-  margin-top: 20rpx;
-}
-
-.detail-intro {
-  margin-top: 20rpx;
-  color: var(--campus-text-soft);
-  font-size: 25rpx;
-  line-height: 1.86;
-}
-
-.detail-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16rpx;
-}
-
-.detail-stat {
-  padding: 28rpx 16rpx;
-  border-radius: 28rpx;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1rpx solid rgba(109, 154, 190, 0.1);
-  box-shadow: var(--campus-shadow-sm);
-  text-align: center;
-}
-
-.detail-stat-value {
-  display: block;
-  color: var(--campus-text);
-  font-size: 38rpx;
-  font-weight: 700;
-}
-
-.detail-stat-label {
-  display: block;
-  margin-top: 8rpx;
-  color: var(--campus-text-muted);
-  font-size: 22rpx;
-}
-
-.author-card,
-.detail-activity-card,
-.guide-card,
-.comment-preview-card {
-  margin-top: 24rpx;
-}
-
-.detail-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16rpx;
-  margin-top: 24rpx;
-}
-
-.action-chip {
-  min-width: 128rpx;
-  padding: 18rpx 24rpx;
-  border-radius: 999rpx;
-  background: rgba(229, 238, 247, 0.92);
-  color: var(--campus-text);
-  font-size: 24rpx;
-  font-weight: 600;
-  text-align: center;
-}
-
-.action-chip-active {
-  background: linear-gradient(135deg, #7cccf0, #67d8b7);
-  color: #ffffff;
-}
-
-.detail-panel-head {
-  margin-top: 0;
-}
-
-.detail-panel-title {
-  margin-top: 0;
-}
-
-.detail-panel-subtitle {
-  margin-bottom: 0;
-}
-
-.detail-panel-chips {
-  margin-top: 16rpx;
-}
-
-.note-stamp {
-  display: inline-flex;
-  align-items: center;
-  padding: 10rpx 18rpx;
-  border-radius: 999rpx;
-  background: rgba(67, 198, 157, 0.12);
-  color: var(--campus-secondary);
-  font-size: 21rpx;
-  font-weight: 700;
-  letter-spacing: 2rpx;
-}
-
-.detail-price {
-  margin-top: 18rpx;
-  color: var(--campus-text);
-  font-size: 34rpx;
-  font-weight: 700;
-}
-
-.preview-item {
-  display: flex;
   gap: 18rpx;
-  padding: 20rpx 0;
-}
-
-.preview-item + .preview-item {
-  border-top: 1rpx solid rgba(133, 159, 184, 0.16);
-}
-
-.preview-body {
+  min-width: 0;
   flex: 1;
 }
 
-.preview-reply-prefix {
-  color: var(--campus-secondary);
+.detail-author-copy {
+  min-width: 0;
 }
 
-.preview-action-row {
-  display: flex;
-  gap: 18rpx;
-  margin-top: 12rpx;
-}
-
-.preview-action {
-  color: var(--campus-text-muted);
-  font-size: 22rpx;
-  font-weight: 600;
-}
-
-.detail-stage {
-  display: grid;
-  gap: 20rpx;
-}
-
-.gallery-card {
-  padding: 20rpx;
-  border-radius: 38rpx;
-  background:
-    linear-gradient(135deg, rgba(201, 49, 91, 0.04), transparent 28%),
-    linear-gradient(315deg, rgba(45, 87, 217, 0.05), transparent 36%),
-    rgba(255, 250, 245, 0.92);
-  border: 1rpx solid rgba(43, 24, 34, 0.08);
-  box-shadow: var(--campus-shadow-md);
-}
-
-.gallery-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16rpx;
-}
-
-.gallery-kicker,
-.gallery-count,
-.gallery-hint {
-  font-family: var(--campus-font-data);
-}
-
-.thumb-item {
-  background: rgba(255, 251, 247, 0.84);
-  border: 1rpx solid rgba(43, 24, 34, 0.08);
-}
-
-.thumb-item-active {
-  background: linear-gradient(135deg, rgba(201, 49, 91, 0.2), rgba(45, 87, 217, 0.18));
-  box-shadow: 0 12rpx 24rpx rgba(201, 49, 91, 0.12);
-}
-
-.detail-head-card {
-  position: relative;
-  padding-top: 24rpx;
-}
-
-.detail-title {
-  line-height: 1.14;
-}
-
-.detail-stats {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.detail-stat:last-child {
-  grid-column: 1 / -1;
-}
-
-.detail-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.action-chip {
-  min-width: auto;
-  padding-left: 0;
-  padding-right: 0;
-}
-
-.author-card,
-.detail-activity-card,
-.guide-card,
-.comment-preview-card {
-  padding: 26rpx;
-}
-
-.preview-item {
-  gap: 16rpx;
-}
-
-.detail-stage {
-  gap: 16rpx;
-}
-
-.detail-head-card {
-  padding: 20rpx 20rpx 18rpx;
-  border-radius: 28rpx;
-}
-
-.detail-topline {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 8rpx;
-}
-
-.detail-price-chip {
-  padding: 8rpx 14rpx;
-  font-size: 20rpx;
-}
-
-.detail-title {
-  margin-top: 0;
-  font-size: 38rpx;
-  line-height: 1.14;
-}
-
-.detail-subtitle {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  line-height: 1.5;
-}
-
-.detail-tag-row {
-  gap: 8rpx;
-  margin-top: 12rpx;
-}
-
-.detail-meta-chip {
-  padding: 8rpx 14rpx;
-  font-size: 20rpx;
-}
-
-.detail-highlight-row {
-  margin-top: 12rpx;
-}
-
-.detail-intro {
-  margin-top: 12rpx;
-  font-size: 22rpx;
-  line-height: 1.58;
-}
-
-.detail-summary-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8rpx;
-  margin-top: 14rpx;
-}
-
-.detail-stat-inline {
-  display: inline-flex;
-  align-items: center;
-  padding: 8rpx 12rpx;
+.avatar {
+  width: 74rpx;
+  height: 74rpx;
   border-radius: 999rpx;
-  background: rgba(45, 87, 217, 0.08);
-  border: 1rpx solid rgba(45, 87, 217, 0.12);
-}
-
-.detail-stat-inline-value {
-  color: var(--campus-text);
-  font-size: 22rpx;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.detail-stat-inline-label {
-  margin-left: 6rpx;
-  color: var(--campus-text-soft);
-  font-size: 19rpx;
-  line-height: 1;
-}
-
-.author-card {
-  margin-top: 14rpx;
-  padding: 18rpx 20rpx;
-  border-radius: 26rpx;
-}
-
-.author-head {
+  display: flex;
   align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #dbeafe, #f0f9ff);
+  color: #2457c6;
+  font-size: 28rpx;
+  font-weight: 700;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .avatar-has-image {
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.72);
-  box-shadow: 0 10rpx 20rpx rgba(43, 24, 34, 0.08);
+  background: #ffffff;
 }
 
 .avatar-image {
@@ -1253,20 +1209,695 @@ export default {
   height: 100%;
   display: block;
 }
+.detail-author-name {
+  color: #243246;
+  font-size: 32rpx;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-.detail-actions {
-  gap: 10rpx;
+.detail-author-school {
+  margin-top: 6rpx;
+  color: #7a8597;
+  font-size: 22rpx;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.detail-follow-button {
+  min-width: 132rpx;
+  height: 66rpx;
+  padding: 0 22rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #5daeff 0%, #2a80f4 100%);
+  box-shadow: 0 12rpx 24rpx rgba(42, 128, 244, 0.22);
+  color: #ffffff;
+  font-size: 24rpx;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.detail-follow-button-active {
+  background: #edf4ff;
+  box-shadow: none;
+  color: #2a80f4;
+}
+
+.detail-main-title {
+  margin-top: 18rpx;
+  color: #1f2937;
+  font-size: 50rpx;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.detail-main-subtitle {
+  margin-top: 10rpx;
+  color: #2f6ec9;
+  font-size: 24rpx;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.detail-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
   margin-top: 14rpx;
 }
 
-.action-chip {
-  min-height: 64rpx;
-  padding: 0 12rpx;
+.detail-meta-item {
+  color: #94a3b8;
+  font-size: 22rpx;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.detail-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: 18rpx;
+}
+
+.detail-tag {
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  font-size: 21rpx;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.detail-tag-scene {
+  background: #dff6ee;
+  color: #22916b;
+}
+
+.detail-tag-style {
+  background: #edf1f6;
+  color: #677487;
+}
+
+.detail-tag-budget {
+  background: #ffe89a;
+  color: #856300;
+}
+
+.detail-tag-muted {
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+.detail-main-desc {
+  margin-top: 20rpx;
+  color: #667085;
+  font-size: 28rpx;
+  line-height: 1.72;
+}
+
+.detail-state-text {
+  margin-top: 18rpx;
+  color: #98a2b3;
+  font-size: 22rpx;
+  line-height: 1.5;
+}
+
+.detail-section-card {
+  margin: 22rpx 24rpx 0;
+  padding: 30rpx 28rpx;
+  border-radius: 34rpx;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1rpx solid rgba(148, 163, 184, 0.12);
+  box-shadow: 0 18rpx 42rpx rgba(15, 23, 42, 0.08);
+}
+
+.detail-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+
+.detail-section-title {
+  color: #1f2937;
+  font-size: 34rpx;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.detail-section-subtitle {
+  margin-top: 8rpx;
+  color: #98a2b3;
+  font-size: 22rpx;
+  line-height: 1.5;
+}
+
+.detail-section-stamp {
+  min-width: 88rpx;
+  height: 48rpx;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(42, 128, 244, 0.1);
+  color: #2a80f4;
+  font-size: 20rpx;
+  font-weight: 700;
+}
+
+.detail-card-title {
+  margin-top: 22rpx;
+  color: #253447;
+  font-size: 32rpx;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.detail-card-copy {
+  margin-top: 12rpx;
+  color: #667085;
+  font-size: 24rpx;
+  line-height: 1.7;
+}
+
+.detail-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: 18rpx;
+}
+
+.detail-chip {
+  padding: 10rpx 16rpx;
+  border-radius: 999rpx;
+  font-size: 20rpx;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.detail-chip-blue {
+  background: rgba(42, 128, 244, 0.12);
+  color: #2a80f4;
+}
+
+.detail-chip-plain {
+  background: #edf1f6;
+  color: #677487;
+}
+
+.detail-note-row {
+  margin-top: 16rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 24rpx;
+  background: #f8fafc;
+}
+
+.detail-note-label {
+  display: block;
+  color: #475467;
+  font-size: 21rpx;
+  font-weight: 700;
+}
+
+.detail-note-value {
+  display: block;
+  margin-top: 8rpx;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.7;
+}
+.detail-button-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14rpx;
+  margin-top: 22rpx;
+}
+
+.detail-button {
+  height: 76rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.detail-button-light {
+  background: #eef4ff;
+  color: #2a80f4;
+}
+
+.detail-button-primary {
+  background: linear-gradient(135deg, #5daeff 0%, #2a80f4 100%);
+  color: #ffffff;
+  box-shadow: 0 12rpx 24rpx rgba(42, 128, 244, 0.18);
+}
+
+.detail-button-disabled {
+  background: #eff2f6;
+  color: #98a2b3;
+}
+
+.detail-activity-card,
+.detail-product-card {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+}
+
+.detail-activity-card-clickable {
+  padding: 22rpx 24rpx;
+}
+
+.detail-inline-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #98a2b3;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.detail-card-thumb {
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 18rpx;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.detail-card-thumb-activity {
+  background: linear-gradient(135deg, rgba(42, 128, 244, 0.14), rgba(56, 189, 248, 0.18));
+}
+
+.detail-card-thumb-product {
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 0 0 2rpx rgba(255, 255, 255, 0.08);
+}
+
+.detail-card-thumb-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.detail-card-thumb-placeholder {
+  color: #5b6b82;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.detail-activity-glyph {
+  width: 56rpx;
+  height: 56rpx;
   border-radius: 18rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22rpx;
+  background: rgba(255, 255, 255, 0.78);
+  color: #2a80f4;
+  font-size: 26rpx;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 2rpx rgba(42, 128, 244, 0.08);
+}
+
+.detail-card-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.detail-card-kicker {
+  display: inline-flex;
+  align-items: center;
+  padding: 6rpx 12rpx;
+  border-radius: 999rpx;
+  background: #eef7f2;
+  color: #5f7f6b;
+  font-size: 18rpx;
+  font-weight: 700;
   line-height: 1;
+}
+
+.detail-card-kicker-light {
+  background: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.detail-card-title-compact {
+  margin-top: 10rpx;
+  font-size: 30rpx;
+}
+
+.detail-card-title-light {
+  margin-top: 10rpx;
+  color: #ffffff;
+  font-size: 30rpx;
+}
+
+.detail-card-meta {
+  margin-top: 8rpx;
+  color: #667085;
+  font-size: 22rpx;
+  line-height: 1.4;
+}
+
+.detail-card-meta-light {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.detail-card-arrow {
+  color: #98a2b3;
+  font-size: 38rpx;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.detail-product-card {
+  background: linear-gradient(135deg, #0a4f98 0%, #0e6cbe 100%);
+  border: 0;
+  box-shadow: 0 18rpx 42rpx rgba(12, 88, 163, 0.24);
+}
+
+.detail-product-buy {
+  min-width: 112rpx;
+  height: 62rpx;
+  padding: 0 22rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  color: #1c63b8;
+  font-size: 22rpx;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.detail-guide-row {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  margin-top: 22rpx;
+}
+
+.detail-guide-icon {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #5daeff 0%, #2a80f4 100%);
+  color: #ffffff;
+  font-size: 30rpx;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.detail-guide-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.detail-price-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14rpx;
+  margin-top: 20rpx;
+}
+
+.detail-price-block {
+  padding: 20rpx;
+  border-radius: 24rpx;
+  background: #f7f9fc;
+}
+
+.detail-price-label {
+  color: #98a2b3;
+  font-size: 20rpx;
+  font-weight: 700;
+}
+
+.detail-price-value {
+  margin-top: 10rpx;
+  color: #1f2937;
+  font-size: 28rpx;
+  font-weight: 800;
+  line-height: 1.35;
+  word-break: break-all;
+}
+
+.detail-price-value-muted {
+  color: #596579;
+  font-size: 24rpx;
+}
+
+.detail-section-head-comments {
+  align-items: center;
+}
+
+.detail-section-link {
+  color: #2a80f4;
+  font-size: 22rpx;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.detail-comment-block + .detail-comment-block {
+  border-top: 1rpx solid rgba(148, 163, 184, 0.12);
+}
+
+.detail-comment-item {
+  display: flex;
+  gap: 16rpx;
+  padding: 22rpx 0;
+}
+
+.detail-comment-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.detail-comment-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14rpx;
+}
+
+.detail-comment-name {
+  color: #253447;
+  font-size: 25rpx;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.detail-comment-time {
+  color: #98a2b3;
+  font-size: 20rpx;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+
+.detail-comment-text {
+  margin-top: 10rpx;
+  color: #667085;
+  font-size: 23rpx;
+  line-height: 1.72;
+  word-break: break-word;
+}
+
+.detail-comment-reply {
+  color: #2a80f4;
+}
+
+.detail-comment-actions {
+  display: flex;
+  gap: 18rpx;
+  margin-top: 12rpx;
+}
+
+.detail-comment-action {
+  color: #7d8798;
+  font-size: 21rpx;
+  font-weight: 700;
+}
+
+.detail-reply-list {
+  margin: -4rpx 0 8rpx 86rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.detail-reply-card {
+  display: flex;
+  gap: 16rpx;
+  padding: 18rpx;
+  border-radius: 22rpx;
+  background: rgba(244, 248, 252, 0.96);
+}
+
+.detail-comment-composer {
+  margin-top: 18rpx;
+  padding-top: 18rpx;
+  border-top: 1rpx solid rgba(148, 163, 184, 0.12);
+}
+
+.detail-composer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.detail-composer-title {
+  color: #253447;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.detail-composer-clear {
+  color: #2a80f4;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.detail-composer-textarea {
+  width: 100%;
+  min-height: 160rpx;
+  margin-top: 14rpx;
+  padding: 20rpx 22rpx;
+  border-radius: 24rpx;
+  box-sizing: border-box;
+  background: #f8fafc;
+  color: #253447;
+  font-size: 24rpx;
+  line-height: 1.7;
+}
+
+.detail-composer-submit {
+  margin-top: 16rpx;
+  height: 72rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #5daeff 0%, #2a80f4 100%);
+  color: #ffffff;
+  font-size: 24rpx;
+  font-weight: 700;
+  box-shadow: 0 12rpx 24rpx rgba(42, 128, 244, 0.16);
+}
+
+.detail-empty-text {
+  margin-top: 18rpx;
+  color: #98a2b3;
+  font-size: 26rpx;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.detail-bottom-bar {
+  position: fixed;
+  left: 20rpx;
+  right: 20rpx;
+  bottom: 18rpx;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12rpx;
+  padding: 16rpx 18rpx calc(16rpx + env(safe-area-inset-bottom));
+  border-radius: 34rpx;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 -4rpx 12rpx rgba(15, 23, 42, 0.02), 0 18rpx 46rpx rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(20rpx);
+}
+
+.detail-bottom-item {
+  min-height: 86rpx;
+  border-radius: 24rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+}
+
+.detail-bottom-item-active {
+  background: rgba(42, 128, 244, 0.08);
+}
+
+.detail-bottom-item-share {
+  background: #edf4ff;
+  color: #2a80f4;
+}
+
+.detail-bottom-icon {
+  color: #64748b;
+  font-size: 28rpx;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.detail-send-glyph {
+  position: relative;
+  width: 40rpx;
+  height: 28rpx;
+}
+
+.detail-send-wing {
+  position: absolute;
+  top: 2rpx;
+  left: 8rpx;
+  width: 0;
+  height: 0;
+  border-top: 12rpx solid transparent;
+  border-bottom: 12rpx solid transparent;
+  border-left: 24rpx solid #2a55d8;
+}
+
+.detail-send-tail {
+  position: absolute;
+  left: 6rpx;
+  top: 11rpx;
+  width: 14rpx;
+  height: 5rpx;
+  border-radius: 999rpx;
+  background: #2a55d8;
+}
+
+.detail-bottom-item-active .detail-bottom-icon,
+.detail-bottom-item-share .detail-bottom-icon {
+  color: #2a80f4;
+}
+
+.detail-bottom-text {
+  color: #94a3b8;
+  font-size: 20rpx;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.detail-bottom-item-active .detail-bottom-text,
+.detail-bottom-item-share .detail-bottom-text {
+  color: #2a80f4;
+}
+
+.detail-disabled {
+  opacity: 0.55;
 }
 </style>

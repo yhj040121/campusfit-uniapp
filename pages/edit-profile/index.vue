@@ -1,57 +1,150 @@
 <template>
-  <view class="page-shell edit-profile-shell">
-    <view v-if="!loggedIn" class="hero-card">
-      <view class="hero-badge">需要登录</view>
-      <view class="hero-title">编辑资料前请先登录</view>
-      <view class="hero-copy">资料编辑会关联你的真实账号数据，需要登录状态才能使用。</view>
-      <button class="btn-primary" style="margin-top:24rpx;" @click="goLogin">去登录</button>
+  <view class="edit-profile-shell">
+    <view class="edit-topbar">
+      <view class="edit-topbar-back" @tap="goBack">返回</view>
+      <view class="edit-topbar-title">编辑资料</view>
     </view>
 
-    <view v-else>
-      <view class="page-header">
-        <view class="page-title">编辑资料</view>
-        <view class="page-desc">修改头像、昵称、学校、年级和签名，完善你的创作者身份。</view>
+    <view v-if="!loggedIn" class="edit-guest-card">
+      <view class="edit-guest-badge">CampusFit</view>
+      <view class="edit-guest-title">登录后再编辑你的资料</view>
+      <view class="edit-guest-copy">头像、主页背景图和个人信息都会同步到你的个人主页，先登录后再继续。</view>
+      <button class="action-button primary-button" hover-class="none" @tap="goLogin">去登录</button>
+    </view>
+
+    <view v-else class="edit-content">
+      <view class="edit-cover-card">
+        <image class="edit-cover-image" :src="coverPreviewUrl" mode="aspectFill"></image>
+        <view class="edit-cover-overlay"></view>
+        <view class="edit-cover-copy">
+          <view class="edit-cover-kicker">主页头图</view>
+          <view class="edit-cover-title">让个人主页第一眼更像你</view>
+          <view class="edit-cover-desc">可以上传你的校园场景、运动日常或穿搭大片。上传后会自动同步到主页。</view>
+        </view>
+        <button class="action-button edit-cover-button" hover-class="none" @tap="chooseCover">
+          {{ coverUploading ? '上传中...' : '更换背景图' }}
+        </button>
       </view>
 
-      <view class="panel-card edit-status-card">
-        <view class="text-copy" style="margin-top:0;">{{ statusText }}</view>
+      <view class="edit-avatar-card">
+        <view class="edit-avatar-shell" @tap="chooseAvatar">
+          <image v-if="form.avatarUrl" class="edit-avatar-image" :src="form.avatarUrl" mode="aspectFill"></image>
+          <view v-else class="edit-avatar-fallback">{{ avatarPreviewText }}</view>
+        </view>
+        <view class="edit-avatar-copy">
+          <view class="edit-section-title">头像</view>
+          <view class="edit-section-copy">新的头像会同步到个人主页、评论区和相关列表。</view>
+        </view>
+        <button class="action-button chip-button" hover-class="none" @tap="chooseAvatar">
+          {{ avatarUploading ? '上传中...' : '重新上传' }}
+        </button>
       </view>
 
-      <view class="panel-card edit-avatar-card">
-        <view class="form-label">头像</view>
-        <view class="edit-avatar-row">
-          <view class="edit-avatar-shell" @click="chooseAvatar">
-            <image v-if="form.avatarUrl" class="edit-avatar-image" :src="form.avatarUrl" mode="aspectFill"></image>
-            <view v-else class="edit-avatar-fallback">{{ avatarPreviewText }}</view>
+      <view class="edit-panel">
+        <view class="edit-panel-title">基础信息</view>
+
+        <view class="edit-field">
+          <view class="edit-label">昵称</view>
+          <input
+            class="edit-input"
+            :value="form.nickname"
+            maxlength="20"
+            placeholder="给自己起一个更好记的名字"
+            @input="updateField('nickname', $event)"
+          />
+        </view>
+
+        <view class="edit-field">
+          <view class="edit-label">性别</view>
+          <view class="gender-row">
+            <button
+              v-for="item in genderOptions"
+              :key="item.value"
+              class="action-button gender-chip"
+              :class="{ 'gender-chip-active': form.gender === item.value }"
+              hover-class="none"
+              @tap="toggleGender(item.value)"
+            >
+              {{ item.label }}
+            </button>
           </view>
-          <view class="edit-avatar-copy">
-            <view class="edit-avatar-title">更新你的头像</view>
-            <view class="edit-avatar-desc">新的头像会同步到个人主页、评论区和关注列表。</view>
-            <button class="btn-ghost edit-avatar-button" :loading="avatarUploading" @click="chooseAvatar">{{ form.avatarUrl ? '重新上传' : '上传头像' }}</button>
-          </view>
+          <view class="edit-hint">可不选择，不选择时主页不显示性别。</view>
+        </view>
+
+        <view class="edit-field">
+          <view class="edit-label">邮箱</view>
+          <input
+            class="edit-input"
+            :value="form.email"
+            maxlength="120"
+            placeholder="填写常用邮箱，便于后续联系"
+            @input="updateField('email', $event)"
+          />
         </view>
       </view>
 
-      <view class="panel-card edit-identity-card">
-        <view class="form-label">手机号</view>
-        <input class="form-input" :value="form.phone" disabled />
-        <view class="form-label" style="margin-top:18rpx;">昵称</view>
-        <input class="form-input" v-model="form.nickname" maxlength="20" placeholder="请输入昵称" />
+      <view class="edit-panel">
+        <view class="edit-panel-title">校园信息</view>
+
+        <view class="edit-field">
+          <view class="edit-label">学校</view>
+          <input
+            class="edit-input"
+            :value="form.schoolName"
+            maxlength="100"
+            placeholder="例如：浙江农林大学"
+            @input="updateField('schoolName', $event)"
+          />
+        </view>
+
+        <view class="edit-field">
+          <view class="edit-label">年级</view>
+          <input
+            class="edit-input"
+            :value="form.gradeName"
+            maxlength="50"
+            placeholder="例如：大三 / 研一"
+            @input="updateField('gradeName', $event)"
+          />
+        </view>
+
+        <view class="edit-field">
+          <view class="edit-label">居住地</view>
+          <input
+            class="edit-input"
+            :value="form.locationName"
+            maxlength="100"
+            placeholder="例如：杭州 临安"
+            @input="updateField('locationName', $event)"
+          />
+          <view class="edit-hint">这项会显示在你的个人主页上，帮助别人更快了解你的校园生活半径。</view>
+        </view>
       </view>
 
-      <view class="panel-card edit-campus-card">
-        <view class="form-label">学校</view>
-        <input class="form-input" v-model="form.schoolName" maxlength="100" placeholder="请输入学校名称" />
-        <view class="form-label" style="margin-top:18rpx;">年级</view>
-        <input class="form-input" v-model="form.gradeName" maxlength="50" placeholder="请输入当前年级" />
+      <view class="edit-panel">
+        <view class="edit-panel-title">个性签名</view>
+        <view class="edit-field">
+          <view class="edit-label">一句话介绍自己</view>
+          <textarea
+            class="edit-textarea"
+            :value="form.signature"
+            maxlength="255"
+            auto-height
+            placeholder="写下你的穿搭偏好、运动日常，或者希望别人认识你的方式。"
+            @input="updateField('signature', $event)"
+          ></textarea>
+          <view class="edit-counter">{{ signatureLength }}/255</view>
+        </view>
       </view>
 
-      <view class="panel-card edit-signature-card">
-        <view class="form-label">个性签名</view>
-        <textarea class="form-textarea" v-model="form.signature" maxlength="255" placeholder="写一句关于你的穿搭风格或校园生活吧。"></textarea>
-      </view>
-
-      <button class="btn-primary" :loading="saving" @click="save">保存资料</button>
+      <button
+        class="action-button primary-button save-button"
+        :class="{ 'primary-button-disabled': saving || avatarUploading || coverUploading }"
+        hover-class="none"
+        @tap="save"
+      >
+        {{ saving ? '保存中...' : '保存资料' }}
+      </button>
     </view>
   </view>
 </template>
@@ -60,19 +153,49 @@
 var api = require('../../common/api.js')
 var session = require('../../common/session.js')
 
+var DEFAULT_PROFILE_COVER = '/static/profile/default-hero.svg'
+var PROFILE_REFRESH_KEY = 'campusfit_profile_refresh_token'
+var GENDER_OPTIONS = [
+  { value: 'male', label: '男生' },
+  { value: 'female', label: '女生' }
+]
+
 function emptyForm() {
   return {
-    phone: '',
     nickname: '',
     avatarUrl: '',
+    coverImageUrl: '',
+    gender: '',
+    email: '',
     schoolName: '',
     gradeName: '',
+    locationName: '',
     signature: ''
   }
 }
 
+function trimText(value) {
+  return value == null ? '' : String(value).trim()
+}
+
+function normalizeGender(value) {
+  var normalized = trimText(value)
+  if (normalized === 'male' || normalized === 'female') {
+    return normalized
+  }
+  return ''
+}
+
 function isAuthError(error) {
-  return ((error && error.message) || '').toLowerCase().indexOf('login') > -1
+  var message = ((error && error.message) || '').toLowerCase()
+  return message.indexOf('login') > -1 || message.indexOf('401') > -1 || message.indexOf('登录') > -1
+}
+
+function isValidEmail(value) {
+  if (!value) {
+    return true
+  }
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 }
 
 export default {
@@ -81,21 +204,29 @@ export default {
       loggedIn: session.isLoggedIn(),
       saving: false,
       avatarUploading: false,
+      coverUploading: false,
       form: emptyForm(),
-      statusText: '正在加载可编辑资料...'
+      statusText: '正在加载资料，可以直接开始编辑。',
+      genderOptions: GENDER_OPTIONS
     }
   },
   computed: {
     avatarPreviewText: function() {
-      var source = this.form.nickname || 'C'
+      var source = trimText(this.form.nickname) || 'C'
       return source.slice(0, 1).toUpperCase()
+    },
+    coverPreviewUrl: function() {
+      return trimText(this.form.coverImageUrl) || DEFAULT_PROFILE_COVER
+    },
+    signatureLength: function() {
+      return String(this.form.signature || '').length
     }
   },
   onShow: function() {
     this.loggedIn = session.isLoggedIn()
     if (!this.loggedIn) {
       this.form = emptyForm()
-      this.statusText = '当前以游客身份浏览。'
+      this.statusText = '当前未登录，请先登录后再编辑资料。'
       return
     }
     this.loadForm()
@@ -106,25 +237,120 @@ export default {
       api.getMyProfileForEdit()
         .then(function(profile) {
           self.form = {
-            phone: profile.phone || '',
-            nickname: profile.nickname || '',
-            avatarUrl: profile.avatarUrl || '',
-            schoolName: profile.schoolName || '',
-            gradeName: profile.gradeName || '',
-            signature: profile.signature || ''
+            nickname: trimText(profile.nickname),
+            avatarUrl: trimText(profile.avatarUrl),
+            coverImageUrl: trimText(profile.coverImageUrl),
+            gender: normalizeGender(profile.gender),
+            email: trimText(profile.email),
+            schoolName: trimText(profile.schoolName),
+            gradeName: trimText(profile.gradeName),
+            locationName: trimText(profile.locationName),
+            signature: trimText(profile.signature)
           }
-          self.statusText = '资料已加载，可以直接编辑。'
+          self.statusText = '资料已加载，修改后会同步到你的个人主页。'
         })
         .catch(function(error) {
           if (isAuthError(error)) {
             session.clearSession()
             self.loggedIn = false
             self.form = emptyForm()
-            self.statusText = '登录已过期，请重新登录。'
+            self.statusText = '登录状态已失效，请重新登录。'
             return
           }
-          self.statusText = '暂时无法加载资料字段。'
+          self.statusText = error.message || '暂时无法加载资料，请稍后再试。'
         })
+    },
+    updateField: function(field, event) {
+      if (!field) {
+        return
+      }
+      var value = event && event.detail ? event.detail.value : ''
+      this.form[field] = value
+    },
+    toggleGender: function(value) {
+      this.form.gender = this.form.gender === value ? '' : value
+    },
+    buildPayload: function() {
+      return {
+        nickname: trimText(this.form.nickname),
+        avatarUrl: trimText(this.form.avatarUrl),
+        coverImageUrl: trimText(this.form.coverImageUrl),
+        gender: normalizeGender(this.form.gender),
+        email: trimText(this.form.email),
+        schoolName: trimText(this.form.schoolName),
+        gradeName: trimText(this.form.gradeName),
+        locationName: trimText(this.form.locationName),
+        signature: trimText(this.form.signature)
+      }
+    },
+    validatePayload: function(payload) {
+      if (!payload.nickname) {
+        uni.showToast({ title: '请先填写昵称', icon: 'none' })
+        return false
+      }
+      if (!isValidEmail(payload.email)) {
+        uni.showToast({ title: '邮箱格式不正确', icon: 'none' })
+        return false
+      }
+      return true
+    },
+    submitProfile: function(options) {
+      var self = this
+      var settings = Object.assign({
+        successMessage: '资料已保存',
+        redirectAfterSave: false,
+        statusText: '资料已同步到个人主页。'
+      }, options || {})
+      if (self.saving || self.avatarUploading || self.coverUploading) {
+        return Promise.resolve()
+      }
+      var payload = self.buildPayload()
+      if (!self.validatePayload(payload)) {
+        return Promise.resolve()
+      }
+      self.saving = true
+      return api.updateMyProfile(payload)
+        .then(function() {
+          self.form = Object.assign({}, self.form, payload)
+          self.statusText = settings.statusText
+          session.updateUser({
+            nickname: payload.nickname,
+            avatarUrl: payload.avatarUrl
+          })
+          uni.setStorageSync(PROFILE_REFRESH_KEY, Date.now())
+          if (settings.successMessage) {
+            uni.showToast({ title: settings.successMessage, icon: 'none' })
+          }
+          if (settings.redirectAfterSave) {
+            setTimeout(function() {
+              uni.switchTab({ url: '/pages/profile/index' })
+            }, 220)
+          }
+        })
+        .catch(function(error) {
+          if (isAuthError(error)) {
+            session.clearSession()
+            self.loggedIn = false
+            self.statusText = '登录状态已失效，请重新登录。'
+            return
+          }
+          uni.showToast({ title: error.message || '资料保存失败', icon: 'none' })
+        })
+        .finally(function() {
+          self.saving = false
+        })
+    },
+    tryAutoSaveAfterImageUpload: function(label) {
+      var payload = this.buildPayload()
+      if (!this.validatePayload(payload)) {
+        this.statusText = label + '已上传，修正资料后点击保存即可同步到主页。'
+        return
+      }
+      this.submitProfile({
+        successMessage: label + '已保存',
+        redirectAfterSave: false,
+        statusText: label + '已同步到个人主页。'
+      })
     },
     chooseAvatar: function() {
       var self = this
@@ -143,8 +369,9 @@ export default {
           self.avatarUploading = true
           api.uploadAvatarImage(filePath)
             .then(function(payload) {
-              self.form.avatarUrl = payload.url || ''
-              uni.showToast({ title: '头像已上传', icon: 'none' })
+              self.form.avatarUrl = trimText(payload && payload.url)
+              self.avatarUploading = false
+              self.tryAutoSaveAfterImageUpload('头像')
             })
             .catch(function(error) {
               uni.showToast({ title: error.message || '头像上传失败', icon: 'none' })
@@ -155,43 +382,50 @@ export default {
         }
       })
     },
-    save: function() {
+    chooseCover: function() {
       var self = this
-      if (!self.form.nickname) {
-        uni.showToast({ title: '请输入昵称', icon: 'none' })
+      if (self.coverUploading) {
         return
       }
-      self.saving = true
-      api.updateMyProfile({
-        nickname: self.form.nickname,
-        avatarUrl: self.form.avatarUrl,
-        schoolName: self.form.schoolName,
-        gradeName: self.form.gradeName,
-        signature: self.form.signature
-      })
-        .then(function() {
-          session.updateUser({
-            nickname: self.form.nickname,
-            avatarUrl: self.form.avatarUrl
-          })
-          self.statusText = '资料修改成功。'
-          uni.showToast({ title: '资料已保存', icon: 'none' })
-          setTimeout(function() {
-            uni.navigateBack()
-          }, 350)
-        })
-        .catch(function(error) {
-          if (isAuthError(error)) {
-            session.clearSession()
-            self.loggedIn = false
-            self.statusText = '登录已过期，请重新登录。'
+      uni.chooseImage({
+        count: 1,
+        sizeType: ['compressed', 'original'],
+        sourceType: ['album', 'camera'],
+        success: function(result) {
+          var filePath = result.tempFilePaths && result.tempFilePaths[0]
+          if (!filePath) {
             return
           }
-          uni.showToast({ title: error.message || '资料保存失败', icon: 'none' })
-        })
-        .finally(function() {
-          self.saving = false
-        })
+          self.coverUploading = true
+          api.uploadProfileCoverImage(filePath)
+            .then(function(payload) {
+              self.form.coverImageUrl = trimText(payload && payload.url)
+              self.coverUploading = false
+              self.tryAutoSaveAfterImageUpload('背景图')
+            })
+            .catch(function(error) {
+              uni.showToast({ title: error.message || '背景图上传失败', icon: 'none' })
+            })
+            .finally(function() {
+              self.coverUploading = false
+            })
+        }
+      })
+    },
+    save: function() {
+      this.submitProfile({
+        successMessage: '资料已保存',
+        redirectAfterSave: true,
+        statusText: '资料已同步到个人主页。'
+      })
+    },
+    goBack: function() {
+      var pages = getCurrentPages()
+      if (pages && pages.length > 1) {
+        uni.navigateBack({ delta: 1 })
+        return
+      }
+      uni.switchTab({ url: '/pages/profile/index' })
     },
     goLogin: function() {
       uni.navigateTo({ url: '/pages/login/index' })
@@ -200,21 +434,178 @@ export default {
 }
 </script>
 
-<style>
-.edit-avatar-row {
+<style scoped>
+.edit-profile-shell {
+  min-height: 100vh;
+  padding: calc(114rpx + env(safe-area-inset-top)) 28rpx calc(92rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  background:
+    radial-gradient(circle at top left, rgba(253, 210, 167, 0.3), transparent 30%),
+    radial-gradient(circle at top right, rgba(68, 165, 255, 0.2), transparent 28%),
+    linear-gradient(180deg, #f8fbff 0%, #f5f6f7 48%, #eef4fa 100%);
+}
+
+.action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: none;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.action-button::after {
+  border: none;
+}
+
+.edit-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(104rpx + env(safe-area-inset-top));
+  padding: calc(20rpx + env(safe-area-inset-top)) 28rpx 20rpx;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(28rpx);
+  box-shadow: 0 18rpx 40rpx rgba(22, 47, 81, 0.06);
+}
+
+.edit-topbar-back {
+  position: absolute;
+  left: 28rpx;
+  bottom: 20rpx;
+  width: 104rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.96);
+  color: #36506f;
+  font-size: 24rpx;
+  font-weight: 700;
+  box-shadow: 0 12rpx 28rpx rgba(25, 52, 87, 0.06);
+}
+
+.edit-topbar-title {
+  font-size: 38rpx;
+  font-weight: 800;
+  line-height: 1;
+  color: #223247;
+}
+
+.edit-content,
+.edit-guest-card {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.edit-cover-card,
+.edit-avatar-card,
+.edit-panel,
+.edit-guest-card {
+  border-radius: 34rpx;
+  background: rgba(255, 255, 255, 0.84);
+  border: 2rpx solid rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(24rpx);
+  box-shadow: 0 24rpx 52rpx rgba(25, 52, 87, 0.07);
+}
+
+.edit-cover-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 360rpx;
+}
+
+.edit-cover-image {
+  width: 100%;
+  height: 360rpx;
+}
+
+.edit-cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8, 38, 67, 0.06) 0%, rgba(8, 38, 67, 0.58) 100%);
+}
+
+.edit-cover-copy {
+  position: absolute;
+  left: 28rpx;
+  right: 28rpx;
+  bottom: 132rpx;
+  z-index: 1;
+}
+
+.edit-cover-kicker {
+  display: inline-flex;
+  padding: 10rpx 20rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.2);
+  color: #edf3ff;
+  font-size: 20rpx;
+  font-weight: 700;
+}
+
+.edit-cover-title {
+  margin-top: 18rpx;
+  font-size: 36rpx;
+  font-weight: 800;
+  line-height: 1.3;
+  color: #ffffff;
+}
+
+.edit-cover-desc {
+  margin-top: 12rpx;
+  max-width: 560rpx;
+  font-size: 22rpx;
+  line-height: 1.7;
+  color: rgba(237, 243, 255, 0.84);
+}
+
+.edit-cover-button {
+  position: absolute;
+  left: 28rpx;
+  right: 28rpx;
+  bottom: 28rpx;
+  z-index: 2;
+  height: 84rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.96);
+  color: #005e9f;
+  font-size: 26rpx;
+  font-weight: 700;
+  box-shadow: 0 14rpx 28rpx rgba(14, 33, 64, 0.12);
+}
+
+.edit-avatar-card,
+.edit-panel {
+  padding: 30rpx 28rpx;
+}
+
+.edit-avatar-card {
   display: flex;
   align-items: center;
   gap: 24rpx;
-  margin-top: 16rpx;
 }
 
 .edit-avatar-shell {
-  width: 128rpx;
-  height: 128rpx;
+  width: 132rpx;
+  height: 132rpx;
   border-radius: 36rpx;
   overflow: hidden;
-  background: linear-gradient(135deg, #ef6288 0%, #345fe0 100%);
-  box-shadow: 0 16rpx 28rpx rgba(201, 49, 91, 0.16);
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #d8e8f9 0%, #f8fbff 100%);
+  box-shadow: 0 16rpx 30rpx rgba(25, 52, 87, 0.08);
 }
 
 .edit-avatar-image {
@@ -225,31 +616,166 @@ export default {
 .edit-avatar-fallback {
   width: 100%;
   height: 100%;
-  color: #ffffff;
-  text-align: center;
-  line-height: 128rpx;
-  font-size: 46rpx;
-  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1f4680;
+  font-size: 48rpx;
+  font-weight: 800;
 }
 
 .edit-avatar-copy {
   flex: 1;
 }
 
-.edit-avatar-title {
-  color: var(--campus-text);
-  font-size: 28rpx;
+.edit-section-title,
+.edit-panel-title {
+  font-size: 30rpx;
+  font-weight: 800;
+  color: #223247;
+}
+
+.edit-section-copy {
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  line-height: 1.7;
+  color: #6a788a;
+}
+
+.chip-button {
+  flex-shrink: 0;
+  min-width: 168rpx;
+  height: 72rpx;
+  padding: 0 28rpx;
+  border-radius: 999rpx;
+  background: rgba(68, 165, 255, 0.14);
+  color: #005e9f;
+  font-size: 24rpx;
   font-weight: 700;
 }
 
-.edit-avatar-desc {
-  margin-top: 10rpx;
-  color: var(--campus-text-soft);
-  font-size: 22rpx;
+.edit-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 22rpx;
+}
+
+.edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.edit-label {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: #516175;
+}
+
+.edit-input,
+.edit-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  outline: none;
+  padding: 28rpx 26rpx;
+  border-radius: 26rpx;
+  background: rgba(245, 248, 252, 0.92);
+  box-shadow: inset 0 0 0 2rpx rgba(191, 208, 226, 0.26);
+  color: #223247;
+  font-size: 28rpx;
+}
+
+.edit-input {
+  height: 88rpx;
+}
+
+.edit-hint {
+  font-size: 21rpx;
+  line-height: 1.7;
+  color: #8391a3;
+}
+
+.gender-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.gender-chip {
+  min-width: 156rpx;
+  height: 72rpx;
+  padding: 0 26rpx;
+  border-radius: 999rpx;
+  background: rgba(239, 244, 250, 0.92);
+  color: #526277;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.gender-chip-active {
+  background: linear-gradient(90deg, #005e9f 0%, #44a5ff 100%);
+  color: #edf3ff;
+  box-shadow: 0 14rpx 28rpx rgba(0, 94, 159, 0.18);
+}
+
+.edit-textarea {
+  min-height: 180rpx;
   line-height: 1.7;
 }
 
-.edit-avatar-button {
-  margin-top: 16rpx;
+.edit-counter {
+  align-self: flex-end;
+  font-size: 20rpx;
+  color: #8a95a6;
+}
+
+.primary-button {
+  height: 96rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(90deg, #005e9f 0%, #44a5ff 100%);
+  color: #edf3ff;
+  font-size: 28rpx;
+  font-weight: 800;
+  box-shadow: 0 22rpx 44rpx rgba(0, 94, 159, 0.22);
+}
+
+.primary-button-disabled {
+  opacity: 0.72;
+}
+
+.save-button {
+  margin-top: 8rpx;
+}
+
+.edit-guest-card {
+  margin-top: 22rpx;
+  padding: 42rpx 36rpx;
+}
+
+.edit-guest-badge {
+  display: inline-flex;
+  padding: 10rpx 22rpx;
+  border-radius: 999rpx;
+  background: rgba(68, 165, 255, 0.14);
+  color: #005e9f;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.edit-guest-title {
+  margin-top: 24rpx;
+  font-size: 40rpx;
+  font-weight: 800;
+  line-height: 1.3;
+  color: #24364a;
+}
+
+.edit-guest-copy {
+  margin-top: 18rpx;
+  margin-bottom: 28rpx;
+  font-size: 25rpx;
+  line-height: 1.7;
+  color: #6a788a;
 }
 </style>

@@ -760,4 +760,151 @@ export default {
 .empty-card {
   margin-top: 14rpx;
 }
+
+.posts-shell {
+  min-height: 100vh;
+  padding-top: 12rpx;
+  padding-bottom: calc(88rpx + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at top left, rgba(253, 210, 167, 0.24), transparent 34%),
+    radial-gradient(circle at top right, rgba(68, 165, 255, 0.16), transparent 28%),
+    linear-gradient(180deg, #f8fbff 0%, #f5f6f7 46%, #eef4fa 100%);
+}
+
+.posts-shell .hero-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1e74bf 0%, #3f8fe1 52%, #6aaef8 100%);
+  box-shadow: 0 24rpx 52rpx rgba(23, 76, 132, 0.16);
+}
+
+.posts-shell .hero-card::after {
+  content: '';
+  position: absolute;
+  right: -72rpx;
+  top: -56rpx;
+  width: 220rpx;
+  height: 220rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  filter: blur(16rpx);
+}
+
+.posts-shell .hero-badge,
+.posts-shell .hero-title,
+.posts-shell .hero-copy,
+.posts-shell .posts-hero-chip {
+  position: relative;
+  z-index: 1;
+}
+
+.posts-shell .posts-hero {
+  margin-top: 0;
+}
+
+.posts-shell .hero-badge {
+  background: rgba(255, 255, 255, 0.16);
+  color: #eef6ff;
+}
+
+.posts-shell .hero-title {
+  color: #ffffff;
+}
+
+.posts-shell .hero-copy {
+  color: rgba(238, 246, 255, 0.84);
+}
+
+.posts-shell .posts-hero-chip {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.12);
+  color: #eef6ff;
+}
+
+.posts-shell .section-head {
+  align-items: center;
+}
+
+.posts-shell .status-overview-card,
+.posts-shell .look-card,
+.posts-shell .panel-card,
+.posts-shell .status-banner {
+  border-radius: 32rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 24rpx 52rpx rgba(25, 52, 87, 0.07);
+  backdrop-filter: blur(24rpx);
+}
+
+.posts-shell .status-overview-card {
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.posts-shell .status-overview-label {
+  color: #6a788a;
+  letter-spacing: 1rpx;
+}
+
+.posts-shell .status-overview-value {
+  color: #223247;
+}
+
+.posts-shell .status-copy {
+  border-color: rgba(68, 165, 255, 0.14);
+  background: rgba(68, 165, 255, 0.08);
+  color: #5f7183;
+}
+
+.posts-shell .float-link,
+.posts-shell .cover-tag {
+  border-color: rgba(68, 165, 255, 0.18);
+  background: rgba(68, 165, 255, 0.1);
+  color: #1f63ac;
+}
+
+.posts-shell .status-chip-published {
+  background: rgba(56, 182, 139, 0.16);
+  color: #18876b;
+}
+
+.posts-shell .status-chip-pending {
+  background: rgba(255, 188, 112, 0.2);
+  color: #b66b1b;
+}
+
+.posts-shell .status-chip-rejected {
+  background: rgba(230, 99, 125, 0.16);
+  color: #c6506b;
+}
+
+.posts-shell .status-chip-offline {
+  background: rgba(124, 145, 167, 0.16);
+  color: #607286;
+}
+
+.posts-shell .btn-secondary {
+  background: rgba(68, 165, 255, 0.1);
+  color: #1f63ac;
+  border-color: transparent;
+}
+
+.posts-shell .btn-ghost {
+  background: rgba(255, 255, 255, 0.82);
+  color: #6a788a;
+  border-color: rgba(191, 208, 226, 0.46);
+}
+
+.posts-shell .btn-delete {
+  color: #d85d7b;
+}
+
+.posts-shell .btn-warn {
+  background: rgba(255, 188, 112, 0.16);
+  color: #b66b1b;
+}
+
+.posts-shell .btn-success {
+  background: rgba(56, 182, 139, 0.14);
+  color: #18876b;
+}
 </style>

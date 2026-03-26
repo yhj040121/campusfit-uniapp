@@ -511,4 +511,107 @@ export default {
   color: var(--campus-secondary);
   font-size: 20rpx;
 }
+
+.message-shell {
+  min-height: 100vh;
+  padding-top: 12rpx;
+  padding-bottom: calc(88rpx + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at top left, rgba(253, 210, 167, 0.24), transparent 34%),
+    radial-gradient(circle at top right, rgba(68, 165, 255, 0.16), transparent 28%),
+    linear-gradient(180deg, #f8fbff 0%, #f5f6f7 46%, #eef4fa 100%);
+}
+
+.message-shell .hero-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1e74bf 0%, #3f8fe1 52%, #6aaef8 100%);
+  box-shadow: 0 24rpx 52rpx rgba(23, 76, 132, 0.16);
+}
+
+.message-shell .hero-card::after {
+  content: '';
+  position: absolute;
+  right: -72rpx;
+  top: -56rpx;
+  width: 220rpx;
+  height: 220rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  filter: blur(16rpx);
+}
+
+.message-shell .hero-badge,
+.message-shell .hero-title,
+.message-shell .hero-copy,
+.message-shell .hero-card-pill-value,
+.message-shell .hero-card-pill-label {
+  position: relative;
+  z-index: 1;
+}
+
+.message-shell .hero-badge {
+  background: rgba(255, 255, 255, 0.16);
+  color: #eef6ff;
+}
+
+.message-shell .hero-title {
+  color: #ffffff;
+}
+
+.message-shell .hero-copy {
+  color: rgba(238, 246, 255, 0.84);
+}
+
+.message-shell .hero-card-pill {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.message-shell .message-toolbar {
+  margin: 14rpx 0 16rpx;
+}
+
+.message-shell .float-link,
+.message-shell .mini-tag {
+  border-color: rgba(68, 165, 255, 0.18);
+  background: rgba(68, 165, 255, 0.1);
+  color: #1f63ac;
+}
+
+.message-shell .message-toolbar-danger,
+.message-shell .message-delete-link {
+  color: #d85d7b;
+}
+
+.message-shell .chip {
+  border-color: rgba(68, 165, 255, 0.18);
+  background: rgba(255, 255, 255, 0.82);
+  color: #6a788a;
+}
+
+.message-shell .chip-active {
+  background: linear-gradient(90deg, #005e9f 0%, #44a5ff 100%);
+  color: #edf3ff;
+  border-color: transparent;
+  box-shadow: 0 14rpx 28rpx rgba(0, 94, 159, 0.16);
+}
+
+.message-shell .chip-outline {
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.message-shell .message-card,
+.message-shell .panel-card,
+.message-shell .status-banner {
+  border-radius: 32rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 24rpx 52rpx rgba(25, 52, 87, 0.07);
+  backdrop-filter: blur(24rpx);
+}
+
+.message-shell .message-card {
+  margin-top: 16rpx;
+}
 </style>

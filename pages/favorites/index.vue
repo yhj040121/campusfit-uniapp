@@ -50,7 +50,7 @@
           </view>
           <view class="product-card favorite-product">
             <view class="text-main">{{ item.product }}</view>
-            <view class="text-copy">{{ item.platform }} · {{ item.price }}</view>
+            <view class="text-copy">{{ item.price ? (item.platform + ' · ' + item.price) : item.platform }}</view>
           </view>
           <view class="btn-row" style="margin-top:18rpx;">
             <button class="btn-secondary btn-half" :disabled="actionLoadingId === item.id" @click.stop="goDetail(item.id)">查看详情</button>
@@ -69,46 +69,8 @@
 
 <script>
 var api = require('../../common/api.js')
+var postDisplay = require('../../common/post-display.js')
 var session = require('../../common/session.js')
-
-function resolveCoverImage(item) {
-  if (!item) {
-    return ''
-  }
-  if (item.coverImageUrl) {
-    return item.coverImageUrl
-  }
-  if (item.coverUrl) {
-    return item.coverUrl
-  }
-  if (item.imageUrl) {
-    return item.imageUrl
-  }
-  if (item.thumbnailUrl) {
-    return item.thumbnailUrl
-  }
-  if (item.posterUrl) {
-    return item.posterUrl
-  }
-  var sources = item.imageUrls || item.images || item.pictures || item.photos || []
-  if (Array.isArray(sources)) {
-    for (var i = 0; i < sources.length; i += 1) {
-      if (!sources[i]) {
-        continue
-      }
-      if (typeof sources[i] === 'string') {
-        return sources[i]
-      }
-      if (sources[i].url) {
-        return sources[i].url
-      }
-      if (sources[i].src) {
-        return sources[i].src
-      }
-    }
-  }
-  return ''
-}
 
 function isAuthError(error) {
   var message = ((error && error.message) || '').toLowerCase()
@@ -147,7 +109,7 @@ export default {
         .then(function(list) {
           self.favorites = (list || []).map(function(item) {
             return Object.assign({}, item, {
-              displayCoverUrl: resolveCoverImage(item)
+              displayCoverUrl: postDisplay.getDisplayCoverUrl(item)
             })
           })
           self.statusText = '收藏内容已更新。'

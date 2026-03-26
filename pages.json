@@ -3,174 +3,192 @@
     {
       "path": "pages/index/index",
       "style": {
-        "navigationBarTitleText": "首页"
+        "navigationBarTitleText": "\u9996\u9875",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/publish/index",
       "style": {
-        "navigationBarTitleText": "发布穿搭"
+        "navigationBarTitleText": "\u53d1\u5e03\u7a7f\u642d",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/search/index",
       "style": {
-        "navigationBarTitleText": "搜索"
+        "navigationBarTitleText": "\u641c\u7d22",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/activity/index",
       "style": {
-        "navigationBarTitleText": "活动中心"
+        "navigationBarTitleText": "\u6d3b\u52a8\u4e2d\u5fc3",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/activity-detail/index",
+      "style": {
+        "navigationBarTitleText": "\u6d3b\u52a8\u8be6\u60c5",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/profile/index",
       "style": {
-        "navigationBarTitleText": "我的"
+        "navigationBarTitleText": "\u6211\u7684",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/splash/index",
       "style": {
-        "navigationBarTitleText": "启动页"
+        "navigationBarTitleText": "\u542f\u52a8\u9875"
       }
     },
     {
       "path": "pages/login/index",
       "style": {
-        "navigationBarTitleText": "登录"
+        "navigationBarTitleText": "\u767b\u5f55"
       }
     },
     {
       "path": "pages/register/index",
       "style": {
-        "navigationBarTitleText": "注册"
+        "navigationBarTitleText": "\u6ce8\u518c"
       }
     },
     {
       "path": "pages/detail/index",
       "style": {
-        "navigationBarTitleText": "穿搭详情"
+        "navigationBarTitleText": "\u7a7f\u642d\u8be6\u60c5",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/announcement/index",
       "style": {
-        "navigationBarTitleText": "官方公告"
+        "navigationBarTitleText": "\u5b98\u65b9\u516c\u544a",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/tags/index",
       "style": {
-        "navigationBarTitleText": "选择标签"
+        "navigationBarTitleText": "\u9009\u62e9\u6807\u7b7e",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/results/index",
       "style": {
-        "navigationBarTitleText": "搜索结果"
+        "navigationBarTitleText": "\u641c\u7d22\u7ed3\u679c",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/my-posts/index",
       "style": {
-        "navigationBarTitleText": "我的发布"
+        "navigationBarTitleText": "\u6211\u7684\u53d1\u5e03"
       }
     },
     {
       "path": "pages/my-activity/index",
       "style": {
-        "navigationBarTitleText": "我的活动"
+        "navigationBarTitleText": "\u6211\u7684\u6d3b\u52a8"
       }
     },
     {
       "path": "pages/favorites/index",
       "style": {
-        "navigationBarTitleText": "我的收藏"
+        "navigationBarTitleText": "\u6211\u7684\u6536\u85cf"
       }
     },
     {
       "path": "pages/follows/index",
       "style": {
-        "navigationBarTitleText": "关注与粉丝"
+        "navigationBarTitleText": "\u5173\u6ce8\u4e0e\u7c89\u4e1d"
       }
     },
     {
       "path": "pages/comments/index",
       "style": {
-        "navigationBarTitleText": "评论"
+        "navigationBarTitleText": "\u8bc4\u8bba"
       }
     },
     {
       "path": "pages/likes/index",
       "style": {
-        "navigationBarTitleText": "点赞"
+        "navigationBarTitleText": "\u70b9\u8d5e"
       }
     },
     {
       "path": "pages/product-jump/index",
       "style": {
-        "navigationBarTitleText": "商品跳转"
+        "navigationBarTitleText": "\u5546\u54c1\u8df3\u8f6c"
       }
     },
     {
       "path": "pages/settings/index",
       "style": {
-        "navigationBarTitleText": "设置"
+        "navigationBarTitleText": "\u8bbe\u7f6e"
       }
     },
     {
       "path": "pages/edit-profile/index",
       "style": {
-        "navigationBarTitleText": "编辑资料"
+        "navigationBarTitleText": "\u7f16\u8f91\u8d44\u6599",
+        "navigationStyle": "custom"
       }
     },
     {
       "path": "pages/incentives/index",
       "style": {
-        "navigationBarTitleText": "创作激励"
+        "navigationBarTitleText": "\u521b\u4f5c\u8005\u6fc0\u52b1"
       }
     },
     {
       "path": "pages/drafts/index",
       "style": {
-        "navigationBarTitleText": "草稿箱"
+        "navigationBarTitleText": "\u8349\u7a3f\u7bb1"
       }
     },
     {
       "path": "pages/messages/index",
       "style": {
-        "navigationBarTitleText": "消息通知"
+        "navigationBarTitleText": "\u6d88\u606f\u901a\u77e5"
       }
     }
   ],
   "tabBar": {
-    "color": "#7f96a7",
-    "selectedColor": "#46a8df",
-    "backgroundColor": "#fdfefe",
+    "color": "#a0acbc",
+    "selectedColor": "#2563eb",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页",
+        "text": "\u9996\u9875",
         "iconPath": "static/tabbar/home.png",
         "selectedIconPath": "static/tabbar/home-active.png"
       },
       {
         "pagePath": "pages/publish/index",
-        "text": "发布",
+        "text": "\u53d1\u5e03",
         "iconPath": "static/tabbar/publish.png",
         "selectedIconPath": "static/tabbar/publish-active.png"
       },
       {
         "pagePath": "pages/search/index",
-        "text": "搜索",
+        "text": "\u641c\u7d22",
         "iconPath": "static/tabbar/search.png",
         "selectedIconPath": "static/tabbar/search-active.png"
       },
       {
         "pagePath": "pages/profile/index",
-        "text": "我的",
+        "text": "\u6211\u7684",
         "iconPath": "static/tabbar/profile.png",
         "selectedIconPath": "static/tabbar/profile-active.png"
       }

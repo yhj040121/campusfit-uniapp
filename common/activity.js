@@ -19,6 +19,7 @@ function normalizeActivity(activity) {
     participation: activity.participation || '',
     scene: activity.scene || '',
     status: activity.status || '',
+    selectable: activity.selectable !== false,
     heat: Number(activity.heat || 0),
     entries: Number(activity.entries || 0),
     joined: !!activity.joined,

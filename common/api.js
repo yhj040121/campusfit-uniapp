@@ -32,6 +32,10 @@ function uploadFileWithBaseUrl(baseUrl, filePath, apiPath, includeAuth) {
       header: header,
       success: function(response) {
         if (response.statusCode < 200 || response.statusCode >= 300) {
+          if (response.statusCode === 413) {
+            reject(new Error('图片过大，请选择压缩图片，或联系管理员放宽服务器上传限制'))
+            return
+          }
           reject(new Error('HTTP ' + response.statusCode))
           return
         }
@@ -73,6 +77,10 @@ function uploadAvatarImage(filePath) {
   return uploadFileByApiPath(filePath, '/api/uploads/avatar', false)
 }
 
+function uploadProfileCoverImage(filePath) {
+  return uploadFileByApiPath(filePath, '/api/uploads/profile-cover', true)
+}
+
 function sendAuthCode(phone, scene) {
   return http.request({
     url: '/api/auth/send-code',
@@ -84,11 +92,22 @@ function sendAuthCode(phone, scene) {
   })
 }
 
-function loginUser(phone, password, code) {
+function loginUser(phoneOrPayload, password, code, loginType) {
+  var payload = {}
+  if (phoneOrPayload && typeof phoneOrPayload === 'object') {
+    payload = phoneOrPayload
+  } else {
+    payload = {
+      phone: phoneOrPayload,
+      password: password,
+      code: code,
+      loginType: loginType
+    }
+  }
   return http.request({
     url: '/api/auth/login',
     method: 'POST',
-    data: { phone: phone, password: password, code: code }
+    data: payload
   })
 }
 
@@ -382,9 +401,23 @@ function listFeaturedActivities() {
   })
 }
 
+function getActivityDetail(activityId) {
+  return http.request({
+    url: '/api/activities/' + activityId,
+    method: 'GET'
+  })
+}
+
 function getLatestAnnouncement() {
   return http.request({
     url: '/api/announcements/latest',
+    method: 'GET'
+  })
+}
+
+function listAnnouncements() {
+  return http.request({
+    url: '/api/announcements',
     method: 'GET'
   })
 }
@@ -467,6 +500,7 @@ module.exports = {
   logoutUser: logoutUser,
   uploadPostImage: uploadPostImage,
   uploadAvatarImage: uploadAvatarImage,
+  uploadProfileCoverImage: uploadProfileCoverImage,
   listRecommendations: listRecommendations,
   listMyPosts: listMyPosts,
   getPostForEdit: getPostForEdit,
@@ -503,6 +537,8 @@ module.exports = {
   getTagOptions: getTagOptions,
   listActivities: listActivities,
   listFeaturedActivities: listFeaturedActivities,
+  getActivityDetail: getActivityDetail,
+  listAnnouncements: listAnnouncements,
   getLatestAnnouncement: getLatestAnnouncement,
   getAnnouncementDetail: getAnnouncementDetail,
   listMyActivities: listMyActivities,

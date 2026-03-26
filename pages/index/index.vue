@@ -1,153 +1,151 @@
 <template>
   <view class="page-shell home-shell">
-    <view class="search-bar home-search" @click="goSearch">
-      <view class="search-icon">搜</view>
-      <view class="search-text">搜索场景、单品、博主或预算</view>
-      <view class="search-enter">去发现</view>
-    </view>
-
-    <view class="hero-card home-hero">
-      <view class="home-hero-top">
-        <view class="home-hero-main">
-          <view class="hero-title home-hero-title">本周清爽穿搭</view>
-          <view class="hero-copy home-hero-copy">先看图和预算。</view>
+    <view class="home-topbar">
+      <view class="home-search-box" @click="goSearch">
+        <view class="home-search-icon">
+          <view class="home-search-lens"></view>
+          <view class="home-search-handle"></view>
         </view>
+        <view class="home-search-placeholder">搜索校园趋势...</view>
       </view>
-      <view class="home-hero-chips">
-        <view class="home-hero-chip">{{ outfits.length }} 推荐</view>
-        <view class="home-hero-chip">{{ featuredActivities.length }} 活动</view>
+
+      <view class="home-message-button" @click="goMessages">
+        <view class="home-message-bubble"></view>
+        <view v-if="unreadCount > 0" class="home-message-dot"></view>
+      </view>
+
+      <view class="home-avatar-button" @click="goProfile">
+        <image
+          v-if="currentUserAvatar"
+          class="home-avatar-image"
+          :src="currentUserAvatar"
+          mode="aspectFill"
+        ></image>
+        <text v-else>{{ currentUserInitial }}</text>
       </view>
     </view>
 
-    <view v-if="featuredActivity" class="panel-card home-activity-strip" @click="goActivityCenter">
-      <view class="home-activity-kicker">{{ featuredActivity.badge }}</view>
-      <view class="home-activity-main">
-        <view class="home-activity-title">{{ featuredActivity.title }}</view>
-        <view class="home-activity-meta">{{ featuredActivity.period }} · {{ featuredActivity.progressText }}</view>
-      </view>
-      <view class="home-activity-link">查看</view>
-    </view>
-
-    <view class="home-mini-head">
-      <view class="home-mini-title">{{ recommendEnabled ? '今日推荐' : '最新内容' }}</view>
-      <view class="float-link" @click="refreshHome">刷新</view>
-    </view>
-    <view class="chip-row channel-row">
-      <view
-        v-for="item in tabs"
-        :key="item"
-        :class="['chip', activeTab === item ? 'chip-active' : 'chip-outline']"
-        @click="activeTab = item"
-      >
-        {{ item }}
-      </view>
-    </view>
-
-    <view v-if="officialAnnouncement" class="feature-note compact-feature-note feature-note-clickable" @click="goAnnouncementDetail">
-      <view class="feature-label">{{ officialAnnouncement.badge }}</view>
-      <view class="feature-title">{{ officialAnnouncement.title }}</view>
-      <view class="feature-meta">
-        发布时间 {{ officialAnnouncement.publishTime }}
-        <text v-if="officialAnnouncement.expireTime && officialAnnouncement.expireTime !== '-'"> · 截止 {{ officialAnnouncement.expireTime }}</text>
-      </view>
-    </view>
-
-    <view class="home-mini-head home-feed-head">
-      <view class="home-mini-title">爆款穿搭</view>
-      <view class="float-link" @click="goSearch">更多筛选</view>
-    </view>
-
-    <view v-if="listLoading">
-      <view class="skeleton-card" v-for="item in 2" :key="'skeleton-' + item">
-        <view class="skeleton-block"></view>
-        <view class="skeleton-line medium"></view>
-        <view class="skeleton-line"></view>
-        <view class="skeleton-line short"></view>
-      </view>
-    </view>
-    <view v-else-if="listFailed" class="status-banner status-banner-error">
-      <view class="status-banner-head">
-        <view>
-          <view class="status-banner-title">推荐内容暂时没有加载出来</view>
-          <view class="status-banner-copy">可以稍后再试一次，或者先通过搜索与活动中心继续浏览。</view>
-        </view>
-        <view class="status-link" @click="refreshHome">重试</view>
-      </view>
-    </view>
-    <view v-else-if="outfits.length">
-      <view class="look-card editorial-card" v-for="item in outfits" :key="item.id" @click="goDetail(item.id)">
-        <view class="editorial-photo">
-          <image v-if="item.coverImageUrl" class="editorial-image" :src="item.coverImageUrl" mode="aspectFill"></image>
-          <view class="editorial-photo-overlay">
-            <view class="editorial-pill">{{ item.coverTag }}</view>
-            <view class="editorial-budget">预算 {{ item.budget }}</view>
-          </view>
-          <view v-if="!item.coverImageUrl" class="editorial-empty">
-            <view class="editorial-empty-kicker">OOTD</view>
-            <view class="editorial-empty-title">{{ item.title }}</view>
+    <view class="home-content">
+      <scroll-view class="home-tab-scroll" scroll-x="true" show-scrollbar="false">
+        <view class="home-tab-row">
+          <view
+            v-for="item in tabs"
+            :key="item"
+            :class="['home-tab-item', activeTab === item ? 'home-tab-item-active' : '']"
+            @click="activeTab = item"
+          >
+            {{ item }}
           </view>
         </view>
+      </scroll-view>
 
-        <view class="editorial-body">
-          <view class="editorial-kicker">{{ item.scene }} · {{ item.style }}</view>
-          <view class="editorial-title">{{ item.title }}</view>
-          <view v-if="getDisplaySubtitle(item)" class="editorial-subtitle">{{ getDisplaySubtitle(item) }}</view>
-          <view class="editorial-desc">{{ item.desc }}</view>
+      <view class="home-section">
+        <view class="home-section-head">
+          <view class="home-section-title">每周精选</view>
+        </view>
 
-          <view class="editorial-tags">
-            <view class="mini-tag">{{ item.scene }}</view>
-            <view class="mini-tag">{{ item.style }}</view>
-            <view class="mini-tag">{{ item.platform }}</view>
-          </view>
-
-          <view class="meta-line editorial-meta">
-            <view class="meta-left">
-              <view :class="['avatar', item.avatarClass, item.avatarUrl ? 'avatar-has-image' : '']">
-                <image v-if="item.avatarUrl" class="avatar-image" :src="item.avatarUrl" mode="aspectFill"></image>
-                <text v-else>{{ item.avatar }}</text>
+        <view class="home-weekly-grid">
+          <view class="home-weekly-panel">
+            <view class="home-weekly-label">公告</view>
+            <view v-if="weeklyAnnouncement" class="home-weekly-card home-weekly-card-note" @click="goAnnouncementDetail">
+              <view class="home-weekly-note-icon">
+                <text class="home-weekly-note-icon-text">公</text>
               </view>
-              <view>
-                <view class="meta-name">{{ item.user }}</view>
-                <view class="meta-school">{{ item.school }}</view>
+              <view class="home-weekly-card-title">{{ weeklyAnnouncement.title }}</view>
+              <view class="home-weekly-card-copy">{{ weeklyAnnouncement.summary || '无' }}</view>
+              <view class="home-weekly-card-meta">{{ weeklyAnnouncement.publishTime || '无' }}</view>
+            </view>
+            <view v-else class="home-weekly-empty">无</view>
+          </view>
+
+          <view class="home-weekly-panel">
+            <view class="home-weekly-label">活动</view>
+            <view v-if="weeklyActivity" class="home-weekly-card home-weekly-card-activity" @click="goActivityCenter">
+              <view class="home-weekly-activity-badge">{{ weeklyActivity.badge || '活动' }}</view>
+              <view class="home-weekly-card-title home-weekly-card-title-light">{{ weeklyActivity.title }}</view>
+              <view class="home-weekly-card-copy home-weekly-card-copy-light">{{ weeklyActivity.summary || '无' }}</view>
+              <view class="home-weekly-card-meta home-weekly-card-meta-light">{{ weeklyActivity.period || '无' }}</view>
+            </view>
+            <view v-else class="home-weekly-empty">无</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="home-feed-head">
+        <view class="home-feed-head-mark"></view>
+        <view class="home-feed-head-title">每日灵感</view>
+      </view>
+
+      <view v-if="listLoading" class="home-feed-grid">
+        <view class="home-feed-column" v-for="column in 2" :key="'skeleton-column-' + column">
+          <view class="home-feed-skeleton" v-for="item in 2" :key="'skeleton-' + column + '-' + item"></view>
+        </view>
+      </view>
+
+      <view v-else-if="listFailed" class="home-empty-card">
+        <view class="home-empty-title">无</view>
+        <view class="home-empty-copy">帖子数据加载失败</view>
+      </view>
+
+      <view v-else-if="displayedPosts.length" class="home-feed-grid">
+        <view class="home-feed-column" v-for="(column, columnIndex) in feedColumns" :key="'column-' + columnIndex">
+          <view class="home-feed-card" v-for="item in column" :key="item.id" @click="goDetail(item.id)">
+            <view :class="['home-feed-media', item.feedMediaClass]">
+              <image
+                v-if="item.displayCoverUrl || item.coverImageUrl"
+                class="home-feed-image"
+                :src="item.displayCoverUrl || item.coverImageUrl"
+                mode="aspectFill"
+              ></image>
+              <view v-else class="home-feed-empty-media">
+                <view class="home-feed-empty-media-text">无</view>
+              </view>
+              <view class="home-feed-badge">{{ item.feedBadge }}</view>
+            </view>
+
+            <view class="home-feed-body">
+              <view class="home-feed-title">{{ item.title || '无' }}</view>
+              <view v-if="item.feedTags && item.feedTags.length" class="home-feed-tag-row">
+                <view
+                  v-for="tag in item.feedTags"
+                  :key="item.id + '-' + tag"
+                  class="home-feed-tag"
+                >
+                  {{ tag }}
+                </view>
+              </view>
+              <view class="home-feed-desc">{{ item.feedDesc || '无' }}</view>
+
+              <view class="home-feed-footer">
+                <view class="home-feed-user">
+                  <view :class="['avatar', item.avatarClass, item.avatarUrl ? 'avatar-has-image' : '']">
+                    <image v-if="item.avatarUrl" class="avatar-image" :src="item.avatarUrl" mode="aspectFill"></image>
+                    <text v-else>{{ item.avatar || 'U' }}</text>
+                  </view>
+                  <view class="home-feed-user-copy">
+                    <view class="home-feed-user-name">{{ item.user || '无' }}</view>
+                    <view class="home-feed-user-school">{{ item.school || '无' }}</view>
+                  </view>
+                </view>
+
+                <view class="home-feed-like">
+                  <text class="home-feed-like-icon">&#9825;</text>
+                  <text class="home-feed-like-value">{{ formatCount(item.likes) }}</text>
+                </view>
               </view>
             </view>
-            <view class="stats-line">
-              <view class="stat-text">赞 {{ item.likes }}</view>
-              <view class="stat-text">评 {{ item.comments }}</view>
-              <view class="stat-text">藏 {{ item.saves }}</view>
-            </view>
           </view>
         </view>
       </view>
-    </view>
-    <view v-else class="panel-card">
-      <view class="section-title" style="margin-top:0;">暂时还没有推荐内容</view>
-      <view class="text-copy">先去搜索页按场景筛选，或者看看当前正在进行的活动专题。</view>
-    </view>
 
-    <view class="bottom-gap"></view>
-
-    <view
-      :class="[
-        'message-fab',
-        'message-fab-' + messageDockSide,
-        messageCollapsed ? 'message-fab-collapsed' : '',
-        messageDragging ? 'message-fab-dragging' : ''
-      ]"
-      :style="messageFabStyle"
-      @touchstart.stop="onMessageTouchStart"
-      @touchmove.stop.prevent="onMessageTouchMove"
-      @touchend.stop="onMessageTouchEnd"
-      @tap.stop="handleMessageTap"
-    >
-      <view class="message-fab-shell">
-        <view class="message-fab-icon">
-          <view class="message-fab-dot"></view>
-          <view class="message-fab-dot"></view>
-          <view class="message-fab-dot"></view>
-        </view>
+      <view v-else class="home-empty-card">
+        <view class="home-empty-title">无</view>
+        <view class="home-empty-copy">{{ emptyText }}</view>
       </view>
-      <view v-if="unreadCount > 0" class="message-fab-badge">{{ unreadBadgeText }}</view>
+    </view>
+
+    <view class="home-fab" @click="goPublish">
+      <view class="home-fab-plus"></view>
     </view>
   </view>
 </template>
@@ -158,80 +156,215 @@ var session = require('../../common/session.js')
 var postDisplay = require('../../common/post-display.js')
 var settingsStore = require('../../common/settings.js')
 
-var MESSAGE_FLOAT_STORAGE_KEY = 'campusfit_home_message_float'
-var MESSAGE_FLOAT_SIZE = 46
-var MESSAGE_FLOAT_MARGIN = 8
-var MESSAGE_FLOAT_MIN_Y = 88
-var MESSAGE_FLOAT_BOTTOM_GAP = 100
+var TAB_RECOMMEND = '\u63a8\u8350'
+var TAB_FOLLOWING = '\u5173\u6ce8'
+var TAB_HOT = '\u70ed\u95e8'
+var HOME_DATA_CACHE_MS = 45000
+var FEED_MEDIA_CLASSES = ['home-feed-media-portrait', 'home-feed-media-square', 'home-feed-media-tall', 'home-feed-media-landscape']
+
+function pickInitial(value, fallback) {
+  var text = String(value || '').trim()
+  if (!text) {
+    return fallback || 'C'
+  }
+  return text.slice(0, 1).toUpperCase()
+}
+
+function safeText(value, fallback) {
+  var text = String(value || '').trim()
+  return text || (fallback || '')
+}
+
+function formatCountValue(value) {
+  var count = Number(value || 0)
+  if (!count) {
+    return '0'
+  }
+  if (count >= 10000) {
+    return (count / 10000).toFixed(count >= 100000 ? 0 : 1) + 'w'
+  }
+  if (count >= 1000) {
+    return (count / 1000).toFixed(count >= 10000 ? 0 : 1) + 'k'
+  }
+  return String(count)
+}
+
+function normalizePosts(list) {
+  return (list || []).map(function(item, index) {
+    var feedTags = []
+    if (item.scene) {
+      feedTags.push(item.scene)
+    }
+    if (item.style) {
+      feedTags.push(item.style)
+    }
+    if (item.budget) {
+      feedTags.push('预算 ' + item.budget)
+    }
+    return Object.assign({}, item, {
+      displayCoverUrl: item.displayCoverUrl || postDisplay.getDisplayCoverUrl(item),
+      feedBadge: safeText(item.coverTag || item.scene, '\u5e16\u5b50'),
+      feedDesc: safeText(postDisplay.getDisplaySubtitle(item) || item.desc || item.subtitle, ''),
+      feedTags: feedTags,
+      feedMediaClass: FEED_MEDIA_CLASSES[index % FEED_MEDIA_CLASSES.length],
+      feedWeight: [1.2, 1, 1.25, 0.9][index % 4]
+    })
+  })
+}
+
+function buildFeedColumns(list) {
+  var columns = [[], []]
+  var heights = [0, 0]
+  var items = list || []
+  for (var i = 0; i < items.length; i += 1) {
+    var columnIndex = heights[0] <= heights[1] ? 0 : 1
+    columns[columnIndex].push(items[i])
+    heights[columnIndex] += Number(items[i].feedWeight || 1)
+  }
+  return columns
+}
+
+function extractFollowedUserIds(list) {
+  var ids = []
+  var source = list || []
+  for (var i = 0; i < source.length; i += 1) {
+    var item = source[i] || {}
+    var id = item.userId || item.id || item.targetUserId || item.followUserId || item.authorId
+    if (!id) {
+      continue
+    }
+    id = String(id)
+    if (ids.indexOf(id) === -1) {
+      ids.push(id)
+    }
+  }
+  return ids
+}
+
+function sortHotPosts(list) {
+  return (list || []).slice(0).sort(function(a, b) {
+    return Number(b.likes || 0) - Number(a.likes || 0)
+  })
+}
 
 export default {
   data: function() {
     return {
-      tabs: ['推荐', '热门', '校园', '场景'],
-      activeTab: '推荐',
-      outfits: [],
+      tabs: [TAB_RECOMMEND, TAB_FOLLOWING, TAB_HOT],
+      activeTab: TAB_RECOMMEND,
+      allPosts: [],
       featuredActivities: [],
       officialAnnouncement: null,
+      followingUsers: [],
       settingMap: settingsStore.getSettingMap(),
+      homeDataLoading: false,
+      homeDataLoadedAt: 0,
       listLoading: false,
       listFailed: false,
-      unreadCount: 0,
-      viewportWidth: 375,
-      viewportHeight: 667,
-      messageFloatX: 0,
-      messageFloatY: 0,
-      messageDockSide: 'right',
-      messageCollapsed: false,
-      messageDragging: false,
-      messageCollapseTimer: null,
-      messageDragStartX: 0,
-      messageDragStartY: 0,
-      messageDragOriginX: 0,
-      messageDragOriginY: 0,
-      messageDragMoved: false
+      unreadCount: 0
     }
   },
   computed: {
-    unreadBadgeText: function() {
-      return this.unreadCount > 99 ? '99+' : String(this.unreadCount)
+    currentUserAvatar: function() {
+      var user = session.getUser() || {}
+      return user.avatarUrl || ''
     },
-    messageFabStyle: function() {
-      return {
-        left: this.messageFloatX + 'px',
-        top: this.messageFloatY + 'px'
-      }
+    currentUserInitial: function() {
+      var user = session.getUser() || {}
+      return pickInitial(user.nickname || user.name || 'C', 'C')
     },
-    featuredActivity: function() {
+    weeklyAnnouncement: function() {
+      return this.officialAnnouncement || null
+    },
+    weeklyActivity: function() {
       return this.featuredActivities && this.featuredActivities.length ? this.featuredActivities[0] : null
     },
-    pushEnabled: function() {
-      return this.settingMap.push !== false
+    followedUserIds: function() {
+      return extractFollowedUserIds(this.followingUsers)
     },
-    recommendEnabled: function() {
-      return this.settingMap.recommend !== false
+    displayedPosts: function() {
+      var list = normalizePosts(this.allPosts)
+      if (this.activeTab === TAB_FOLLOWING) {
+        var ids = this.followedUserIds
+        if (!ids.length) {
+          return []
+        }
+        return list.filter(function(item) {
+          var authorId = item.authorId || item.userId
+          return ids.indexOf(String(authorId || '')) > -1
+        })
+      }
+      if (this.activeTab === TAB_HOT) {
+        return sortHotPosts(list)
+      }
+      return list
+    },
+    feedColumns: function() {
+      return buildFeedColumns(this.displayedPosts)
+    },
+    emptyText: function() {
+      if (this.activeTab === TAB_FOLLOWING) {
+        return '\u5173\u6ce8\u9875\u65e0\u5e16\u5b50'
+      }
+      if (this.activeTab === TAB_HOT) {
+        return '\u70ed\u95e8\u9875\u65e0\u5e16\u5b50'
+      }
+      return '\u6bcf\u65e5\u7075\u611f\u65e0\u5e16\u5b50'
     }
   },
-  onLoad: function() {
-    this.initMessageFloat()
+  watch: {
+    activeTab: function(nextTab) {
+      if (nextTab === TAB_FOLLOWING && session.isLoggedIn() && !this.followingUsers.length) {
+        this.loadFollowingUsers()
+      }
+    }
   },
   onShow: function() {
     this.settingMap = settingsStore.getSettingMap()
-    this.loadAnnouncement()
-    this.loadActivities()
-    this.loadRecommendations()
     this.loadUnreadCount()
-    this.queueMessageCollapse(1200)
-  },
-  onHide: function() {
-    this.clearMessageCollapseTimer()
-  },
-  onUnload: function() {
-    this.clearMessageCollapseTimer()
+    if (this.shouldRefreshHomeData()) {
+      this.refreshHomeData()
+      return
+    }
+    if (this.activeTab === TAB_FOLLOWING && session.isLoggedIn() && !this.followingUsers.length) {
+      this.loadFollowingUsers()
+    }
   },
   methods: {
+    formatCount: function(value) {
+      return formatCountValue(value)
+    },
+    shouldRefreshHomeData: function() {
+      if (this.homeDataLoading) {
+        return false
+      }
+      if (this.listFailed || !this.homeDataLoadedAt) {
+        return true
+      }
+      return (Date.now() - this.homeDataLoadedAt) > HOME_DATA_CACHE_MS
+    },
+    refreshHomeData: function() {
+      var self = this
+      if (self.homeDataLoading) {
+        return
+      }
+      self.homeDataLoading = true
+      Promise.all([
+        self.loadAnnouncement(),
+        self.loadActivities(),
+        self.loadPosts(),
+        session.isLoggedIn() ? self.loadFollowingUsers() : Promise.resolve([])
+      ])
+        .finally(function() {
+          self.homeDataLoading = false
+          if (!self.listFailed) {
+            self.homeDataLoadedAt = Date.now()
+          }
+        })
+    },
     loadAnnouncement: function() {
       var self = this
-      api.getLatestAnnouncement()
+      return api.getLatestAnnouncement()
         .then(function(item) {
           self.officialAnnouncement = item || null
         })
@@ -241,7 +374,7 @@ export default {
     },
     loadActivities: function() {
       var self = this
-      api.listFeaturedActivities()
+      return api.listFeaturedActivities()
         .then(function(list) {
           self.featuredActivities = list || []
         })
@@ -249,32 +382,54 @@ export default {
           self.featuredActivities = []
         })
     },
-    loadRecommendations: function() {
+    loadPosts: function() {
       var self = this
       self.listLoading = true
       self.listFailed = false
-      api.listRecommendations()
+      return api.searchPosts('', {})
         .then(function(list) {
-          var nextList = (list || []).slice(0)
-          if (!self.recommendEnabled) {
-            nextList.sort(function(a, b) {
-              return String(b.id || '').localeCompare(String(a.id || ''))
-            })
-          }
-          self.outfits = nextList
+          self.allPosts = list || []
           self.listFailed = false
         })
         .catch(function() {
-          self.outfits = []
-          self.listFailed = true
+          return api.listRecommendations()
+            .then(function(list) {
+              self.allPosts = list || []
+              self.listFailed = false
+            })
+            .catch(function() {
+              self.allPosts = []
+              self.listFailed = true
+            })
+            .finally(function() {
+              self.listLoading = false
+            })
         })
         .finally(function() {
-          self.listLoading = false
+          if (!self.listFailed) {
+            self.listLoading = false
+          }
+        })
+    },
+    loadFollowingUsers: function() {
+      var self = this
+      if (!session.isLoggedIn()) {
+        self.followingUsers = []
+        return Promise.resolve([])
+      }
+      return api.listFollows('following')
+        .then(function(list) {
+          self.followingUsers = list || []
+          return self.followingUsers
+        })
+        .catch(function() {
+          self.followingUsers = []
+          return []
         })
     },
     loadUnreadCount: function() {
       var self = this
-      if (!session.isLoggedIn() || !self.pushEnabled) {
+      if (!session.isLoggedIn() || !settingsStore.isEnabled('push')) {
         self.unreadCount = 0
         return
       }
@@ -285,133 +440,6 @@ export default {
         .catch(function() {
           self.unreadCount = 0
         })
-    },
-    initMessageFloat: function() {
-      var systemInfo = uni.getSystemInfoSync ? uni.getSystemInfoSync() : {}
-      this.viewportWidth = Number(systemInfo.windowWidth || 375)
-      this.viewportHeight = Number(systemInfo.windowHeight || 667)
-
-      var saved = uni.getStorageSync(MESSAGE_FLOAT_STORAGE_KEY) || {}
-      var defaultX = this.viewportWidth - MESSAGE_FLOAT_SIZE - MESSAGE_FLOAT_MARGIN
-      var defaultY = this.viewportHeight - MESSAGE_FLOAT_SIZE - MESSAGE_FLOAT_BOTTOM_GAP
-      var position = this.clampMessageFloat(
-        typeof saved.x === 'number' ? saved.x : defaultX,
-        typeof saved.y === 'number' ? saved.y : defaultY
-      )
-      var dockSide = this.getMessageDockSide(position.x)
-      var snappedX = dockSide === 'left' ? MESSAGE_FLOAT_MARGIN : this.getMessageFloatMaxX()
-      var snappedPosition = this.clampMessageFloat(snappedX, position.y)
-
-      this.messageFloatX = snappedPosition.x
-      this.messageFloatY = snappedPosition.y
-      this.messageDockSide = dockSide
-      this.messageCollapsed = true
-      this.persistMessageFloat()
-    },
-    getMessageFloatMaxX: function() {
-      return Math.max(MESSAGE_FLOAT_MARGIN, this.viewportWidth - MESSAGE_FLOAT_SIZE - MESSAGE_FLOAT_MARGIN)
-    },
-    clampMessageFloat: function(x, y) {
-      var maxX = this.getMessageFloatMaxX()
-      var maxY = Math.max(MESSAGE_FLOAT_MIN_Y, this.viewportHeight - MESSAGE_FLOAT_SIZE - MESSAGE_FLOAT_BOTTOM_GAP)
-
-      return {
-        x: Math.min(maxX, Math.max(MESSAGE_FLOAT_MARGIN, Number(x || 0))),
-        y: Math.min(maxY, Math.max(MESSAGE_FLOAT_MIN_Y, Number(y || 0)))
-      }
-    },
-    getMessageDockSide: function(x) {
-      var maxX = this.getMessageFloatMaxX()
-      return Number(x || 0) <= maxX / 2 ? 'left' : 'right'
-    },
-    clearMessageCollapseTimer: function() {
-      if (this.messageCollapseTimer) {
-        clearTimeout(this.messageCollapseTimer)
-        this.messageCollapseTimer = null
-      }
-    },
-    queueMessageCollapse: function(delay) {
-      var self = this
-      this.clearMessageCollapseTimer()
-      this.messageCollapseTimer = setTimeout(function() {
-        self.messageCollapsed = true
-      }, typeof delay === 'number' ? delay : 900)
-    },
-    persistMessageFloat: function() {
-      uni.setStorageSync(MESSAGE_FLOAT_STORAGE_KEY, {
-        x: this.messageFloatX,
-        y: this.messageFloatY
-      })
-    },
-    snapMessageFloat: function(shouldCollapse) {
-      var dockSide = this.getMessageDockSide(this.messageFloatX)
-      var snappedX = dockSide === 'left' ? MESSAGE_FLOAT_MARGIN : this.getMessageFloatMaxX()
-      var position = this.clampMessageFloat(snappedX, this.messageFloatY)
-
-      this.messageFloatX = position.x
-      this.messageFloatY = position.y
-      this.messageDockSide = dockSide
-      this.persistMessageFloat()
-
-      if (shouldCollapse !== false) {
-        this.queueMessageCollapse(700)
-      }
-    },
-    onMessageTouchStart: function(event) {
-      var touch = event && event.touches && event.touches[0]
-      if (!touch) {
-        return
-      }
-
-      this.clearMessageCollapseTimer()
-      this.messageCollapsed = false
-      this.messageDragging = true
-      this.messageDragStartX = Number(touch.clientX || touch.pageX || 0)
-      this.messageDragStartY = Number(touch.clientY || touch.pageY || 0)
-      this.messageDragOriginX = this.messageFloatX
-      this.messageDragOriginY = this.messageFloatY
-      this.messageDragMoved = false
-    },
-    onMessageTouchMove: function(event) {
-      var touch = event && event.touches && event.touches[0]
-      if (!touch) {
-        return
-      }
-
-      var currentX = Number(touch.clientX || touch.pageX || 0)
-      var currentY = Number(touch.clientY || touch.pageY || 0)
-      var deltaX = currentX - this.messageDragStartX
-      var deltaY = currentY - this.messageDragStartY
-
-      if (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4) {
-        this.messageDragMoved = true
-      }
-
-      var position = this.clampMessageFloat(
-        this.messageDragOriginX + deltaX,
-        this.messageDragOriginY + deltaY
-      )
-
-      this.messageFloatX = position.x
-      this.messageFloatY = position.y
-      this.messageDockSide = this.getMessageDockSide(position.x)
-    },
-    onMessageTouchEnd: function() {
-      this.messageDragging = false
-      if (this.messageDragMoved) {
-        this.snapMessageFloat(true)
-        return
-      }
-      this.queueMessageCollapse(1600)
-    },
-    handleMessageTap: function() {
-      if (this.messageDragMoved) {
-        this.messageDragMoved = false
-        return
-      }
-      this.clearMessageCollapseTimer()
-      this.messageCollapsed = false
-      this.goMessages()
     },
     goSearch: function() {
       uni.switchTab({ url: '/pages/search/index' })
@@ -426,10 +454,10 @@ export default {
       uni.navigateTo({ url: '/pages/announcement/index?id=' + this.officialAnnouncement.id })
     },
     goDetail: function(id) {
+      if (!id) {
+        return
+      }
       uni.navigateTo({ url: '/pages/detail/index?id=' + id })
-    },
-    getDisplaySubtitle: function(item) {
-      return postDisplay.getDisplaySubtitle(item)
     },
     goMessages: function() {
       if (!session.isLoggedIn()) {
@@ -438,12 +466,11 @@ export default {
       }
       uni.navigateTo({ url: '/pages/messages/index' })
     },
-    refreshHome: function() {
-      this.loadAnnouncement()
-      this.loadActivities()
-      this.loadRecommendations()
-      this.loadUnreadCount()
-      uni.showToast({ title: '首页已刷新', icon: 'none' })
+    goProfile: function() {
+      uni.switchTab({ url: '/pages/profile/index' })
+    },
+    goPublish: function() {
+      uni.switchTab({ url: '/pages/publish/index' })
     }
   }
 }
@@ -451,195 +478,283 @@ export default {
 
 <style scoped>
 .home-shell {
-  padding-top: 10rpx;
+  min-height: 100vh;
+  padding: 0 0 140rpx;
+  background: #f5f6f7;
 }
 
-.home-search {
-  position: sticky;
-  top: 12rpx;
-  z-index: 4;
-  margin-top: 0;
+.home-shell::before,
+.home-shell::after {
+  display: none;
 }
 
-.search-enter {
-  margin-left: auto;
-  color: var(--campus-secondary);
-  font-size: 22rpx;
-  font-weight: 700;
-}
-
-.home-hero {
-  margin-top: 10rpx;
-  padding: 18rpx 18rpx;
-  border-radius: 28rpx;
-}
-
-.home-hero-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16rpx;
-}
-
-.home-hero-main {
-  flex: 1;
-  min-width: 0;
-}
-
-.home-hero-badge {
-  padding: 8rpx 14rpx;
-  font-size: 18rpx;
-}
-
-.home-hero-side {
-  flex-shrink: 0;
-  color: rgba(255, 255, 255, 0.36);
-  font-family: var(--campus-font-data);
-  font-size: 18rpx;
-  font-weight: 700;
-  letter-spacing: 2rpx;
-}
-
-.home-hero-title {
-  max-width: 96%;
-  margin-top: 10rpx;
-  font-size: 36rpx;
-  line-height: 1.14;
-}
-
-.home-hero-copy {
-  margin-top: 8rpx;
-  max-width: 100%;
-  font-size: 22rpx;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.home-hero-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8rpx;
-  margin-top: 12rpx;
-}
-
-.home-hero-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 10rpx 14rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1rpx solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 20rpx;
-  font-weight: 700;
-}
-
-.home-activity-strip {
+.home-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 18rpx;
-  margin-top: 18rpx;
-  padding: 24rpx 26rpx;
+  padding: calc(env(safe-area-inset-top) + 18rpx) 24rpx 18rpx;
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(18rpx);
+  box-shadow: 0 10rpx 26rpx rgba(15, 23, 42, 0.04);
 }
 
-.home-activity-kicker {
-  flex-shrink: 0;
-  padding: 10rpx 16rpx;
-  border-radius: 999rpx;
-  background: rgba(45, 87, 217, 0.08);
-  color: var(--campus-secondary);
-  font-family: var(--campus-font-data);
-  font-size: 20rpx;
-  font-weight: 700;
-  letter-spacing: 2rpx;
+.home-content {
+  padding: calc(env(safe-area-inset-top) + 116rpx) 24rpx 0;
 }
 
-.home-activity-main {
+.home-search-box {
   flex: 1;
   min-width: 0;
+  height: 78rpx;
+  padding: 0 24rpx;
+  border-radius: 999rpx;
+  background: #edf0f2;
+  display: flex;
+  align-items: center;
 }
 
-.home-activity-title {
-  color: var(--campus-text);
-  font-size: 30rpx;
-  font-weight: 700;
-  line-height: 1.3;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
+.home-search-icon {
+  position: relative;
+  width: 30rpx;
+  height: 30rpx;
+  margin-right: 16rpx;
+}
+
+.home-search-lens {
+  width: 18rpx;
+  height: 18rpx;
+  border: 3rpx solid #98a2b3;
+  border-radius: 999rpx;
+}
+
+.home-search-handle {
+  position: absolute;
+  right: 2rpx;
+  bottom: 1rpx;
+  width: 12rpx;
+  height: 3rpx;
+  border-radius: 999rpx;
+  background: #98a2b3;
+  transform: rotate(45deg);
+}
+
+.home-search-placeholder {
+  color: #a1aab5;
+  font-size: 24rpx;
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.home-activity-meta {
-  margin-top: 8rpx;
-  color: var(--campus-text-soft);
-  font-size: 22rpx;
-}
-
-.home-activity-link {
+.home-message-button,
+.home-avatar-button {
+  position: relative;
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  color: var(--campus-secondary);
-  font-family: var(--campus-font-data);
-  font-size: 20rpx;
-  font-weight: 700;
-  letter-spacing: 2rpx;
 }
 
-.home-mini-head {
+.home-message-bubble {
+  position: relative;
+  width: 28rpx;
+  height: 22rpx;
+  border: 3rpx solid #2563eb;
+  border-radius: 8rpx;
+  box-sizing: border-box;
+}
+
+.home-message-bubble::after {
+  content: "";
+  position: absolute;
+  right: 3rpx;
+  bottom: -6rpx;
+  width: 10rpx;
+  height: 10rpx;
+  border-right: 3rpx solid #2563eb;
+  border-bottom: 3rpx solid #2563eb;
+  background: #ffffff;
+  transform: rotate(45deg);
+  box-sizing: border-box;
+}
+
+.home-message-dot {
+  position: absolute;
+  top: 6rpx;
+  right: 6rpx;
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 999rpx;
+  background: #ef4444;
+  box-shadow: 0 0 0 4rpx #ffffff;
+}
+
+.home-avatar-button {
+  overflow: hidden;
+  background: linear-gradient(135deg, #f7dcc3 0%, #e3b789 100%);
+  color: #ffffff;
+  font-size: 22rpx;
+  font-weight: 800;
+  box-shadow: 0 8rpx 18rpx rgba(15, 23, 42, 0.08);
+}
+
+.home-avatar-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.home-tab-scroll {
+  width: 100%;
+  margin-bottom: 24rpx;
+  white-space: nowrap;
+}
+
+.home-tab-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 34rpx;
+  padding-right: 24rpx;
+}
+
+.home-tab-item {
+  position: relative;
+  padding: 8rpx 0 10rpx;
+  color: #6b7280;
+  font-size: 28rpx;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.home-tab-item-active {
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.home-tab-item-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4rpx;
+  border-radius: 999rpx;
+  background: #2563eb;
+}
+
+.home-section {
+  margin-bottom: 34rpx;
+}
+
+.home-section-head,
+.home-feed-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16rpx;
-  margin: 24rpx 0 12rpx;
+  margin-bottom: 22rpx;
 }
 
-.home-mini-title {
-  color: var(--campus-secondary);
-  font-family: var(--campus-font-data);
-  font-size: 20rpx;
+.home-section-title {
+  color: #101828;
+  font-size: 46rpx;
+  font-weight: 800;
+  letter-spacing: -1rpx;
+}
+
+.home-weekly-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18rpx;
+  align-items: stretch;
+}
+
+.home-weekly-panel {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-weekly-label {
+  margin-bottom: 12rpx;
+  color: #475467;
+  font-size: 22rpx;
   font-weight: 700;
-  letter-spacing: 2rpx;
 }
 
-.channel-row {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  padding-bottom: 6rpx;
-  margin-top: 0;
-}
-
-.feature-note {
-  position: relative;
-  margin: 18rpx 0 6rpx;
-  padding: 24rpx 26rpx 24rpx;
+.home-weekly-card,
+.home-weekly-empty {
+  min-height: 352rpx;
+  height: 352rpx;
+  padding: 24rpx;
   border-radius: 28rpx;
-  background: rgba(255, 250, 245, 0.92);
-  border: 1rpx solid rgba(43, 24, 34, 0.08);
-  box-shadow: 0 14rpx 30rpx rgba(43, 24, 34, 0.08);
+  box-sizing: border-box;
+  background: #ffffff;
+  box-shadow: 0 10rpx 24rpx rgba(15, 23, 42, 0.06);
 }
 
-.feature-note-clickable {
-  cursor: pointer;
+.home-empty-card {
+  min-height: 248rpx;
+  padding: 24rpx;
+  border-radius: 28rpx;
+  box-sizing: border-box;
+  background: #ffffff;
+  box-shadow: 0 10rpx 24rpx rgba(15, 23, 42, 0.06);
 }
 
-.compact-feature-note .feature-label {
+.home-weekly-card-note {
+  background: rgba(68, 165, 255, 0.14);
+  display: flex;
+  flex-direction: column;
+}
+
+.home-weekly-card-activity {
+  background: linear-gradient(180deg, #63aefb 0%, #2f7be5 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.home-weekly-note-icon {
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 20rpx;
+  background: #0f68d5;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-weekly-note-icon-text {
+  font-size: 28rpx;
+  font-weight: 800;
+}
+
+.home-weekly-activity-badge {
   display: inline-flex;
   align-items: center;
-  padding: 10rpx 16rpx;
+  min-height: 42rpx;
+  padding: 0 16rpx;
   border-radius: 999rpx;
-  background: rgba(201, 49, 91, 0.08);
-  color: var(--campus-primary);
-  font-size: 20rpx;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 18rpx;
   font-weight: 700;
 }
 
-.compact-feature-note .feature-title {
-  margin-top: 16rpx;
-  padding-right: 0;
-  font-size: 30rpx;
+.home-weekly-card-title {
+  margin-top: 20rpx;
+  color: #0f4ea5;
+  font-size: 28rpx;
+  font-weight: 800;
   line-height: 1.35;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -647,281 +762,309 @@ export default {
   overflow: hidden;
 }
 
-.feature-meta {
-  margin-top: 10rpx;
-  color: var(--campus-text-soft);
-  font-size: 22rpx;
-  line-height: 1.5;
-}
-
-.home-feed-head {
-  margin-top: 20rpx;
-}
-
-.editorial-card {
-  overflow: hidden;
-  padding: 18rpx;
-  border-radius: 34rpx;
-  margin-top: 14rpx;
-}
-
-.editorial-photo {
-  position: relative;
-  overflow: hidden;
-  height: 420rpx;
-  border-radius: 28rpx;
-  background:
-    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.2), transparent 26%),
-    linear-gradient(140deg, rgba(255, 239, 231, 0.96) 0%, rgba(238, 244, 255, 0.96) 100%);
-}
-
-.editorial-photo::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, rgba(13, 25, 37, 0.04) 0%, rgba(13, 25, 37, 0.18) 100%),
-    linear-gradient(120deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 34%);
-  pointer-events: none;
-}
-
-.editorial-image {
-  width: 100%;
-  height: 100%;
-}
-
-.editorial-photo-overlay {
-  position: absolute;
-  left: 20rpx;
-  right: 20rpx;
-  top: 20rpx;
-  z-index: 2;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16rpx;
-}
-
-.editorial-pill,
-.editorial-budget {
-  display: inline-flex;
-  align-items: center;
-  padding: 10rpx 18rpx;
-  border-radius: 999rpx;
-  font-size: 21rpx;
-  font-weight: 700;
-}
-
-.editorial-pill {
-  background: rgba(255, 255, 255, 0.88);
-  color: var(--campus-primary);
-}
-
-.editorial-budget {
-  background: rgba(32, 49, 66, 0.52);
+.home-weekly-card-title-light {
   color: #ffffff;
 }
 
-.editorial-empty {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
-  padding: 32rpx;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 250, 245, 0.8) 48%, rgba(255, 250, 245, 0.94) 100%);
-}
-
-.editorial-empty-kicker {
-  color: rgba(32, 49, 66, 0.64);
-  font-size: 22rpx;
-  letter-spacing: 3rpx;
-}
-
-.editorial-empty-title {
+.home-weekly-card-copy {
   margin-top: 12rpx;
-  color: var(--campus-text);
-  font-size: 36rpx;
-  font-weight: 700;
-  line-height: 1.28;
-}
-
-.editorial-body {
-  display: grid;
-  gap: 4rpx;
-  padding: 22rpx 10rpx 6rpx;
-}
-
-.editorial-kicker {
-  color: var(--campus-primary);
+  color: #667085;
   font-size: 20rpx;
-  font-weight: 700;
-  letter-spacing: 2rpx;
-}
-
-.editorial-title {
-  margin-top: 10rpx;
-  color: var(--campus-text);
-  font-size: 38rpx;
-  font-weight: 700;
-  line-height: 1.22;
-}
-
-.editorial-subtitle {
-  margin-top: 8rpx;
-  color: var(--campus-text);
-  font-size: 25rpx;
-  line-height: 1.55;
+  line-height: 1.6;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.editorial-desc {
-  margin-top: 10rpx;
-  color: var(--campus-text-soft);
-  font-size: 23rpx;
-  line-height: 1.68;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.home-weekly-card-copy-light {
+  color: rgba(255, 255, 255, 0.9);
 }
 
-.editorial-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10rpx;
-  margin-top: 14rpx;
-}
-
-.mini-tag {
-  padding: 10rpx 16rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 250, 245, 0.92);
-  border: 1rpx solid rgba(43, 24, 34, 0.08);
-  color: var(--campus-text-soft);
-  font-size: 22rpx;
-}
-
-.editorial-meta {
-  margin-top: 4rpx;
+.home-weekly-card-meta {
+  margin-top: auto;
   padding-top: 16rpx;
-  border-top: 1rpx solid rgba(43, 24, 34, 0.08);
+  color: #98a2b3;
+  font-size: 18rpx;
 }
 
-.editorial-card:first-child {
-  border-radius: 38rpx;
+.home-weekly-card-meta-light {
+  color: rgba(255, 255, 255, 0.82);
 }
 
-.editorial-card:first-child .editorial-photo {
-  height: 468rpx;
-}
-
-.editorial-card:first-child .editorial-title {
-  font-size: 44rpx;
-  line-height: 1.16;
-}
-
-.message-fab {
-  position: fixed;
-  z-index: 12;
-  width: 46px;
-  height: 46px;
-  opacity: 0.96;
-  transition:
-    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 220ms ease;
-}
-
-.message-fab-dragging {
-  transition: none;
-}
-
-.message-fab-collapsed {
-  opacity: 0.74;
-}
-
-.message-fab-collapsed.message-fab-left {
-  transform: translateX(-16px);
-}
-
-.message-fab-collapsed.message-fab-right {
-  transform: translateX(16px);
-}
-
-.message-fab-shell {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  border-radius: 18px;
-  background:
-    linear-gradient(135deg, rgba(201, 49, 91, 0.72), rgba(45, 87, 217, 0.64)),
-    rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.42);
-  box-shadow: 0 10px 18px rgba(43, 24, 34, 0.12);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-.message-fab-left .message-fab-shell {
-  border-top-left-radius: 14px;
-  border-bottom-left-radius: 14px;
-}
-
-.message-fab-right .message-fab-shell {
-  border-top-right-radius: 14px;
-  border-bottom-right-radius: 14px;
-}
-
-.message-fab-icon {
-  position: absolute;
-  left: 50%;
-  top: 50%;
+.home-weekly-empty,
+.home-empty-card {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  color: #98a2b3;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.home-empty-card {
+  flex-direction: column;
+}
+
+.home-feed-head {
+  justify-content: flex-start;
+  margin-top: 8rpx;
+}
+
+.home-feed-head-mark {
+  width: 8rpx;
+  height: 36rpx;
+  border-radius: 999rpx;
+  background: #0f68d5;
+}
+
+.home-feed-head-title {
+  color: #101828;
+  font-size: 40rpx;
+  font-weight: 800;
+}
+
+.home-feed-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18rpx;
+}
+
+.home-feed-column {
+  display: grid;
+  gap: 18rpx;
+  align-content: start;
+}
+
+.home-feed-card {
+  overflow: hidden;
+  border-radius: 26rpx;
+  background: #ffffff;
+  box-shadow: 0 10rpx 24rpx rgba(15, 23, 42, 0.06);
+}
+
+.home-feed-media {
+  position: relative;
+  overflow: hidden;
+  background: #e9f2ff;
+}
+
+.home-feed-media-portrait {
+  height: 360rpx;
+}
+
+.home-feed-media-square {
+  height: 312rpx;
+}
+
+.home-feed-media-tall {
+  height: 392rpx;
+}
+
+.home-feed-media-landscape {
+  height: 278rpx;
+}
+
+.home-feed-image,
+.home-feed-empty-media {
+  width: 100%;
+  height: 100%;
+}
+
+.home-feed-empty-media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #dbeafe 0%, #eff6ff 100%);
+}
+
+.home-feed-empty-media-text {
+  color: #98a2b3;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.home-feed-badge {
+  position: absolute;
+  left: 14rpx;
+  top: 14rpx;
+  min-height: 40rpx;
+  padding: 0 16rpx;
+  border-radius: 999rpx;
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.9);
+  color: #0f68d5;
+  font-size: 18rpx;
+  font-weight: 700;
+}
+
+.home-feed-body {
+  padding: 18rpx 18rpx 16rpx;
+}
+
+.home-feed-title {
+  color: #111827;
+  font-size: 24rpx;
+  font-weight: 700;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.home-feed-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 10rpx;
+}
+
+.home-feed-tag {
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  background: #eef4ff;
+  color: #3567b9;
+  font-size: 18rpx;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.home-feed-desc {
+  margin-top: 8rpx;
+  color: #667085;
+  font-size: 20rpx;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.home-feed-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+
+.home-feed-user {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  flex: 1;
+}
+
+.home-feed-user-copy {
+  min-width: 0;
+}
+
+.home-feed-user-name {
+  color: #111827;
+  font-size: 18rpx;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-feed-user-school {
+  margin-top: 4rpx;
+  color: #98a2b3;
+  font-size: 16rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-feed-like {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  color: #667085;
+  flex-shrink: 0;
+}
+
+.home-feed-like-icon {
+  font-size: 18rpx;
+  line-height: 1;
+}
+
+.home-feed-like-value {
+  font-size: 18rpx;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.home-feed-skeleton {
+  height: 420rpx;
+  border-radius: 26rpx;
+  background: linear-gradient(90deg, rgba(236, 240, 244, 0.95) 0%, rgba(247, 249, 252, 1) 50%, rgba(236, 240, 244, 0.95) 100%);
+}
+
+.home-empty-title {
+  color: #98a2b3;
+  font-size: 32rpx;
+  font-weight: 800;
+}
+
+.home-empty-copy {
+  margin-top: 10rpx;
+  color: #98a2b3;
+  font-size: 20rpx;
+  text-align: center;
+}
+
+.home-fab {
+  position: fixed;
+  right: 28rpx;
+  bottom: calc(env(safe-area-inset-bottom) + 116rpx);
+  z-index: 19;
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(135deg, #2498f5 0%, #005e9f 100%);
+  box-shadow: 0 18rpx 34rpx rgba(0, 94, 159, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-fab-plus {
+  position: relative;
+  width: 36rpx;
+  height: 36rpx;
+}
+
+.home-fab-plus::before,
+.home-fab-plus::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 999rpx;
+  background: #ffffff;
   transform: translate(-50%, -50%);
 }
 
-.message-fab-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 2px 6px rgba(43, 24, 34, 0.16);
+.home-fab-plus::before {
+  width: 36rpx;
+  height: 6rpx;
 }
 
-.message-fab-badge {
-  position: absolute;
-  right: -2px;
-  top: -2px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 3px;
-  border-radius: 999px;
-  background: #ffffff;
-  color: var(--campus-primary);
-  font-family: var(--campus-font-data);
-  font-size: 9px;
-  font-weight: 700;
-  line-height: 16px;
-  text-align: center;
-  box-shadow: 0 6px 12px rgba(43, 24, 34, 0.12);
-  box-sizing: border-box;
+.home-fab-plus::after {
+  width: 6rpx;
+  height: 36rpx;
 }
 
-@media (min-width: 720rpx) {
-  .message-fab {
-    width: 50px;
-    height: 50px;
-  }
-
-  .message-fab-dot {
-    width: 6px;
-    height: 6px;
+@media screen and (min-width: 768px) {
+  .home-content {
+    max-width: 860rpx;
+    margin: 0 auto;
   }
 }
 </style>

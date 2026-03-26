@@ -1,145 +1,243 @@
 <template>
   <view class="page-shell publish-shell">
-    <view v-if="!loggedIn" class="hero-card publish-hero">
-      <view class="publish-hero-head">
-        <view class="hero-badge publish-hero-badge">需要登录</view>
-      </view>
-      <view class="hero-title publish-hero-title">登录后开始发布穿搭</view>
-      <view class="hero-copy publish-hero-copy">先上传图片，再整理标题、标签和导购信息。</view>
-      <view class="guest-actions publish-guest-actions">
-        <button class="btn-primary" @click="goLogin">去登录</button>
-        <button class="btn-ghost" @click="saveDraft">先存草稿</button>
+    <view class="publish-topbar">
+      <view class="publish-topbar-inner">
+        <view class="publish-topbar-left">
+          <button class="publish-topbar-side" @click="handleTopBack">
+            <text class="publish-topbar-close">×</text>
+          </button>
+          <text class="publish-topbar-brand">青搭</text>
+        </view>
+
+<!--        <view
+          :class="['publish-topbar-action', isTopActionDisabled ? 'publish-topbar-action-disabled' : '']"
+          @click="submitPost"
+        >
+          {{ topActionText }}
+        </view> -->
       </view>
     </view>
 
-    <view v-else>
-      <view class="hero-card publish-hero">
-        <view class="publish-hero-head">
-          <view class="hero-badge publish-hero-badge">{{ mode === 'edit' ? '继续编辑' : '发布概览' }}</view>
-          <view v-if="mode === 'edit'" class="publish-hero-link" @click="secondaryAction">退出</view>
-        </view>
-        <view class="hero-title publish-hero-title">{{ mode === 'edit' ? '把这条内容补完整' : '先上传图，再补标题和标签' }}</view>
-        <view class="hero-copy publish-hero-copy">{{ mode === 'edit' ? '改完会直接更新原内容。' : '按顺序整理图片、描述、标签和导购信息。' }}</view>
-        <view class="publish-hero-chips">
-          <view class="publish-hero-chip">{{ uploadedImageCount }} 图</view>
-          <view class="publish-hero-chip">{{ form.tags.length }} 标签</view>
-          <view class="publish-hero-chip">{{ selectedActivity ? '已绑活动' : '未绑活动' }}</view>
-        </view>
-      </view>
-
-      <view :class="['publish-inline-tip', publishStateClass]">
-        <view class="publish-inline-copy">{{ publishStateText }}</view>
-        <view class="float-link" @click="refreshComposer">刷新</view>
-      </view>
-
-      <view class="panel-card upload-card">
-        <view class="section-head">
-          <view>
-            <view class="section-title" style="margin-top:0;">内容图片</view>
+    <scroll-view class="publish-scroll" scroll-y="true" show-scrollbar="false">
+      <view class="publish-content">
+        <view v-if="!loggedIn" class="publish-login-card">
+          <view class="publish-login-badge">需要登录</view>
+          <view class="publish-login-title">登录后开始发布穿搭</view>
+          <view class="publish-login-copy">先上传图片，再整理标题、标签、预算和商品链接。</view>
+          <view class="publish-login-actions">
+            <button class="publish-secondary-button" @click="goLogin">去登录</button>
+            <button class="publish-ghost-button" @click="saveDraft">保存草稿</button>
           </view>
-          <view class="upload-tip">{{ uploadedImageCount }}/9</view>
         </view>
 
-        <view class="upload-grid">
-          <view
-            v-for="(item, index) in images"
-            :key="item.id"
-            class="upload-item"
-            @click="handleImageTap(index)"
-          >
-            <image class="upload-thumb" :src="item.previewUrl || item.url" mode="aspectFill"></image>
-            <view v-if="index === 0" class="upload-cover-badge">封面</view>
-            <view class="upload-remove" @click.stop="removeImage(index)">删除</view>
-            <view v-if="item.status === 'uploading'" class="upload-mask">
-              <text class="upload-mask-title">上传中</text>
-              <text class="upload-mask-copy">请稍候...</text>
+        <view v-else>
+          <view :class="['publish-state-card', publishStateClass]">
+            <view class="publish-state-dot"></view>
+            <view class="publish-state-copy">{{ publishStateText }}</view>
+            <view class="publish-state-link" @click="refreshComposer">刷新</view>
+          </view>
+
+          <view class="publish-section">
+            <view class="publish-section-head">
+              <view class="publish-section-title">发布内容</view>
+              <view class="publish-section-note">最多添加 9 张图片</view>
             </view>
-            <view v-else-if="item.status === 'error'" class="upload-mask upload-mask-error">
-              <text class="upload-mask-title">上传失败</text>
-              <text class="upload-mask-copy">{{ item.errorMessage || '点击重试' }}</text>
+
+            <view class="publish-photo-grid">
+              <view
+                v-for="(item, index) in images"
+                :key="item.id"
+                class="publish-photo-card"
+                @click="handleImageTap(index)"
+              >
+                <image class="publish-photo-image" :src="item.previewUrl || item.url" mode="aspectFill"></image>
+                <view v-if="index === 0" class="publish-photo-cover-badge">主图</view>
+                <view class="publish-photo-remove" @click.stop="removeImage(index)">删除</view>
+
+                <view v-if="item.status === 'uploading'" class="publish-photo-mask">
+                  <text class="publish-photo-mask-title">上传中</text>
+                  <text class="publish-photo-mask-copy">请稍候...</text>
+                </view>
+
+                <view v-else-if="item.status === 'error'" class="publish-photo-mask publish-photo-mask-error">
+                  <text class="publish-photo-mask-title">上传失败</text>
+                  <text class="publish-photo-mask-copy">{{ item.errorMessage || '点击重试' }}</text>
+                </view>
+              </view>
+
+              <view
+                v-if="canChooseMoreImages"
+                :class="['publish-photo-card', 'publish-photo-add', imageCount === 0 ? 'publish-photo-add-primary' : '']"
+                @click="chooseImages"
+              >
+                <view class="publish-photo-add-icon">+</view>
+                <view class="publish-photo-add-label">{{ imageCount === 0 ? '主图' : '添加图片' }}</view>
+              </view>
+
+              <view
+                v-for="slot in uploadPlaceholderCount"
+                :key="'placeholder-' + slot"
+                class="publish-photo-card publish-photo-placeholder"
+              >
+                <view class="publish-photo-placeholder-icon"></view>
+              </view>
             </view>
           </view>
 
-          <view v-if="canChooseMoreImages" class="upload-add-card" @click="chooseImages">
-            <view class="upload-add-mark">+</view>
-            <view class="upload-add-title">添加图片</view>
+          <view class="publish-form-section">
+            <input
+              v-model="form.title"
+              class="publish-title-input"
+              :placeholder="titlePlaceholder"
+              placeholder-style="color: #dadddf;"
+              maxlength="30"
+            />
+            <view class="publish-title-divider"></view>
+
+            <view class="publish-desc-card">
+              <textarea
+                v-model="form.desc"
+                class="publish-desc-input"
+                :placeholder="descPlaceholder"
+                placeholder-style="color: rgba(89, 92, 93, 0.45);"
+                maxlength="200"
+                cursor-spacing="36"
+                auto-height
+              ></textarea>
+            </view>
+
+            <view class="publish-inline-fields">
+              <view class="publish-inline-field">
+                <view class="publish-inline-icon">¥</view>
+                <input
+                  v-model="form.price"
+                  class="publish-inline-input"
+                  type="digit"
+                  :placeholder="pricePlaceholder"
+                  placeholder-style="color: rgba(89, 92, 93, 0.58);"
+                />
+              </view>
+
+              <view class="publish-inline-field">
+                <view class="publish-inline-icon publish-inline-icon-link">↗</view>
+                <input
+                  v-model="form.link"
+                  class="publish-inline-input"
+                  :placeholder="linkPlaceholder"
+                  placeholder-style="color: rgba(89, 92, 93, 0.58);"
+                />
+              </view>
+            </view>
+          </view>
+
+          <view class="publish-meta-section">
+            <view class="publish-meta-label">场景 &amp; 风格</view>
+            <view class="publish-chip-row">
+              <view class="publish-chip publish-chip-primary" @click="chooseTags">{{ currentSceneTag }}</view>
+              <view class="publish-chip publish-chip-muted" @click="chooseTags">{{ currentStyleTag }}</view>
+              <view class="publish-chip publish-chip-add" @click="chooseTags">+ 添加风格</view>
+            </view>
+          </view>
+
+          <view class="publish-meta-section">
+            <view class="publish-meta-label">价格</view>
+            <view class="publish-budget-row">
+              <view
+                :class="['publish-budget-chip', !currentBudgetTag ? 'publish-budget-chip-active' : '']"
+                @click="setBudgetTag('')"
+              >
+                不填写
+              </view>
+              <view
+                v-for="item in budgetOptions"
+                :key="item"
+                :class="['publish-budget-chip', currentBudgetTag === item ? 'publish-budget-chip-active' : '']"
+                @click="setBudgetTag(item)"
+              >
+                {{ item }}
+              </view>
+            </view>
+          </view>
+
+          <view class="publish-activity-section">
+            <view class="publish-activity-head">
+              <view class="publish-meta-label">选择校园活动</view>
+              <view class="publish-activity-link" @click="chooseActivity">查看全部</view>
+            </view>
+
+            <scroll-view class="publish-activity-scroll" scroll-x="true" show-scrollbar="false">
+              <view v-if="activityPreviewList.length" class="publish-activity-row">
+                <view
+                  v-for="(item, index) in activityPreviewList"
+                  :key="item.id"
+                  :class="['publish-activity-card', selectedActivity && selectedActivity.id === item.id ? 'publish-activity-card-active' : '']"
+                  @click="pickActivityInline(item)"
+                >
+                  <view :class="['publish-activity-cover', 'publish-activity-cover-' + (index % 3)]">
+                    <image
+                      v-if="item.coverImageUrl"
+                      class="publish-activity-cover-image"
+                      :src="item.coverImageUrl"
+                      mode="aspectFill"
+                    ></image>
+                    <view class="publish-activity-cover-ambient"></view>
+                    <view class="publish-activity-cover-mask"></view>
+
+                    <view class="publish-activity-cover-top">
+                      <view class="publish-activity-cover-badge">{{ item.badge || '活动' }}</view>
+                      <view v-if="selectedActivity && selectedActivity.id === item.id" class="publish-activity-check">✓</view>
+                    </view>
+
+                    <view class="publish-activity-cover-scene">{{ item.scene || item.theme || 'Campus Activity' }}</view>
+                  </view>
+
+                  <view class="publish-activity-card-body">
+                    <view class="publish-activity-card-title">{{ item.title || '未命名活动' }}</view>
+                    <view class="publish-activity-card-copy">{{ item.period || item.statusCopy || item.summary || '点击选择这个活动' }}</view>
+                  </view>
+                </view>
+              </view>
+
+              <view v-else class="publish-activity-empty-inline">暂无可关联活动</view>
+            </scroll-view>
+
+            <view v-if="selectedActivity" class="publish-activity-summary">
+              <view class="publish-activity-summary-title">{{ selectedActivity.title }}</view>
+              <view class="publish-activity-summary-copy">{{ selectedActivity.summary || selectedActivity.theme || '已选择这个活动作为当前发布的关联专题。' }}</view>
+
+              <view class="publish-activity-summary-meta">
+                <view class="publish-activity-meta-chip">{{ selectedActivity.period || '待更新时间' }}</view>
+                <view class="publish-activity-meta-chip publish-activity-meta-chip-soft">
+                  {{ selectedActivity.status || selectedActivity.statusCopy || '可参与' }}
+                </view>
+              </view>
+
+              <view class="publish-activity-clear" @click="clearActivity">取消选择</view>
+            </view>
           </view>
         </view>
-
-        <view v-if="!uploadedImageCount && !uploadingCount" class="upload-hint">先上传至少1张图片后再发布。</view>
       </view>
+    </scroll-view>
 
-      <view class="panel-card">
-        <view class="section-head">
-          <view>
-            <view class="section-title" style="margin-top:0;">标签与分类</view>
-            <view class="section-subtitle">用场景、风格、预算把内容归到更准确的位置</view>
-          </view>
-          <view class="float-link" @click="chooseTags">选择标签</view>
-        </view>
-        <view class="chip-row">
-          <view class="chip chip-active" v-for="tag in form.tags" :key="tag">{{ tag }}</view>
-        </view>
-      </view>
+    <view v-if="loggedIn" class="publish-actions">
+      <button
+        class="publish-action-button publish-action-secondary"
+        :disabled="mode !== 'edit' && savingDraft"
+        :class="mode !== 'edit' && savingDraft ? 'publish-action-disabled' : ''"
+        @click="secondaryAction"
+      >
+        {{ secondaryButtonText }}
+      </button>
 
-      <view class="panel-card">
-        <view class="section-head">
-          <view>
-            <view class="section-title" style="margin-top:0;">活动 / 专题</view>
-            <view class="section-subtitle">把内容绑定到校园专题活动里，获得更清晰的曝光入口</view>
-          </view>
-          <view class="float-link" @click="chooseActivity">选择活动</view>
-        </view>
-
-        <view v-if="selectedActivity" class="activity-binding-card">
-          <view class="list-title">{{ selectedActivity.title }}</view>
-          <view class="list-copy">{{ selectedActivity.summary }}</view>
-          <view class="chip-row" style="margin-top:16rpx;">
-            <view class="chip chip-active">{{ selectedActivity.period }}</view>
-            <view class="chip chip-outline">{{ selectedActivity.status }}</view>
-          </view>
-          <view class="note-box">活动奖励：{{ selectedActivity.reward }}</view>
-          <view class="float-link" style="margin-top:16rpx;" @click="clearActivity">清除绑定</view>
-        </view>
-
-        <view v-else class="sub-panel">
-          <view class="sub-panel-title">还没有绑定活动</view>
-          <view class="text-copy" style="margin-top:8rpx;">可以先去活动中心报名，再带着选中的活动回到发布页，形成更完整的创作链路。</view>
-        </view>
-      </view>
-
-      <view class="panel-card form-card">
-        <view class="form-label">标题</view>
-        <input class="form-input" v-model="form.title" :placeholder="titlePlaceholder" maxlength="30" />
-
-        <view class="form-label">穿搭描述</view>
-        <textarea class="form-textarea" v-model="form.desc" :placeholder="descPlaceholder" maxlength="200"></textarea>
-
-        <view class="form-label">{{ priceLabel }}</view>
-        <input class="form-input" v-model="form.price" type="digit" :placeholder="pricePlaceholder" />
-
-        <view class="form-label">商品导购链接</view>
-        <input class="form-input" v-model="form.link" :placeholder="linkPlaceholder" />
-      </view>
-
-      <view class="action-row publish-actions">
-        <button
-          class="btn-secondary btn-half"
-          :disabled="mode !== 'edit' && savingDraft"
-          :class="mode !== 'edit' && savingDraft ? 'btn-disabled' : ''"
-          @click="secondaryAction"
-        >
-          {{ mode === 'edit' ? '退出编辑' : (savingDraft ? '保存中...' : '保存草稿') }}
-        </button>
-        <button
-          class="btn-primary btn-half"
-          :disabled="!isReadyToSubmit || submitting"
-          :class="(!isReadyToSubmit || submitting) ? 'btn-disabled' : ''"
-          @click="submitPost"
-        >
-          {{ submitLabel }}
-        </button>
-      </view>
+      <button
+        class="publish-action-button publish-action-primary"
+        :disabled="!isReadyToSubmit || submitting"
+        :class="(!isReadyToSubmit || submitting) ? 'publish-action-disabled' : ''"
+        @click="submitPost"
+      >
+        <text>{{ primaryButtonText }}</text>
+        <text class="publish-action-arrow">↗</text>
+      </button>
     </view>
   </view>
 </template>
@@ -154,7 +252,8 @@ var ACTIVE_DRAFT_KEY = 'campusfit_active_draft_id'
 var EDIT_POST_KEY = 'campusfit_edit_post_id'
 var MAX_IMAGE_COUNT = 9
 var MAX_FILE_SIZE = 10 * 1024 * 1024
-var DEFAULT_PUBLISH_TAGS = ['图书馆', '学院风', '100-150']
+var DEFAULT_PUBLISH_TAGS = ['图书馆', '学院风', '']
+var DEFAULT_BUDGET_OPTIONS = ['0-50', '50-100', '100-150', '150+']
 
 function defaultForm() {
   return {
@@ -242,12 +341,71 @@ function hasListValue(list) {
   return !!(list && list.length)
 }
 
+function repairTagValue(value, index) {
+  var text = typeof value === 'string' ? value.trim() : ''
+  if (!text) {
+    return index < 2 ? (DEFAULT_PUBLISH_TAGS[index] || '') : ''
+  }
+  if (text.indexOf('鍥句功') > -1) {
+    return '图书馆'
+  }
+  if (text.indexOf('瀛﹂櫌') > -1) {
+    return '学院风'
+  }
+  return text
+}
+
+function normalizeTagList(tags) {
+  var list = []
+  for (var i = 0; i < 3; i += 1) {
+    list.push(repairTagValue(tags && tags[i], i))
+  }
+  return list
+}
+
+function getTagValue(tags, index) {
+  if (tags && tags[index]) {
+    return tags[index]
+  }
+  return index < 2 ? (DEFAULT_PUBLISH_TAGS[index] || '') : ''
+}
+
+function buildBudgetOptions(selectedBudget) {
+  var options = DEFAULT_BUDGET_OPTIONS.slice(0)
+  if (selectedBudget && options.indexOf(selectedBudget) === -1) {
+    options.push(selectedBudget)
+  }
+  return options
+}
+
+function isPublishSelectableActivity(activity) {
+  return !!(activity && activity.id && activity.selectable !== false)
+}
+
+function buildActivityPreviewList(list, selectedActivity) {
+  var source = (list || []).filter(isPublishSelectableActivity)
+  var selectedId = selectedActivity && selectedActivity.id ? String(selectedActivity.id) : ''
+  if (selectedActivity && selectedId && selectedActivity.selectable !== false) {
+    var exists = false
+    for (var i = 0; i < source.length; i += 1) {
+      if (String(source[i] && source[i].id) === selectedId) {
+        exists = true
+        break
+      }
+    }
+    if (!exists) {
+      source.unshift(selectedActivity)
+    }
+  }
+  return source.slice(0, 6)
+}
+
 function buildDraftPayload(vm) {
   return {
     title: vm.form.title,
     desc: vm.form.desc,
     imageUrls: collectImageUrls(vm.images),
-    tags: vm.form.tags,
+    tags: normalizeTagList(vm.form.tags),
     productPrice: buildProductPrice(vm.form.price),
     productLink: vm.form.link,
     activityId: vm.selectedActivity ? vm.selectedActivity.id : ''
@@ -265,7 +423,6 @@ function isDraftMissingError(error) {
   return message.indexOf('404') > -1 || message.indexOf('\u672a\u627e\u5230\u5bf9\u5e94\u8349\u7a3f') > -1 || (lower.indexOf('draft') > -1 && lower.indexOf('not found') > -1)
 }
 
-
 export default {
   data: function() {
     return {
@@ -273,6 +430,7 @@ export default {
       images: [],
       form: defaultForm(),
       selectedActivity: null,
+      availableActivities: [],
       pageLoading: false,
       lastSavedAt: '',
       lastSuccessText: '',
@@ -314,29 +472,64 @@ export default {
     canChooseMoreImages: function() {
       return this.remainingImageCount > 0
     },
-    submitLabel: function() {
-      if (this.submitting) {
-        return '提交中...'
-      }
-      return this.mode === 'edit' ? '提交修改审核' : '提交审核'
+    uploadPlaceholderCount: function() {
+      var previewSlots = 6
+      var usedSlots = this.imageCount + (this.canChooseMoreImages ? 1 : 0)
+      return Math.max(0, previewSlots - usedSlots)
+    },
+    currentSceneTag: function() {
+      return getTagValue(this.form.tags, 0)
+    },
+    currentStyleTag: function() {
+      return getTagValue(this.form.tags, 1)
+    },
+    currentBudgetTag: function() {
+      return getTagValue(this.form.tags, 2)
+    },
+    budgetOptions: function() {
+      return buildBudgetOptions(this.currentBudgetTag)
+    },
+    activityPreviewList: function() {
+      return buildActivityPreviewList(this.availableActivities, this.selectedActivity)
     },
     hasBasicFields: function() {
-      return !!(this.form.title && this.form.desc && hasValidProductPrice(this.form.price) && this.form.link && this.form.tags && this.form.tags.length)
+      return !!(this.form.title && this.form.desc && this.form.tags && this.form.tags.length)
+    },
+    hasValidOptionalPrice: function() {
+      return !this.form.price || hasValidProductPrice(this.form.price)
     },
     isReadyToSubmit: function() {
-      return this.hasBasicFields && this.uploadedImageCount > 0 && !this.pageLoading && !this.uploadingCount && !this.failedImageCount
+      return this.hasBasicFields && this.hasValidOptionalPrice && this.uploadedImageCount > 0 && !this.pageLoading && !this.uploadingCount && !this.failedImageCount
+    },
+    isTopActionDisabled: function() {
+      return !this.loggedIn || !this.isReadyToSubmit || this.submitting
+    },
+    topActionText: function() {
+      return this.mode === 'edit' ? '提交修改' : '立即发布'
+    },
+    secondaryButtonText: function() {
+      if (this.mode === 'edit') {
+        return '退出编辑'
+      }
+      return this.savingDraft ? '保存中...' : '保存草稿'
+    },
+    primaryButtonText: function() {
+      if (this.mode === 'edit') {
+        return this.submitting ? '提交中...' : '立即更新'
+      }
+      return this.submitting ? '发布中...' : '立即发布'
     },
     publishStateClass: function() {
       if (this.pageLoading || this.savingDraft || this.submitting || this.uploadingCount || this.failedImageCount) {
-        return 'status-banner-warning'
+        return 'publish-state-card-warning'
       }
       if (this.lastSuccessText) {
-        return 'publish-inline-tip-success'
+        return 'publish-state-card-success'
       }
       if (!this.isReadyToSubmit) {
-        return 'publish-inline-tip-muted'
+        return 'publish-state-card-muted'
       }
-      return 'publish-inline-tip-ready'
+      return 'publish-state-card-ready'
     },
     publishStateText: function() {
       if (this.pageLoading) {
@@ -360,35 +553,37 @@ export default {
       if (!this.uploadedImageCount) {
         return '先上传至少 1 张图片，首张会作为内容封面。'
       }
+      if (!this.hasValidOptionalPrice) {
+        return '商品价格格式不正确，可留空，或填写类似 129 / 129.90 的价格。'
+      }
       if (!this.hasBasicFields && this.currentDraftId && this.lastSavedAt) {
         return '已恢复 ' + this.lastSavedAt + ' 保存的草稿，可继续补全后提交审核。'
       }
       if (!this.hasBasicFields) {
-        return '还差一点点：补齐标题、描述、标签、商品价格和导购链接即可提交审核。'
+        return '还差一点点：补齐标题、描述和标签即可提交审核。商品价格和链接都可以按需填写。'
       }
       return this.selectedActivity ? '信息已完整，提交后会带着活动专题一起进入审核。' : '信息已完整，提交后会进入内容审核。'
     },
     titlePlaceholder: function() {
-      return '例如：适合图书馆和早八的清爽蓝白穿搭'
+      return '添加标题'
     },
     descPlaceholder: function() {
-      return '写一下这套穿搭适合什么场景、预算大概多少、搭配亮点是什么。'
-    },
-    priceLabel: function() {
-      return '商品价格'
+      return '这一刻的想法...'
     },
     pricePlaceholder: function() {
-      return '例如：129 或 129.90'
+      return '价格（可选）'
     },
     linkPlaceholder: function() {
-      return '粘贴真实商品导购链接'
+      return '商品链接（可选）'
     }
   },
   onShow: function() {
     this.loggedIn = session.isLoggedIn()
     this.applyStoredTags()
     this.loadSelectedActivity()
+    this.loadActivityOptions()
     this.lastSuccessText = ''
+
     var editId = uni.getStorageSync(EDIT_POST_KEY)
     if (!this.loggedIn) {
       return
@@ -409,11 +604,41 @@ export default {
     applyStoredTags: function() {
       var stored = uni.getStorageSync('campusfit_publish_tags')
       if (stored && stored.length) {
-        this.form.tags = stored
+        this.form.tags = normalizeTagList(stored)
       }
     },
     loadSelectedActivity: function() {
       this.selectedActivity = activityStore.getSelectedActivity()
+    },
+    loadActivityOptions: function() {
+      var self = this
+      api.listActivities()
+        .then(function(list) {
+          self.availableActivities = (list || []).filter(isPublishSelectableActivity)
+        })
+        .catch(function() {
+          self.availableActivities = []
+        })
+    },
+    setPublishTags: function(tags) {
+      var normalized = normalizeTagList(tags)
+      this.form.tags = normalized
+      uni.setStorageSync('campusfit_publish_tags', normalized)
+    },
+    setBudgetTag: function(tag) {
+      var nextTag = this.currentBudgetTag === tag ? '' : tag
+      this.setPublishTags([this.currentSceneTag, this.currentStyleTag, nextTag])
+    },
+    pickActivityInline: function(activity) {
+      if (!activity || !activity.id) {
+        return
+      }
+      if (activity.selectable === false) {
+        uni.showToast({ title: '该活动当前不可在发布时选择', icon: 'none' })
+        return
+      }
+      this.selectedActivity = activityStore.selectActivity(activity)
+      uni.showToast({ title: '已选择活动', icon: 'none' })
     },
     syncActiveDraftId: function(draftId) {
       this.currentDraftId = draftId || ''
@@ -481,7 +706,7 @@ export default {
         desc: draft.desc || '',
         price: normalizePriceInput(draft.productPrice),
         link: draft.productLink || base.link,
-        tags: hasListValue(draft.tags) ? draft.tags : base.tags
+        tags: hasListValue(draft.tags) ? normalizeTagList(draft.tags) : base.tags
       }
       this.setImagesFromUrls(draft.imageUrls || [])
       this.lastSavedAt = draft.savedAt || ''
@@ -592,7 +817,7 @@ export default {
             desc: post.desc || '',
             price: normalizePriceInput(post.productPrice),
             link: post.productLink || '',
-            tags: hasListValue(post.tags) ? post.tags : defaultForm().tags
+            tags: hasListValue(post.tags) ? normalizeTagList(post.tags) : defaultForm().tags
           }
           self.setImagesFromUrls(post.imageUrls || [])
           if (post.activity) {
@@ -635,7 +860,7 @@ export default {
       }
       uni.chooseImage({
         count: self.remainingImageCount,
-        sizeType: ['original'],
+        sizeType: ['compressed'],
         sourceType: ['album', 'camera'],
         success: function(result) {
           var tempFilePaths = result.tempFilePaths || []
@@ -770,7 +995,7 @@ export default {
     clearActivity: function() {
       activityStore.clearSelectedActivity()
       this.selectedActivity = null
-      uni.showToast({ title: '已清除活动绑定', icon: 'none' })
+      uni.showToast({ title: '已取消活动选择', icon: 'none' })
     },
     saveDraft: function() {
       var self = this
@@ -778,14 +1003,14 @@ export default {
         return
       }
       if (!session.isLoggedIn()) {
-        self.promptLogin('\u767b\u5f55\u540e\u624d\u80fd\u628a\u8349\u7a3f\u540c\u6b65\u5230\u4f60\u7684\u8d26\u53f7\u3002')
+        self.promptLogin('登录后才能把草稿同步到你的账号。')
         return
       }
-      if (!self.ensureImageQueueReady('\u4fdd\u5b58\u8349\u7a3f')) {
+      if (!self.ensureImageQueueReady('保存草稿')) {
         return
       }
       if (self.form.price && !hasValidProductPrice(self.form.price)) {
-        uni.showToast({ title: '\u8bf7\u8f93\u5165\u6b63\u786e\u7684\u5546\u54c1\u4ef7\u683c', icon: 'none' })
+        uni.showToast({ title: '请输入正确的商品价格', icon: 'none' })
         return
       }
       self.savingDraft = true
@@ -795,21 +1020,21 @@ export default {
       request
         .then(function() {
           self.clearComposerAfterDraftSave()
-          uni.showToast({ title: '\u5df2\u4fdd\u5b58\u8349\u7a3f', icon: 'none' })
+          uni.showToast({ title: '已保存草稿', icon: 'none' })
         })
         .catch(function(error) {
           if (isAuthError(error)) {
             session.clearSession()
             self.loggedIn = false
-            self.promptLogin('\u767b\u5f55\u72b6\u6001\u5df2\u5931\u6548\uff0c\u8bf7\u91cd\u65b0\u767b\u5f55\u540e\u7ee7\u7eed\u4fdd\u5b58\u8349\u7a3f\u3002')
+            self.promptLogin('登录状态已失效，请重新登录后继续保存草稿。')
             return
           }
           if (isDraftMissingError(error)) {
             self.clearActiveDraftState()
-            uni.showToast({ title: '\u539f\u8349\u7a3f\u5df2\u4e0d\u5b58\u5728\uff0c\u518d\u70b9\u4e00\u6b21\u4fdd\u5b58\u4f1a\u65b0\u5efa\u8349\u7a3f', icon: 'none' })
+            uni.showToast({ title: '原草稿已不存在，再点一次保存会新建草稿', icon: 'none' })
             return
           }
-          uni.showToast({ title: error.message || '\u8349\u7a3f\u4fdd\u5b58\u5931\u8d25', icon: 'none' })
+          uni.showToast({ title: error.message || '草稿保存失败', icon: 'none' })
         })
         .finally(function() {
           self.savingDraft = false
@@ -817,6 +1042,56 @@ export default {
     },
     goLogin: function() {
       uni.navigateTo({ url: '/pages/login/index' })
+    },
+    hasPendingContent: function() {
+      var baseTags = DEFAULT_PUBLISH_TAGS.join('|')
+      var currentTags = normalizeTagList(this.form.tags).join('|')
+      return !!(
+        this.images.length ||
+        this.form.title ||
+        this.form.desc ||
+        this.form.price ||
+        this.form.link ||
+        currentTags !== baseTags ||
+        this.selectedActivity
+      )
+    },
+    leaveComposer: function() {
+      var pages = typeof getCurrentPages === 'function' ? getCurrentPages() : []
+      if (this.mode === 'edit') {
+        this.resetCreateMode(true)
+        setTimeout(function() {
+          uni.navigateTo({ url: '/pages/my-posts/index' })
+        }, 80)
+        return
+      }
+      if (pages && pages.length > 1) {
+        uni.navigateBack({ delta: 1 })
+        return
+      }
+      uni.switchTab({ url: '/pages/index/index' })
+    },
+    handleTopBack: function() {
+      var self = this
+      if (this.uploadingCount) {
+        uni.showToast({ title: '图片上传中，请稍候再离开', icon: 'none' })
+        return
+      }
+      if (this.mode !== 'edit' && !this.hasPendingContent()) {
+        this.leaveComposer()
+        return
+      }
+      uni.showModal({
+        title: this.mode === 'edit' ? '退出编辑' : '放弃这次发布？',
+        content: this.mode === 'edit' ? '当前修改还没有提交，确认退出编辑吗？' : '当前填写内容还没有发布，确认离开吗？',
+        confirmText: '确认离开',
+        cancelText: '继续编辑',
+        success: function(result) {
+          if (result.confirm) {
+            self.leaveComposer()
+          }
+        }
+      })
     },
     exitEditMode: function() {
       this.resetCreateMode(true)
@@ -845,8 +1120,12 @@ export default {
       if (!self.ensureImageQueueReady('发布内容')) {
         return
       }
-      if (!self.form.title || !self.form.desc || !hasValidProductPrice(self.form.price) || !self.form.link || !self.form.tags.length) {
-        uni.showToast({ title: '请先补齐标题、描述、标签、商品价格和导购链接。', icon: 'none' })
+      if (!self.form.title || !self.form.desc || !self.form.tags.length) {
+        uni.showToast({ title: '请先补齐标题、描述和标签。', icon: 'none' })
+        return
+      }
+      if (self.form.price && !hasValidProductPrice(self.form.price)) {
+        uni.showToast({ title: '请输入正确的商品价格，或留空。', icon: 'none' })
         return
       }
       if (!self.uploadedImageCount) {
@@ -903,6 +1182,7 @@ export default {
       }
       this.applyStoredTags()
       this.loadSelectedActivity()
+      this.loadActivityOptions()
       this.lastSuccessText = ''
       if (!this.loggedIn) {
         uni.showToast({ title: '已刷新状态', icon: 'none' })
@@ -933,329 +1213,772 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .publish-shell {
-  padding-bottom: 48rpx;
+  height: 100vh;
+  padding: 0;
+  background: #f5f6f7;
 }
 
-.guest-actions,
-.publish-actions {
-  display: flex;
-  gap: 18rpx;
-  margin-top: 24rpx;
+.publish-shell::before,
+.publish-shell::after {
+  display: none;
 }
 
-.publish-hero {
-  margin-top: 10rpx;
-  padding: 18rpx 18rpx;
-  border-radius: 28rpx;
+.publish-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(24rpx);
+  box-shadow: 0 14rpx 36rpx rgba(44, 47, 48, 0.06);
 }
 
-.publish-hero-head {
+.publish-topbar-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16rpx;
+  gap: 18rpx;
+  padding: calc(env(safe-area-inset-top) + 18rpx) 24rpx 18rpx;
 }
 
-.publish-hero-badge {
-  padding: 8rpx 14rpx;
-  font-size: 18rpx;
+.publish-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  min-width: 0;
 }
 
-.publish-hero-link {
+.publish-topbar-side {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  color: rgba(255, 255, 255, 0.88);
+  background: rgba(148, 163, 184, 0.1);
+}
+
+.publish-topbar-close {
+  color: #64748b;
+  font-size: 38rpx;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.publish-topbar-brand {
+  color: #005e9f;
+  font-size: 32rpx;
+  font-weight: 800;
+  letter-spacing: -0.8rpx;
+}
+
+.publish-topbar-action {
+  flex-shrink: 0;
+  color: #005e9f;
+  font-size: 24rpx;
+  font-weight: 800;
+}
+
+.publish-topbar-action-disabled {
+  opacity: 0.42;
+}
+
+.publish-scroll {
+  height: 100vh;
+}
+
+.publish-content {
+  padding: calc(env(safe-area-inset-top) + 116rpx) 24rpx calc(194rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.publish-login-card,
+.publish-section,
+.publish-form-section,
+.publish-meta-section,
+.publish-activity-section {
+  margin-top: 22rpx;
+  padding: 28rpx;
+  border-radius: 30rpx;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1rpx solid rgba(171, 173, 174, 0.16);
+  box-shadow: 0 18rpx 40rpx rgba(44, 47, 48, 0.06);
+}
+
+.publish-login-card,
+.publish-section {
+  margin-top: 0;
+}
+
+.publish-login-card {
+  background:
+    radial-gradient(circle at top right, rgba(68, 165, 255, 0.14), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 248, 250, 0.94));
+}
+
+.publish-login-badge,
+.publish-meta-label {
+  display: inline-flex;
+  align-items: center;
+  color: #757778;
   font-family: var(--campus-font-data);
   font-size: 20rpx;
   font-weight: 700;
-  letter-spacing: 2rpx;
+  letter-spacing: 3rpx;
+  text-transform: uppercase;
 }
 
-.publish-hero-title {
-  max-width: 100%;
-  margin-top: 10rpx;
-  font-size: 36rpx;
-  line-height: 1.14;
+.publish-login-title {
+  margin-top: 16rpx;
+  color: #2c2f30;
+  font-size: 40rpx;
+  font-weight: 800;
+  line-height: 1.2;
 }
 
-.publish-hero-copy {
-  margin-top: 8rpx;
-  max-width: 100%;
-  font-size: 22rpx;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.publish-hero-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8rpx;
+.publish-login-copy {
   margin-top: 12rpx;
+  color: #595c5d;
+  font-size: 25rpx;
+  line-height: 1.7;
 }
 
-.publish-hero-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 10rpx 14rpx;
+.publish-login-actions {
+  display: flex;
+  gap: 14rpx;
+  margin-top: 22rpx;
+}
+
+.publish-secondary-button,
+.publish-ghost-button,
+.publish-action-button {
+  min-height: 92rpx;
   border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1rpx solid rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
   font-weight: 700;
 }
 
-.publish-guest-actions {
-  margin-top: 18rpx;
+.publish-secondary-button,
+.publish-ghost-button {
+  flex: 1;
 }
 
-.publish-inline-tip {
+.publish-secondary-button {
+  background: linear-gradient(135deg, #005e9f 0%, #2498f5 100%);
+  color: #edf3ff;
+  box-shadow: 0 18rpx 34rpx rgba(37, 99, 235, 0.18);
+}
+
+.publish-ghost-button {
+  background: #eef1f3;
+  color: #4f5964;
+}
+
+.publish-state-card {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  gap: 14rpx;
+  padding: 22rpx 24rpx;
+  border-radius: 24rpx;
+  border: 1rpx solid rgba(171, 173, 174, 0.16);
+  box-shadow: 0 12rpx 28rpx rgba(44, 47, 48, 0.04);
+}
+
+.publish-state-dot {
+  width: 14rpx;
+  height: 14rpx;
+  margin-top: 10rpx;
+  border-radius: 999rpx;
+  background: #abadae;
+  flex-shrink: 0;
+}
+
+.publish-state-copy {
+  flex: 1;
+  color: #595c5d;
+  font-size: 24rpx;
+  line-height: 1.6;
+}
+
+.publish-state-link,
+.publish-activity-link,
+.publish-activity-clear {
+  color: #005e9f;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.publish-state-card-muted {
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.publish-state-card-muted .publish-state-dot {
+  background: #abadae;
+}
+
+.publish-state-card-ready {
+  background: rgba(177, 239, 216, 0.22);
+  border-color: rgba(41, 102, 84, 0.14);
+}
+
+.publish-state-card-ready .publish-state-dot {
+  background: #296654;
+}
+
+.publish-state-card-success {
+  background: rgba(68, 165, 255, 0.12);
+  border-color: rgba(0, 94, 159, 0.12);
+}
+
+.publish-state-card-success .publish-state-dot {
+  background: #005e9f;
+}
+
+.publish-state-card-warning {
+  background: rgba(253, 211, 77, 0.14);
+  border-color: rgba(112, 89, 0, 0.12);
+}
+
+.publish-state-card-warning .publish-state-dot {
+  background: #705900;
+}
+
+.publish-section-head,
+.publish-activity-head {
+  display: flex;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 18rpx;
-  margin-top: 14rpx;
-  padding: 18rpx 20rpx;
-  border-radius: 20rpx;
-  background: rgba(255, 255, 255, 0.86);
 }
 
-.publish-inline-copy {
-  flex: 1;
-  color: var(--campus-text-muted);
-  font-size: 22rpx;
-  line-height: 1.5;
+.publish-section-title {
+  color: #2c2f30;
+  font-size: 34rpx;
+  font-weight: 800;
 }
 
-.publish-inline-tip-muted {
-  border: 1rpx dashed rgba(106, 156, 192, 0.22);
+.publish-section-note {
+  color: #757778;
+  font-size: 21rpx;
 }
 
-.publish-inline-tip-ready {
-  background: rgba(240, 251, 247, 0.92);
-}
-
-.publish-inline-tip-success {
-  background: rgba(237, 248, 255, 0.96);
-}
-
-.upload-card,
-.form-card {
-  margin-top: 24rpx;
-}
-
-.upload-grid {
+.publish-photo-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18rpx;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12rpx;
+  margin-top: 22rpx;
 }
 
-.upload-item,
-.upload-add-card {
+.publish-photo-card {
   position: relative;
-  min-height: 214rpx;
-  border-radius: 28rpx;
+  height: 206rpx;
   overflow: hidden;
+  border-radius: 24rpx;
+  background: #ffffff;
 }
 
-.upload-item {
-  background: rgba(239, 246, 251, 0.98);
-}
-
-.upload-thumb {
+.publish-photo-image {
   width: 100%;
-  height: 214rpx;
+  height: 100%;
   display: block;
 }
 
-.upload-cover-badge {
+.publish-photo-cover-badge {
   position: absolute;
   left: 14rpx;
   top: 14rpx;
   padding: 8rpx 14rpx;
   border-radius: 999rpx;
   background: rgba(255, 255, 255, 0.92);
-  color: var(--campus-text);
-  font-size: 20rpx;
-  font-weight: 700;
+  color: #005e9f;
+  font-size: 18rpx;
+  font-weight: 800;
+  letter-spacing: 2rpx;
 }
 
-.upload-remove {
+.publish-photo-remove {
   position: absolute;
   right: 14rpx;
   top: 14rpx;
   padding: 8rpx 14rpx;
   border-radius: 999rpx;
-  background: rgba(11, 24, 36, 0.56);
-  color: #fff;
-  font-size: 20rpx;
+  background: rgba(12, 15, 16, 0.56);
+  color: #ffffff;
+  font-size: 18rpx;
+  font-weight: 700;
 }
 
-.upload-mask {
+.publish-photo-mask {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   gap: 8rpx;
-  padding: 22rpx 20rpx;
-  background: linear-gradient(180deg, rgba(15, 30, 45, 0.08) 0%, rgba(15, 30, 45, 0.76) 100%);
-  color: #fff;
+  padding: 18rpx;
+  background: linear-gradient(180deg, rgba(12, 15, 16, 0.08) 0%, rgba(12, 15, 16, 0.76) 100%);
 }
 
-.upload-mask-error {
-  background: linear-gradient(180deg, rgba(115, 35, 35, 0.08) 0%, rgba(115, 35, 35, 0.82) 100%);
+.publish-photo-mask-error {
+  background: linear-gradient(180deg, rgba(179, 27, 37, 0.1) 0%, rgba(87, 0, 8, 0.82) 100%);
 }
 
-.upload-mask-title {
-  font-size: 26rpx;
-  font-weight: 700;
+.publish-photo-mask-title {
+  color: #ffffff;
+  font-size: 24rpx;
+  font-weight: 800;
 }
 
-.upload-mask-copy {
-  font-size: 22rpx;
+.publish-photo-mask-copy {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 20rpx;
   line-height: 1.5;
 }
 
-.upload-add-card {
+.publish-photo-add,
+.publish-photo-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8rpx;
-  border: 2rpx dashed rgba(89, 154, 191, 0.3);
-  background:
-    radial-gradient(circle at top, rgba(120, 222, 207, 0.28), transparent 58%),
-    rgba(247, 251, 255, 0.96);
 }
 
-.upload-add-mark {
+.publish-photo-add {
+  border: 2rpx dashed rgba(171, 173, 174, 0.46);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.publish-photo-add-primary {
+  border-color: rgba(0, 94, 159, 0.22);
+  background:
+    radial-gradient(circle at top, rgba(68, 165, 255, 0.16), transparent 56%),
+    rgba(255, 255, 255, 0.86);
+}
+
+.publish-photo-add-icon {
   width: 68rpx;
   height: 68rpx;
-  border-radius: 24rpx;
-  background: rgba(103, 191, 223, 0.14);
-  color: #3f97c8;
-  font-size: 42rpx;
-  font-weight: 600;
+  border-radius: 999rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(0, 94, 159, 0.1);
+  color: #005e9f;
+  font-size: 40rpx;
+  font-weight: 500;
+  line-height: 1;
 }
 
-.upload-add-title {
-  color: var(--campus-text);
+.publish-photo-add-label {
+  margin-top: 10rpx;
+  color: #005e9f;
+  font-size: 18rpx;
+  font-weight: 800;
+  letter-spacing: 3rpx;
+  text-transform: uppercase;
+}
+
+.publish-photo-placeholder {
+  border: 1rpx solid rgba(171, 173, 174, 0.12);
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.publish-photo-placeholder-icon {
+  position: relative;
+  width: 52rpx;
+  height: 40rpx;
+  border: 3rpx solid rgba(171, 173, 174, 0.44);
+  border-radius: 12rpx;
+}
+
+.publish-photo-placeholder-icon::before {
+  content: '';
+  position: absolute;
+  top: 8rpx;
+  right: 10rpx;
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 999rpx;
+  background: rgba(171, 173, 174, 0.44);
+}
+
+.publish-photo-placeholder-icon::after {
+  content: '';
+  position: absolute;
+  left: 8rpx;
+  bottom: 8rpx;
+  width: 24rpx;
+  height: 12rpx;
+  border-left: 3rpx solid rgba(171, 173, 174, 0.44);
+  border-bottom: 3rpx solid rgba(171, 173, 174, 0.44);
+  transform: skewX(-22deg) rotate(-18deg);
+}
+
+.publish-title-input {
+  width: 100%;
+  min-height: 64rpx;
+  color: #2c2f30;
+  font-size: 46rpx;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.publish-title-divider {
+  height: 2rpx;
+  margin-top: 12rpx;
+  background: rgba(218, 221, 223, 0.72);
+}
+
+.publish-desc-card {
+  margin-top: 22rpx;
+  padding: 22rpx 24rpx;
+  border-radius: 24rpx;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1rpx rgba(171, 173, 174, 0.08);
+}
+
+.publish-desc-input {
+  width: 100%;
+  min-height: 148rpx;
+  color: #2c2f30;
   font-size: 26rpx;
-  font-weight: 700;
+  line-height: 1.7;
 }
 
-.upload-tip {
-  color: var(--campus-text-muted);
-  font-size: 22rpx;
+.publish-inline-fields {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 14rpx;
 }
 
-.upload-hint {
-  margin-top: 18rpx;
-  color: var(--campus-text-muted);
-  font-size: 22rpx;
-  line-height: 1.6;
+.publish-inline-field {
+  flex: 1;
+  min-width: 0;
+  min-height: 92rpx;
+  padding: 0 22rpx;
+  border-radius: 22rpx;
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+  background: #eef1f3;
 }
 
-.activity-binding-card {
-  margin-top: 18rpx;
-  padding: 26rpx;
-  border-radius: 28rpx;
-  background: rgba(244, 249, 255, 0.94);
-}
-
-.sub-panel {
-  margin-top: 18rpx;
-  padding: 26rpx;
-  border-radius: 28rpx;
-  background: rgba(248, 251, 255, 0.92);
-}
-
-.sub-panel-title {
-  color: var(--campus-text);
-  font-size: 28rpx;
-  font-weight: 700;
-}
-
-.form-label {
-  margin-top: 20rpx;
-  margin-bottom: 12rpx;
-  color: var(--campus-text);
+.publish-inline-icon {
+  width: 46rpx;
+  height: 46rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.92);
+  color: #6b7280;
   font-size: 24rpx;
   font-weight: 700;
 }
 
-.form-label:first-child {
-  margin-top: 0;
+.publish-inline-icon-link {
+  font-size: 22rpx;
 }
 
-.form-input,
-.form-textarea {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 22rpx 24rpx;
+.publish-inline-input {
+  flex: 1;
+  min-width: 0;
+  color: #2c2f30;
+  font-size: 25rpx;
+}
+
+.publish-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 18rpx;
+}
+
+.publish-chip {
+  max-width: 100%;
+  padding: 14rpx 22rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.publish-chip-primary {
+  background: #005e9f;
+  color: #edf3ff;
+  box-shadow: 0 12rpx 28rpx rgba(0, 94, 159, 0.2);
+}
+
+.publish-chip-muted {
+  background: #e0e3e4;
+  color: #595c5d;
+}
+
+.publish-chip-add {
+  background: #b1efd8;
+  color: #1d5c4a;
+}
+
+.publish-budget-row {
+  display: flex;
+  gap: 10rpx;
+  margin-top: 18rpx;
+}
+
+.publish-budget-chip {
+  flex: 1;
+  min-width: 0;
+  min-height: 84rpx;
   border-radius: 22rpx;
-  background: rgba(246, 250, 253, 0.96);
-  color: var(--campus-text);
-  font-size: 26rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1rpx solid rgba(171, 173, 174, 0.24);
+  color: #595c5d;
+  font-size: 22rpx;
+  font-weight: 800;
+  background: #ffffff;
 }
 
-.form-textarea {
-  min-height: 220rpx;
+.publish-budget-chip-active {
+  border: 3rpx solid #005e9f;
+  color: #005e9f;
+  background: rgba(68, 165, 255, 0.12);
 }
 
-.publish-inline-tip {
-  position: sticky;
-  top: 16rpx;
-  z-index: 4;
+.publish-activity-scroll {
+  width: 100%;
+  margin-top: 18rpx;
+  white-space: nowrap;
 }
 
-.upload-card,
-.form-card {
+.publish-activity-row {
+  display: inline-flex;
+  gap: 14rpx;
+  padding-bottom: 8rpx;
+}
+
+.publish-activity-card {
+  width: 236rpx;
+  overflow: hidden;
+  border-radius: 26rpx;
+  background: #ffffff;
+  box-shadow: 0 12rpx 28rpx rgba(44, 47, 48, 0.06);
+}
+
+.publish-activity-card-active {
+  box-shadow: 0 0 0 3rpx rgba(0, 94, 159, 0.16), 0 16rpx 32rpx rgba(0, 94, 159, 0.14);
+}
+
+.publish-activity-cover {
   position: relative;
+  height: 152rpx;
+  overflow: hidden;
 }
 
-.upload-card {
-  padding-top: 28rpx;
+.publish-activity-cover-0 {
+  background: linear-gradient(135deg, #3b82f6 0%, #38bdf8 100%);
 }
 
-.form-card {
-  padding-top: 24rpx;
+.publish-activity-cover-1 {
+  background: linear-gradient(135deg, #2f855a 0%, #63b3ed 100%);
 }
 
-.upload-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: 214rpx;
+.publish-activity-cover-2 {
+  background: linear-gradient(135deg, #0f172a 0%, #475569 100%);
 }
 
-.upload-item {
-  min-height: 214rpx;
+.publish-activity-cover-image,
+.publish-activity-cover-mask,
+.publish-activity-cover-ambient {
+  position: absolute;
+  inset: 0;
 }
 
-.upload-item:first-child {
-  grid-row: span 2;
+.publish-activity-cover-image {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
-.upload-item:first-child .upload-thumb {
-  height: 446rpx;
-}
-
-.upload-add-card {
-  grid-column: span 2;
-  min-height: 120rpx;
-}
-
-.activity-binding-card,
-.sub-panel {
+.publish-activity-cover-ambient {
   background:
-    linear-gradient(135deg, rgba(201, 49, 91, 0.06), rgba(45, 87, 217, 0.05)),
-    rgba(255, 250, 245, 0.94);
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.2), transparent 26%),
+    radial-gradient(circle at 82% 0%, rgba(255, 255, 255, 0.18), transparent 32%);
+}
+
+.publish-activity-cover-mask {
+  background: linear-gradient(180deg, rgba(12, 15, 16, 0.12) 0%, rgba(12, 15, 16, 0.48) 100%);
+}
+
+.publish-activity-cover-top {
+  position: absolute;
+  left: 16rpx;
+  right: 16rpx;
+  top: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10rpx;
+}
+
+.publish-activity-cover-badge {
+  max-width: 150rpx;
+  padding: 8rpx 12rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.24);
+  color: #ffffff;
+  font-size: 18rpx;
+  font-weight: 800;
+}
+
+.publish-activity-check {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.92);
+  color: #005e9f;
+  font-size: 22rpx;
+  font-weight: 900;
+}
+
+.publish-activity-cover-scene {
+  position: absolute;
+  left: 16rpx;
+  right: 16rpx;
+  bottom: 16rpx;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 20rpx;
+  font-weight: 700;
+}
+
+.publish-activity-card-body {
+  padding: 18rpx 16rpx 20rpx;
+}
+
+.publish-activity-card-title {
+  color: #2c2f30;
+  font-size: 24rpx;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.publish-activity-card-copy {
+  margin-top: 8rpx;
+  color: #757778;
+  font-size: 20rpx;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.publish-activity-empty-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 188rpx;
+  padding: 0 28rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.72);
+  color: #757778;
+  font-size: 24rpx;
+}
+
+.publish-activity-summary {
+  margin-top: 18rpx;
+  padding: 22rpx 24rpx;
+  border-radius: 24rpx;
+  background: linear-gradient(135deg, rgba(68, 165, 255, 0.12), rgba(177, 239, 216, 0.18));
+}
+
+.publish-activity-summary-title {
+  color: #2c2f30;
+  font-size: 28rpx;
+  font-weight: 800;
+}
+
+.publish-activity-summary-copy {
+  margin-top: 10rpx;
+  color: #595c5d;
+  font-size: 23rpx;
+  line-height: 1.6;
+}
+
+.publish-activity-summary-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: 14rpx;
+}
+
+.publish-activity-meta-chip {
+  padding: 10rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.88);
+  color: #2c2f30;
+  font-size: 20rpx;
+  font-weight: 700;
+}
+
+.publish-activity-meta-chip-soft {
+  background: rgba(0, 94, 159, 0.08);
+  color: #005e9f;
+}
+
+.publish-activity-clear {
+  margin-top: 16rpx;
+}
+
+.publish-actions {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  gap: 14rpx;
+  padding: 18rpx 24rpx calc(24rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(24rpx);
+  box-shadow: 0 -12rpx 30rpx rgba(44, 47, 48, 0.05);
+}
+
+.publish-action-button {
+  flex: 1;
+}
+
+.publish-action-secondary {
+  background: #e0e3e4;
+  color: #595c5d;
+}
+
+.publish-action-primary {
+  flex: 1.6;
+  gap: 10rpx;
+  background: linear-gradient(135deg, #005e9f 0%, #2498f5 58%, #7ec9ff 100%);
+  color: #edf3ff;
+  box-shadow: 0 20rpx 40rpx rgba(0, 94, 159, 0.24);
+}
+
+.publish-action-arrow {
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.publish-action-disabled {
+  opacity: 0.56;
+  box-shadow: none;
 }
 </style>

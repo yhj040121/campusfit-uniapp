@@ -34,7 +34,7 @@
         <view class="section-head" style="margin-top:0;">
           <view>
             <view class="text-main">当前已选活动</view>
-            <view class="section-subtitle">如果你正从发布页返回，这里会显示最新绑定项</view>
+            <view class="section-subtitle">如果你正从发布页返回，这里会显示最近选择的活动</view>
           </view>
           <view class="float-link" @click="manualRefresh">刷新</view>
         </view>
@@ -46,7 +46,7 @@
         </view>
         <view class="btn-row">
           <button class="btn-secondary btn-half" @click="goActivityCenter">去活动中心</button>
-          <button class="btn-ghost btn-half" @click="clearSelected">清除绑定</button>
+          <button class="btn-ghost btn-half" @click="clearSelected">取消选择</button>
         </view>
       </view>
 
@@ -162,7 +162,7 @@ export default {
     clearSelected: function() {
       activityStore.clearSelectedActivity()
       this.selectedActivity = null
-      uni.showToast({ title: '已清除当前绑定活动', icon: 'none' })
+      uni.showToast({ title: '已取消当前活动选择', icon: 'none' })
     },
     goActivityCenter: function() {
       uni.navigateTo({ url: '/pages/activity/index' })
@@ -305,5 +305,98 @@ export default {
 .mini-tag {
   padding: 8rpx 14rpx;
   font-size: 20rpx;
+}
+
+.my-activity-shell {
+  min-height: 100vh;
+  padding-top: 12rpx;
+  padding-bottom: calc(88rpx + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at top left, rgba(253, 210, 167, 0.24), transparent 34%),
+    radial-gradient(circle at top right, rgba(68, 165, 255, 0.16), transparent 28%),
+    linear-gradient(180deg, #f8fbff 0%, #f5f6f7 46%, #eef4fa 100%);
+}
+
+.my-activity-shell .hero-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1e74bf 0%, #3f8fe1 52%, #6aaef8 100%);
+  box-shadow: 0 24rpx 52rpx rgba(23, 76, 132, 0.16);
+}
+
+.my-activity-shell .hero-card::after {
+  content: '';
+  position: absolute;
+  right: -72rpx;
+  top: -56rpx;
+  width: 220rpx;
+  height: 220rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  filter: blur(16rpx);
+}
+
+.my-activity-shell .hero-badge,
+.my-activity-shell .hero-title,
+.my-activity-shell .hero-copy,
+.my-activity-shell .hero-card-pill-value,
+.my-activity-shell .hero-card-pill-label {
+  position: relative;
+  z-index: 1;
+}
+
+.my-activity-shell .hero-badge {
+  background: rgba(255, 255, 255, 0.16);
+  color: #eef6ff;
+}
+
+.my-activity-shell .hero-title {
+  color: #ffffff;
+}
+
+.my-activity-shell .hero-copy {
+  color: rgba(238, 246, 255, 0.84);
+}
+
+.my-activity-shell .hero-card-pill {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.my-activity-shell .panel-card,
+.my-activity-shell .list-card {
+  border-radius: 32rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 24rpx 52rpx rgba(25, 52, 87, 0.07);
+  backdrop-filter: blur(24rpx);
+}
+
+.my-activity-shell .float-link,
+.my-activity-shell .side-pill,
+.my-activity-shell .cover-tag,
+.my-activity-shell .mini-tag {
+  border-color: rgba(68, 165, 255, 0.18);
+  background: rgba(68, 165, 255, 0.1);
+  color: #1f63ac;
+}
+
+.my-activity-shell .side-pill-active {
+  background: linear-gradient(90deg, #005e9f 0%, #44a5ff 100%);
+  color: #edf3ff;
+  border-color: transparent;
+  box-shadow: 0 14rpx 28rpx rgba(0, 94, 159, 0.16);
+}
+
+.my-activity-shell .btn-secondary {
+  background: rgba(68, 165, 255, 0.1);
+  color: #1f63ac;
+  border-color: transparent;
+}
+
+.my-activity-shell .btn-ghost {
+  background: rgba(255, 255, 255, 0.82);
+  color: #6a788a;
+  border-color: rgba(191, 208, 226, 0.46);
 }
 </style>
