@@ -249,6 +249,7 @@ var session = require('../../common/session.js')
 
 var LEGACY_DRAFT_KEY = 'campusfit_publish_draft'
 var ACTIVE_DRAFT_KEY = 'campusfit_active_draft_id'
+var ACTIVE_PROFILE_TAB_KEY = 'campusfit_profile_active_tab'
 var EDIT_POST_KEY = 'campusfit_edit_post_id'
 var MAX_IMAGE_COUNT = 9
 var MAX_FILE_SIZE = 10 * 1024 * 1024
@@ -380,6 +381,11 @@ function buildBudgetOptions(selectedBudget) {
 
 function isPublishSelectableActivity(activity) {
   return !!(activity && activity.id && activity.selectable !== false)
+}
+
+function openProfilePostsTab() {
+  uni.setStorageSync(ACTIVE_PROFILE_TAB_KEY, 'posts')
+  uni.switchTab({ url: '/pages/profile/index' })
 }
 
 function buildActivityPreviewList(list, selectedActivity) {
@@ -1061,7 +1067,7 @@ export default {
       if (this.mode === 'edit') {
         this.resetCreateMode(true)
         setTimeout(function() {
-          uni.navigateTo({ url: '/pages/my-posts/index' })
+          openProfilePostsTab()
         }, 80)
         return
       }
@@ -1096,6 +1102,9 @@ export default {
     exitEditMode: function() {
       this.resetCreateMode(true)
       uni.showToast({ title: '已退出编辑', icon: 'none' })
+      setTimeout(function() {
+        openProfilePostsTab()
+      }, 260)
     },
     secondaryAction: function() {
       if (this.mode === 'edit') {
@@ -1151,7 +1160,7 @@ export default {
             self.lastSuccessText = '修改已提交审核，可在我的发布查看进度。'
             uni.showToast({ title: '已提交修改', icon: 'none' })
             setTimeout(function() {
-              uni.navigateTo({ url: '/pages/my-posts/index' })
+              openProfilePostsTab()
             }, 400)
             return
           }
@@ -1159,7 +1168,7 @@ export default {
           self.lastSuccessText = '内容已提交审核，可在我的发布查看进度。'
           uni.showToast({ title: '已提交审核', icon: 'none' })
           setTimeout(function() {
-            uni.navigateTo({ url: '/pages/my-posts/index' })
+            openProfilePostsTab()
           }, 400)
         })
         .catch(function(error) {

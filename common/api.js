@@ -81,6 +81,95 @@ function uploadProfileCoverImage(filePath) {
   return uploadFileByApiPath(filePath, '/api/uploads/profile-cover', true)
 }
 
+function createUploadError(message, extra) {
+  var error = new Error(message)
+  var patch = extra || {}
+  var keys = Object.keys(patch)
+  for (var i = 0; i < keys.length; i += 1) {
+    error[keys[i]] = patch[keys[i]]
+  }
+  return error
+}
+
+function uploadFileWithBaseUrl(baseUrl, filePath, apiPath, includeAuth) {
+  return new Promise(function(resolve, reject) {
+    var header = {}
+    var token = session.getToken()
+    if (includeAuth !== false && token) {
+      header.Authorization = 'Bearer ' + token
+    }
+    uni.uploadFile({
+      url: baseUrl + apiPath,
+      filePath: filePath,
+      name: 'file',
+      timeout: 20000,
+      header: header,
+      success: function(response) {
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          if (response.statusCode === 413) {
+            reject(createUploadError(
+              '鍥剧墖杩囧ぇ锛岃閫夋嫨鍘嬬缉鍥剧墖锛屾垨鑱旂郴绠＄悊鍛樻斁瀹芥湇鍔″櫒涓婁紶闄愬埗',
+              {
+                baseUrl: baseUrl,
+                statusCode: response.statusCode
+              }
+            ))
+            return
+          }
+          reject(createUploadError(
+            'HTTP ' + response.statusCode,
+            {
+              baseUrl: baseUrl,
+              statusCode: response.statusCode
+            }
+          ))
+          return
+        }
+        try {
+          var payload = parseUploadResponse(response.data)
+          http.setActiveBaseUrl(baseUrl)
+          resolve(payload)
+        } catch (error) {
+          reject(error)
+        }
+      },
+      fail: function(error) {
+        reject(createUploadError(
+          error.errMsg || '鍥剧墖涓婁紶澶辫触',
+          {
+            baseUrl: baseUrl,
+            isNetworkError: true
+          }
+        ))
+      }
+    })
+  })
+}
+
+function uploadWithFallback(filePath, apiPath, includeAuth, baseUrl, allowFallback) {
+  return uploadFileWithBaseUrl(baseUrl, filePath, apiPath, includeAuth)
+    .catch(function(error) {
+      if (!allowFallback || !error || !error.isNetworkError) {
+        throw error
+      }
+
+      var fallbackBaseUrl = http.getFallbackBaseUrl(baseUrl)
+      if (!fallbackBaseUrl) {
+        throw error
+      }
+
+      http.setActiveBaseUrl(fallbackBaseUrl)
+      return uploadFileWithBaseUrl(fallbackBaseUrl, filePath, apiPath, includeAuth)
+    })
+}
+
+function uploadFileByApiPath(filePath, apiPath, includeAuth) {
+  return http.resolveBaseUrl(false)
+    .then(function(baseUrl) {
+      return uploadWithFallback(filePath, apiPath, includeAuth, baseUrl, true)
+    })
+}
+
 function sendAuthCode(phone, scene) {
   return http.request({
     url: '/api/auth/send-code',
@@ -143,6 +232,13 @@ function listRecommendations() {
 function listMyPosts() {
   return http.request({
     url: '/api/posts/mine',
+    method: 'GET'
+  })
+}
+
+function listLikedPosts() {
+  return http.request({
+    url: '/api/posts/liked',
     method: 'GET'
   })
 }
@@ -503,6 +599,7 @@ module.exports = {
   uploadProfileCoverImage: uploadProfileCoverImage,
   listRecommendations: listRecommendations,
   listMyPosts: listMyPosts,
+  listLikedPosts: listLikedPosts,
   getPostForEdit: getPostForEdit,
   updatePost: updatePost,
   deletePost: deletePost,

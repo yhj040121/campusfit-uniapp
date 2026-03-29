@@ -1,26 +1,77 @@
-var DEPLOYED_API_BASE_URL = 'https://api.yuhaojie.cn'
-var LOCALHOST_BASE_URL = 'http://127.0.0.1:8080'
-var LOCAL_LAN_BASE_URL = 'http://192.168.31.193:8080'
-var H5_BASE_URLS = [DEPLOYED_API_BASE_URL, LOCALHOST_BASE_URL, 'http://localhost:8080', LOCAL_LAN_BASE_URL]
-var APP_BASE_URLS = [DEPLOYED_API_BASE_URL, LOCAL_LAN_BASE_URL, 'http://10.0.2.2:8080', 'http://10.0.3.2:8080', LOCALHOST_BASE_URL]
+var PRIMARY_DEPLOYED_BASE_URL = 'https://yuhaojie.cn'
+var APP_DEBUG_BASE_URL = 'http://192.168.31.193:8080'
+
+var CUSTOM_BASE_URL_KEY = 'campusfit_custom_base_url'
+var ACTIVE_BASE_URL_KEY = 'campusfit_base_url'
+
+function normalizeBaseUrl(value) {
+  var text = String(value || '').trim()
+  if (!text) {
+    return ''
+  }
+  return text.replace(/\/+$/, '')
+}
+
+function unique(list) {
+  var result = []
+  for (var i = 0; i < list.length; i += 1) {
+    if (list[i] && result.indexOf(list[i]) === -1) {
+      result.push(list[i])
+    }
+  }
+  return result
+}
+
+function getCustomBaseUrl() {
+  return normalizeBaseUrl(uni.getStorageSync(CUSTOM_BASE_URL_KEY))
+}
+
+function getStoredBaseUrl() {
+  return normalizeBaseUrl(uni.getStorageSync(ACTIVE_BASE_URL_KEY))
+}
+
+function getDefaultBaseUrl() {
+  return normalizeBaseUrl(PRIMARY_DEPLOYED_BASE_URL)
+}
+
+function getDebugBaseUrl() {
+  // #ifdef APP-PLUS
+  if (typeof __DEV__ !== 'undefined' && __DEV__) {
+    return normalizeBaseUrl(APP_DEBUG_BASE_URL)
+  }
+  // #endif
+  return ''
+}
 
 function getBaseUrlCandidates() {
-    var custom = uni.getStorageSync('campusfit_custom_base_url')
-    var list = []
-    if (custom) {
-        list.push(custom)
-    }
-    // #ifdef H5
-    return list.concat(H5_BASE_URLS)
-    // #endif
-    // #ifndef H5
-    return list.concat(APP_BASE_URLS)
-    // #endif
+  var list = []
+  var customBaseUrl = getCustomBaseUrl()
+  var storedBaseUrl = getStoredBaseUrl()
+  var debugBaseUrl = getDebugBaseUrl()
+  var defaultBaseUrl = getDefaultBaseUrl()
+
+  if (customBaseUrl) {
+    list.push(customBaseUrl)
+  }
+  if (storedBaseUrl) {
+    list.push(storedBaseUrl)
+  }
+  if (debugBaseUrl) {
+    list.push(debugBaseUrl)
+  }
+  if (defaultBaseUrl) {
+    list.push(defaultBaseUrl)
+  }
+
+  return unique(list)
 }
 
 module.exports = {
-    getBaseUrlCandidates: getBaseUrlCandidates
+  ACTIVE_BASE_URL_KEY: ACTIVE_BASE_URL_KEY,
+  CUSTOM_BASE_URL_KEY: CUSTOM_BASE_URL_KEY,
+  normalizeBaseUrl: normalizeBaseUrl,
+  getCustomBaseUrl: getCustomBaseUrl,
+  getStoredBaseUrl: getStoredBaseUrl,
+  getDefaultBaseUrl: getDefaultBaseUrl,
+  getBaseUrlCandidates: getBaseUrlCandidates
 }
-
-
-

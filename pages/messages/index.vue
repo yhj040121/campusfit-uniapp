@@ -4,113 +4,107 @@
       <view class="hero-badge">需要登录</view>
       <view class="hero-title">登录后查看你的消息通知</view>
       <view class="hero-copy">互动提醒、评论动态、活动通知和公告更新都会汇总到这里，方便你统一查看。</view>
-      <button class="btn-primary" style="margin-top:24rpx;" @click="goLogin">去登录</button>
+      <button class="btn-primary" style="margin-top: 24rpx;" @click="goLogin">去登录</button>
     </view>
 
     <view v-else>
-      <view class="page-header">
-        <view class="campus-ribbon">消息中心</view>
-        <view class="page-title">把互动、系统和活动提醒放进同一个收件箱</view>
-        <view class="page-desc">消息支持按类型筛选，也支持单条删除、删除已读和全部设为已读，让首页和我的页红点状态保持同步。</view>
-      </view>
-
-      <view class="hero-card message-hero">
-        <view class="hero-badge">未读提醒</view>
-        <view class="hero-title">当前还有 {{ unreadCount }} 条未读</view>
-        <view class="hero-copy">{{ heroStatusText }}</view>
-        <view class="hero-card-row">
-          <view class="hero-card-pill">
-            <text class="hero-card-pill-value">{{ messages.length }}</text>
-            <text class="hero-card-pill-label">全部消息</text>
+      <view class="message-summary-card">
+        <view class="message-summary-head">
+          <view class="message-summary-copygroup">
+            <view class="message-summary-kicker">消息中心</view>
+            <view class="message-summary-title">{{ summaryTitle }}</view>
+            <view class="message-summary-copy">{{ heroStatusText }}</view>
           </view>
-          <view class="hero-card-pill">
-            <text class="hero-card-pill-value">{{ heroUnreadCount }}</text>
-            <text class="hero-card-pill-label">未读消息</text>
+          <view :class="['message-summary-badge', unreadCount ? 'message-summary-badge-active' : '']">
+            {{ unreadBadgeText }}
           </view>
         </view>
+
+        <view class="message-summary-metrics">
+          <view class="message-summary-metric">
+            <view class="message-summary-metric-value">{{ messages.length }}</view>
+            <view class="message-summary-metric-label">全部</view>
+          </view>
+          <view class="message-summary-metric">
+            <view class="message-summary-metric-value">{{ heroUnreadCount }}</view>
+            <view class="message-summary-metric-label">未读</view>
+          </view>
+          <view class="message-summary-metric">
+            <view class="message-summary-metric-value">{{ readCount }}</view>
+            <view class="message-summary-metric-label">已读</view>
+          </view>
+        </view>
+
+        <view class="message-toolbar">
+          <view class="message-toolbar-button" @click="refreshMessages">刷新</view>
+          <view
+            :class="['message-toolbar-button', markingAll ? 'btn-disabled' : '']"
+            @click="markAllRead"
+          >
+            {{ markAllLabel }}
+          </view>
+          <view
+            :class="['message-toolbar-button', 'message-toolbar-button-danger', deletingRead ? 'btn-disabled' : '']"
+            @click="confirmDeleteRead"
+          >
+            {{ deleteReadLabel }}
+          </view>
+        </view>
       </view>
 
-      <view class="section-head">
-        <view>
-          <view class="section-title" style="margin-top:0;">消息分类</view>
-          <view class="section-subtitle">点击标签切换你关心的消息类型</view>
-        </view>
-        <view class="float-link" @click="refreshMessages">刷新消息</view>
-      </view>
-
-      <view class="message-toolbar">
-        <view
-          class="float-link"
-          :class="markingAll ? 'btn-disabled' : ''"
-          @click="markAllRead"
-        >
-          {{ markAllLabel }}
-        </view>
-        <view
-          class="float-link message-toolbar-danger"
-          :class="deletingRead ? 'btn-disabled' : ''"
-          @click="confirmDeleteRead"
-        >
-          {{ deleteReadLabel }}
-        </view>
-      </view>
-
-      <view class="chip-row" v-if="tabs.length > 1">
+      <view v-if="tabs.length > 1" class="message-tab-row">
         <view
           v-for="item in tabs"
           :key="item"
-          :class="['chip', currentTab === item ? 'chip-active' : 'chip-outline']"
+          :class="['message-tab-chip', currentTab === item ? 'message-tab-chip-active' : '']"
           @click="currentTab = item"
         >
           {{ item }}
         </view>
       </view>
 
-      <view v-if="listLoading">
-        <view class="skeleton-card" v-for="item in 2" :key="'message-skeleton-' + item">
-          <view class="skeleton-block"></view>
-          <view class="skeleton-line medium"></view>
-          <view class="skeleton-line"></view>
+      <view v-if="listLoading" class="message-list">
+        <view v-for="item in 4" :key="'message-skeleton-' + item" class="message-skeleton-card"></view>
+      </view>
+
+      <view v-else-if="listFailed" class="message-state-card">
+        <view class="message-state-title">消息列表暂时不可用</view>
+        <view class="message-state-copy">当前接口请求失败，你可以稍后重试，也可以先回到别的页面继续浏览。</view>
+        <view class="message-state-actions">
+          <view class="message-state-button message-state-button-primary" @click="refreshMessages">重新加载</view>
         </view>
       </view>
 
-      <view v-else-if="listFailed" class="status-banner status-banner-error">
-        <view class="status-banner-head">
-          <view>
-            <view class="status-banner-title">消息接口暂时不可用</view>
-            <view class="status-banner-copy">接口失败时，这里会提供重试入口，避免消息区直接空白。</view>
-          </view>
-          <view class="status-link" @click="refreshMessages">重新加载</view>
-        </view>
-      </view>
-
-      <view v-else-if="filtered.length">
-        <view class="list-card message-card" v-for="item in filtered" :key="item.id" @click="markRead(item)">
-          <view class="meta-line" style="margin-top:0; align-items:flex-start;">
-            <view :class="['side-pill', item.read ? '' : 'side-pill-active']">{{ item.read ? '已读' : '未读' }}</view>
-            <view class="list-meta">{{ item.time }}</view>
-          </view>
-          <view class="list-title" style="margin-top:18rpx;">{{ item.title }}</view>
-          <view class="list-copy">{{ item.desc }}</view>
-          <view class="message-footer">
-            <view class="mini-tag">{{ item.type }}</view>
-            <view class="message-action-group">
-              <view class="float-link" :class="activeMessageId === item.id ? 'btn-disabled' : ''">{{ item.read ? '已同步' : '点按后设为已读' }}</view>
-              <view
-                class="float-link message-delete-link"
-                :class="deletingMessageId === item.id ? 'btn-disabled' : ''"
-                @click.stop="confirmDeleteMessage(item)"
-              >
-                {{ deletingMessageId === item.id ? '删除中...' : '删除消息' }}
+      <view v-else-if="filtered.length" class="message-list">
+        <view class="message-card" v-for="item in filtered" :key="item.id" @click="markRead(item)">
+          <view class="message-card-head">
+            <view class="message-card-meta">
+              <view :class="['message-state-pill', item.read ? '' : 'message-state-pill-active']">
+                {{ item.read ? '已读' : '未读' }}
               </view>
+              <view class="message-type-pill">{{ item.type }}</view>
+            </view>
+            <view class="message-card-time">{{ item.time }}</view>
+          </view>
+
+          <view class="message-card-title">{{ item.title }}</view>
+          <view class="message-card-copy">{{ item.desc }}</view>
+
+          <view class="message-card-footer">
+            <view class="message-card-hint">{{ item.read ? '消息已同步' : '点卡片后设为已读' }}</view>
+            <view
+              :class="['message-delete-link', deletingMessageId === item.id ? 'btn-disabled' : '']"
+              @click.stop="confirmDeleteMessage(item)"
+            >
+              {{ deletingMessageId === item.id ? '删除中...' : '删除' }}
             </view>
           </view>
         </view>
       </view>
 
-      <view v-else class="panel-card">
-        <view class="section-title" style="margin-top:0;">当前分类暂无消息</view>
-        <view class="text-copy">可以切换到其他分类，或者稍后再回来查看。</view>
+      <view v-else class="message-state-card">
+        <view class="message-state-title">当前分类暂无消息</view>
+        <view class="message-state-copy">可以切换到其他分类，或者稍后再回来看看。</view>
       </view>
     </view>
   </view>
@@ -179,7 +173,22 @@ export default {
       if (this.deletingRead) {
         return '删除中...'
       }
-      return this.readCount > 0 ? '删除已读' : '暂无已读'
+      return this.readCount > 0 ? '清理已读' : '暂无已读'
+    },
+    unreadBadgeText: function() {
+      if (!this.unreadCount) {
+        return '0'
+      }
+      return this.unreadCount > 99 ? '99+' : String(this.unreadCount)
+    },
+    summaryTitle: function() {
+      if (!this.pushEnabled) {
+        return '消息提醒当前已关闭'
+      }
+      if (!this.unreadCount) {
+        return '现在没有未读消息'
+      }
+      return '你有 ' + this.unreadCount + ' 条未读消息'
     }
   },
   onShow: function() {
@@ -279,7 +288,7 @@ export default {
         return
       }
       if (!self.unreadCount) {
-        uni.showToast({ title: '已经全部读完啦', icon: 'none' })
+        uni.showToast({ title: '已经全部读完了', icon: 'none' })
         return
       }
       self.markingAll = true
@@ -357,7 +366,7 @@ export default {
         return
       }
       uni.showModal({
-        title: '删除已读消息',
+        title: '清理已读',
         content: '确认删除全部已读消息吗？未读消息会被保留。',
         confirmText: '确认删除',
         cancelText: '取消',
@@ -402,216 +411,326 @@ export default {
 
 <style>
 .message-shell {
-  padding-top: 10rpx;
+  min-height: 100vh;
+  padding-top: 12rpx;
+  padding-bottom: calc(96rpx + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at top left, rgba(253, 210, 167, 0.2), transparent 32%),
+    radial-gradient(circle at top right, rgba(68, 165, 255, 0.14), transparent 26%),
+    linear-gradient(180deg, #f8fbff 0%, #f5f7fa 44%, #eef4fa 100%);
 }
 
-.message-shell .page-header {
-  display: none;
+.message-summary-card,
+.message-card,
+.message-state-card {
+  border-radius: 32rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 24rpx 52rpx rgba(25, 52, 87, 0.07);
+  backdrop-filter: blur(22rpx);
 }
 
-.message-hero {
-  margin-top: 0;
-  padding: 18rpx 18rpx;
-  border-radius: 28rpx;
+.message-summary-card {
+  padding: 28rpx;
 }
 
-.message-hero .hero-badge {
-  padding: 8rpx 14rpx;
-  font-size: 18rpx;
-}
-
-.message-hero .hero-title {
-  margin-top: 10rpx;
-  font-size: 36rpx;
-  line-height: 1.14;
-}
-
-.message-hero .hero-copy {
-  margin-top: 8rpx;
-  font-size: 22rpx;
-  line-height: 1.45;
-}
-
-.message-hero .hero-card-row {
+.message-summary-head {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8rpx;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18rpx;
+}
+
+.message-summary-copygroup {
+  flex: 1;
+  min-width: 0;
+}
+
+.message-summary-kicker {
+  color: #1f63ac;
+  font-size: 22rpx;
+  font-weight: 800;
+  letter-spacing: 2rpx;
+}
+
+.message-summary-title {
+  margin-top: 10rpx;
+  color: #24364a;
+  font-size: 42rpx;
+  font-weight: 800;
+  line-height: 1.18;
+}
+
+.message-summary-copy {
   margin-top: 12rpx;
+  color: #66768b;
+  font-size: 24rpx;
+  line-height: 1.6;
 }
 
-.message-hero .hero-card-pill {
-  flex: 0 0 auto;
-  min-height: 0;
-  padding: 10rpx 14rpx;
-  border-radius: 999rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.12);
+.message-summary-badge {
+  min-width: 84rpx;
+  height: 84rpx;
+  padding: 0 18rpx;
+  border-radius: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(235, 241, 248, 0.96);
+  color: #6a7a8d;
+  font-size: 28rpx;
+  font-weight: 800;
+  flex-shrink: 0;
 }
 
-.message-hero .hero-card-pill-value,
-.message-hero .hero-card-pill-label {
-  display: inline-block;
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 20rpx;
+.message-summary-badge-active {
+  background: linear-gradient(135deg, #1f7cd8 0%, #46b0ff 100%);
+  color: #edf7ff;
+  box-shadow: 0 16rpx 34rpx rgba(31, 124, 216, 0.22);
+}
+
+.message-summary-metrics {
+  margin-top: 22rpx;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14rpx;
+}
+
+.message-summary-metric {
+  padding: 18rpx 16rpx;
+  border-radius: 24rpx;
+  background: rgba(242, 247, 253, 0.96);
+}
+
+.message-summary-metric-value {
+  color: #24364a;
+  font-size: 30rpx;
+  font-weight: 800;
   line-height: 1;
 }
 
-.message-hero .hero-card-pill-label {
-  margin-top: 0;
-  margin-left: 8rpx;
-}
-
-.message-shell .section-head {
-  align-items: center;
-}
-
-.message-shell .section-subtitle {
-  display: none;
+.message-summary-metric-label {
+  margin-top: 8rpx;
+  color: #7b8798;
+  font-size: 20rpx;
+  font-weight: 700;
 }
 
 .message-toolbar {
   display: flex;
-  justify-content: flex-end;
-  gap: 16rpx;
-  margin: 10rpx 0 14rpx;
-}
-
-.message-toolbar-danger,
-.message-delete-link {
-  color: var(--campus-danger);
-}
-
-.message-card {
-  margin-top: 14rpx;
-}
-
-.message-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14rpx;
-  margin-top: 14rpx;
-}
-
-.message-action-group {
-  display: flex;
-  align-items: center;
-  gap: 14rpx;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  gap: 12rpx;
+  margin-top: 20rpx;
 }
 
-.mini-tag {
+.message-toolbar-button {
+  min-height: 60rpx;
+  padding: 0 20rpx;
+  border-radius: 18rpx;
   display: inline-flex;
   align-items: center;
-  padding: 8rpx 14rpx;
-  border-radius: 999rpx;
-  border: 1rpx solid rgba(45, 87, 217, 0.12);
-  background: rgba(45, 87, 217, 0.08);
-  color: var(--campus-secondary);
-  font-size: 20rpx;
-}
-
-.message-shell {
-  min-height: 100vh;
-  padding-top: 12rpx;
-  padding-bottom: calc(88rpx + env(safe-area-inset-bottom));
-  background:
-    radial-gradient(circle at top left, rgba(253, 210, 167, 0.24), transparent 34%),
-    radial-gradient(circle at top right, rgba(68, 165, 255, 0.16), transparent 28%),
-    linear-gradient(180deg, #f8fbff 0%, #f5f6f7 46%, #eef4fa 100%);
-}
-
-.message-shell .hero-card {
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(135deg, #1e74bf 0%, #3f8fe1 52%, #6aaef8 100%);
-  box-shadow: 0 24rpx 52rpx rgba(23, 76, 132, 0.16);
-}
-
-.message-shell .hero-card::after {
-  content: '';
-  position: absolute;
-  right: -72rpx;
-  top: -56rpx;
-  width: 220rpx;
-  height: 220rpx;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-  filter: blur(16rpx);
-}
-
-.message-shell .hero-badge,
-.message-shell .hero-title,
-.message-shell .hero-copy,
-.message-shell .hero-card-pill-value,
-.message-shell .hero-card-pill-label {
-  position: relative;
-  z-index: 1;
-}
-
-.message-shell .hero-badge {
-  background: rgba(255, 255, 255, 0.16);
-  color: #eef6ff;
-}
-
-.message-shell .hero-title {
-  color: #ffffff;
-}
-
-.message-shell .hero-copy {
-  color: rgba(238, 246, 255, 0.84);
-}
-
-.message-shell .hero-card-pill {
-  border-color: rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.message-shell .message-toolbar {
-  margin: 14rpx 0 16rpx;
-}
-
-.message-shell .float-link,
-.message-shell .mini-tag {
-  border-color: rgba(68, 165, 255, 0.18);
+  justify-content: center;
   background: rgba(68, 165, 255, 0.1);
   color: #1f63ac;
+  font-size: 22rpx;
+  font-weight: 700;
 }
 
-.message-shell .message-toolbar-danger,
-.message-shell .message-delete-link {
-  color: #d85d7b;
+.message-toolbar-button-danger {
+  background: rgba(255, 235, 237, 0.96);
+  color: #df4c63;
 }
 
-.message-shell .chip {
-  border-color: rgba(68, 165, 255, 0.18);
-  background: rgba(255, 255, 255, 0.82);
-  color: #6a788a;
+.message-tab-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin: 18rpx 0 4rpx;
 }
 
-.message-shell .chip-active {
+.message-tab-chip {
+  min-height: 58rpx;
+  padding: 0 22rpx;
+  border-radius: 999rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.84);
+  border: 2rpx solid rgba(68, 165, 255, 0.12);
+  color: #7a8698;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.message-tab-chip-active {
   background: linear-gradient(90deg, #005e9f 0%, #44a5ff 100%);
-  color: #edf3ff;
   border-color: transparent;
+  color: #edf3ff;
   box-shadow: 0 14rpx 28rpx rgba(0, 94, 159, 0.16);
 }
 
-.message-shell .chip-outline {
-  background: rgba(255, 255, 255, 0.82);
+.message-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-top: 18rpx;
 }
 
-.message-shell .message-card,
-.message-shell .panel-card,
-.message-shell .status-banner {
-  border-radius: 32rpx;
-  border: 2rpx solid rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.84);
-  box-shadow: 0 24rpx 52rpx rgba(25, 52, 87, 0.07);
-  backdrop-filter: blur(24rpx);
+.message-card {
+  padding: 24rpx;
 }
 
-.message-shell .message-card {
+.message-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.message-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  flex-wrap: wrap;
+}
+
+.message-state-pill,
+.message-type-pill {
+  min-height: 44rpx;
+  padding: 0 14rpx;
+  border-radius: 999rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19rpx;
+  font-weight: 700;
+}
+
+.message-state-pill {
+  background: rgba(233, 239, 247, 0.96);
+  color: #6b7788;
+}
+
+.message-state-pill-active {
+  background: rgba(68, 165, 255, 0.14);
+  color: #1f63ac;
+}
+
+.message-type-pill {
+  background: rgba(244, 246, 250, 0.96);
+  color: #596579;
+}
+
+.message-card-time {
+  color: #90a0b4;
+  font-size: 20rpx;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.message-card-title {
   margin-top: 16rpx;
+  color: #24364a;
+  font-size: 30rpx;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.message-card-copy {
+  margin-top: 12rpx;
+  color: #66768b;
+  font-size: 24rpx;
+  line-height: 1.6;
+}
+
+.message-card-footer {
+  margin-top: 18rpx;
+  padding-top: 16rpx;
+  border-top: 2rpx solid rgba(117, 119, 120, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.message-card-hint {
+  color: #90a0b4;
+  font-size: 21rpx;
+  font-weight: 700;
+}
+
+.message-delete-link {
+  min-height: 48rpx;
+  padding: 0 14rpx;
+  border-radius: 14rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 235, 237, 0.96);
+  color: #df4c63;
+  font-size: 21rpx;
+  font-weight: 700;
+}
+
+.message-state-card {
+  margin-top: 18rpx;
+  padding: 34rpx 28rpx;
+}
+
+.message-state-title {
+  color: #24364a;
+  font-size: 34rpx;
+  font-weight: 800;
+}
+
+.message-state-copy {
+  margin-top: 14rpx;
+  color: #66768b;
+  font-size: 24rpx;
+  line-height: 1.65;
+}
+
+.message-state-actions {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 22rpx;
+}
+
+.message-state-button {
+  min-height: 72rpx;
+  padding: 0 24rpx;
+  border-radius: 20rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.message-state-button-primary {
+  background: linear-gradient(90deg, #005e9f 0%, #44a5ff 100%);
+  color: #edf3ff;
+}
+
+.message-skeleton-card {
+  height: 188rpx;
+  border-radius: 32rpx;
+  background:
+    linear-gradient(90deg, rgba(238, 243, 247, 0.88) 25%, rgba(248, 251, 255, 0.98) 37%, rgba(238, 243, 247, 0.88) 63%);
+  background-size: 300% 100%;
+  animation: messageShimmer 1.4s infinite linear;
+}
+
+.btn-disabled {
+  opacity: 0.58;
+}
+
+@keyframes messageShimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
 }
 </style>

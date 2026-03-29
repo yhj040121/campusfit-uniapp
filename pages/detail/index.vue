@@ -72,6 +72,19 @@
         </view>
       </view>
 
+      <view v-if="isMine" class="detail-owner-panel">
+        <view class="detail-owner-copy">{{ ownerActionCopy }}</view>
+        <view class="detail-owner-actions">
+          <view class="detail-owner-button detail-owner-button-secondary" @click="startEdit">编辑内容</view>
+          <view
+            :class="['detail-owner-button', 'detail-owner-button-danger', deleteLoading ? 'detail-disabled' : '']"
+            @click="confirmDelete"
+          >
+            {{ deleteLoading ? '删除中' : '删除内容' }}
+          </view>
+        </view>
+      </view>
+
       <view class="detail-main-title">{{ post.title || '无' }}</view>
       <view v-if="getDisplaySubtitle(post)" class="detail-main-subtitle">{{ getDisplaySubtitle(post) }}</view>
       <view class="detail-meta-row">
@@ -89,7 +102,8 @@
 
       <view class="detail-main-desc">{{ post.desc || '无' }}</view>
 
-      <view v-if="detailFailed" class="detail-state-text">当前未获取到真实详情数据</view>
+      <view v-if="ownerFallbackMode" class="detail-state-text">当前展示的是我的内容管理视图，未公开内容也能在这里查看和处理。</view>
+      <view v-else-if="detailFailed" class="detail-state-text">当前未获取到真实详情数据</view>
       <view v-else-if="detailLoading" class="detail-state-text">正在加载详情</view>
     </view>
 
@@ -257,6 +271,7 @@ var session = require('../../common/session.js')
 var activityStore = require('../../common/activity.js')
 var postDisplay = require('../../common/post-display.js')
 var settingsStore = require('../../common/settings.js')
+var EDIT_POST_KEY = 'campusfit_edit_post_id'
 
 function pickFirstText(value, fallback) {
   var text = String(value || '').trim()
@@ -355,6 +370,20 @@ function formatCountValue(value) {
   return String(count)
 }
 
+function formatPriceLabel(value) {
+  if (value === null || value === undefined || value === '') {
+    return '无'
+  }
+  var amount = Number(value)
+  if (!isFinite(amount)) {
+    return String(value)
+  }
+  if (Math.floor(amount) === amount) {
+    return '¥' + String(amount)
+  }
+  return '¥' + amount.toFixed(2).replace(/0+$/, '').replace(/\.$/, '')
+}
+
 function emptyPost(id) {
   return {
     id: id || '',
@@ -392,6 +421,39 @@ function emptyPost(id) {
     highlights: [],
     commentsPreview: []
   }
+}
+
+function buildMineFallbackPost(postId, editData) {
+  var source = editData || {}
+  var imageUrls = Array.isArray(source.imageUrls) ? source.imageUrls.filter(Boolean) : []
+  var tags = Array.isArray(source.tags) ? source.tags : []
+  var currentUser = session.getUser() || {}
+  var nickname = pickFirstText(currentUser.nickname, '我')
+  return Object.assign({}, emptyPost(postId), {
+    id: source.id || postId,
+    title: source.title || '未命名内容',
+    desc: source.desc || '暂无内容介绍。',
+    coverImageUrl: imageUrls[0] || '',
+    imageUrls: imageUrls,
+    authorId: currentUser.userId || '',
+    user: nickname,
+    avatar: pickFirstText(nickname, '我'),
+    avatarUrl: currentUser.avatarUrl || '',
+    avatarClass: 'soft',
+    school: '',
+    mine: true,
+    liked: false,
+    favorited: false,
+    followed: false,
+    scene: tags[0] || '',
+    style: tags[1] || '',
+    budget: tags[2] || '',
+    publishTime: '我的内容',
+    price: formatPriceLabel(source.productPrice),
+    product: source.productLink ? '商品链接' : '无',
+    productLink: source.productLink || '',
+    activity: source.activity || null
+  })
 }
 
 function isAuthError(error) {
@@ -436,6 +498,8 @@ export default {
     return {
       postId: '',
       post: emptyPost(''),
+      ownerEntry: false,
+      ownerFallbackMode: false,
       liked: false,
       saved: false,
       followed: false,
@@ -449,6 +513,7 @@ export default {
       detailLoading: false,
       detailFailed: false,
       actionLoading: false,
+      deleteLoading: false,
       activityActionLoading: false,
       shareLoading: false,
       shareLink: '',
@@ -520,6 +585,12 @@ export default {
     },
     draftPlaceholder: function() {
       return this.replyTarget ? ('回复 ' + this.replyTarget.name + '...') : '写下你的评论...'
+    },
+    ownerActionCopy: function() {
+      if (this.ownerFallbackMode) {
+        return '这条内容当前未对外展示，你可以继续编辑后重新提交，或者直接删除。'
+      }
+      return '这是你自己的内容，可以继续编辑，也可以直接删除。'
     }
   },
   onShareAppMessage: function() {
@@ -538,6 +609,8 @@ export default {
   },
   onLoad: function(options) {
     this.postId = (options && options.id) || ''
+    this.ownerEntry = !!(options && (options.mine === '1' || options.mine === 'true'))
+    this.ownerFallbackMode = false
     this.post = emptyPost(this.postId)
     this.loadDetail()
   },
@@ -559,6 +632,35 @@ export default {
       }
       uni.switchTab({ url: '/pages/index/index' })
     },
+    applyResolvedDetail: function(detail, ownerFallback) {
+      var merged = Object.assign({}, emptyPost(this.postId), detail || {})
+      this.post = merged
+      this.liked = !!merged.liked
+      this.saved = !!merged.favorited
+      this.followed = !!merged.followed
+      this.isMine = !!merged.mine || !!ownerFallback
+      this.currentActivity = merged.activity || null
+      this.galleryCurrent = 0
+      this.detailFailed = false
+      this.ownerFallbackMode = !!ownerFallback
+    },
+    markDetailFailed: function() {
+      this.post = emptyPost(this.postId)
+      this.currentActivity = null
+      this.allComments = []
+      this.galleryCurrent = 0
+      this.detailFailed = true
+      this.detailRequested = false
+      this.ownerFallbackMode = false
+    },
+    loadMineFallbackDetail: function() {
+      var self = this
+      return api.getPostForEdit(self.postId)
+        .then(function(detail) {
+          self.applyResolvedDetail(buildMineFallbackPost(self.postId, detail), true)
+          self.loadComments()
+        })
+    },
     loadDetail: function() {
       var self = this
       if (!self.postId) {
@@ -568,32 +670,27 @@ export default {
         self.detailFailed = true
         self.detailLoading = false
         self.detailRequested = false
+        self.ownerFallbackMode = false
         return
       }
       self.detailRequested = true
       self.detailLoading = true
       self.detailFailed = false
+      self.ownerFallbackMode = false
       self.shareLink = ''
       api.getPostDetail(self.postId)
         .then(function(detail) {
-          var merged = Object.assign({}, emptyPost(self.postId), detail || {})
-          self.post = merged
-          self.liked = !!merged.liked
-          self.saved = !!merged.favorited
-          self.followed = !!merged.followed
-          self.isMine = !!merged.mine
-          self.currentActivity = merged.activity || null
-          self.galleryCurrent = 0
-          self.detailFailed = false
+          self.applyResolvedDetail(detail, false)
           self.loadComments()
         })
         .catch(function() {
-          self.post = emptyPost(self.postId)
-          self.currentActivity = null
-          self.allComments = []
-          self.galleryCurrent = 0
-          self.detailFailed = true
-          self.detailRequested = false
+          if (self.ownerEntry && session.isLoggedIn()) {
+            return self.loadMineFallbackDetail()
+              .catch(function() {
+                self.markDetailFailed()
+              })
+          }
+          self.markDetailFailed()
         })
         .finally(function() {
           self.detailLoading = false
@@ -616,6 +713,57 @@ export default {
         })
         .finally(function() {
           self.commentsLoading = false
+        })
+    },
+    startEdit: function() {
+      var targetId = this.post.id || this.postId
+      if (!targetId) {
+        return
+      }
+      uni.setStorageSync(EDIT_POST_KEY, targetId)
+      uni.switchTab({ url: '/pages/publish/index' })
+    },
+    confirmDelete: function() {
+      var self = this
+      if (!self.isMine || self.deleteLoading) {
+        return
+      }
+      var targetId = self.post.id || self.postId
+      if (!targetId) {
+        return
+      }
+      uni.showModal({
+        title: '删除确认',
+        content: '确认删除《' + (self.post.title || '这条内容') + '》吗？删除后将无法恢复。',
+        confirmText: '确认删除',
+        cancelText: '取消',
+        success: function(result) {
+          if (result.confirm) {
+            self.deleteMyPost(targetId)
+          }
+        }
+      })
+    },
+    deleteMyPost: function(targetId) {
+      var self = this
+      self.deleteLoading = true
+      api.deletePost(targetId)
+        .then(function() {
+          uni.showToast({ title: '已删除', icon: 'none' })
+          setTimeout(function() {
+            var pages = typeof getCurrentPages === 'function' ? getCurrentPages() : []
+            if (pages && pages.length > 1) {
+              uni.navigateBack({ delta: 1 })
+              return
+            }
+            uni.switchTab({ url: '/pages/profile/index' })
+          }, 260)
+        })
+        .catch(function(error) {
+          self.handleActionError(error, '删除失败，请稍后重试。')
+        })
+        .finally(function() {
+          self.deleteLoading = false
         })
     },
     handleGalleryChange: function(event) {
@@ -1249,6 +1397,47 @@ export default {
   background: #edf4ff;
   box-shadow: none;
   color: #2a80f4;
+}
+
+.detail-owner-panel {
+  margin-top: 20rpx;
+  padding: 22rpx 24rpx;
+  border-radius: 28rpx;
+  background: linear-gradient(180deg, rgba(236, 244, 255, 0.92) 0%, rgba(245, 249, 255, 0.92) 100%);
+  border: 1rpx solid rgba(42, 128, 244, 0.12);
+}
+
+.detail-owner-copy {
+  color: #56708d;
+  font-size: 24rpx;
+  line-height: 1.6;
+}
+
+.detail-owner-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 18rpx;
+}
+
+.detail-owner-button {
+  flex: 1;
+  min-height: 74rpx;
+  border-radius: 22rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.detail-owner-button-secondary {
+  background: rgba(42, 128, 244, 0.12);
+  color: #2a80f4;
+}
+
+.detail-owner-button-danger {
+  background: rgba(255, 236, 237, 0.96);
+  color: #df4c63;
 }
 
 .detail-main-title {

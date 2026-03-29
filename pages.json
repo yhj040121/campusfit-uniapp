@@ -89,12 +89,6 @@
       }
     },
     {
-      "path": "pages/my-posts/index",
-      "style": {
-        "navigationBarTitleText": "\u6211\u7684\u53d1\u5e03"
-      }
-    },
-    {
       "path": "pages/my-activity/index",
       "style": {
         "navigationBarTitleText": "\u6211\u7684\u6d3b\u52a8"

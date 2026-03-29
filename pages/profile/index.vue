@@ -35,7 +35,7 @@
             <view class="profile-metric-value">{{ formatCount(profile.followers) }}</view>
             <view class="profile-metric-label">粉丝</view>
           </view>
-          <view class="profile-metric-item" @tap="go('/pages/my-posts/index')">
+          <view class="profile-metric-item">
             <view class="profile-metric-value">{{ formatCount(profile.likes) }}</view>
             <view class="profile-metric-label">获赞</view>
           </view>
@@ -98,8 +98,59 @@
         </view>
       </view>
 
-      <view v-if="previewLoading" class="profile-preview-grid">
+      <view v-if="previewLoading && activePreviewTab === 'posts'" class="profile-post-grid">
+        <view v-for="item in 4" :key="'post-skeleton-' + item" class="profile-post-card profile-post-skeleton"></view>
+      </view>
+
+      <view v-else-if="previewLoading" class="profile-preview-grid">
         <view v-for="item in 4" :key="item" class="profile-preview-skeleton"></view>
+      </view>
+
+      <view v-else-if="currentPreviewList.length && activePreviewTab === 'posts'" class="profile-post-grid">
+        <view
+          v-for="item in currentPreviewList"
+          :key="item.id"
+          class="profile-post-card"
+        >
+          <view class="profile-post-cover" @tap="openPreview(item)">
+            <image v-if="item.coverUrl" class="profile-post-cover-image" :src="item.coverUrl" mode="aspectFill"></image>
+            <view v-else class="profile-post-cover-fallback">
+              <view class="profile-post-cover-fallback-title">{{ item.title }}</view>
+            </view>
+            <view class="profile-post-cover-top">
+              <view class="profile-post-cover-tag">{{ item.source.coverTag || item.source.scene || '我的发布' }}</view>
+              <view :class="['profile-post-cover-status', postStatusClass(item.source.publishStatus)]">
+                {{ item.source.publishStatusText || '处理中' }}
+              </view>
+            </view>
+          </view>
+
+          <view class="profile-post-body" @tap="openPreview(item)">
+            <view class="profile-post-title">{{ item.title }}</view>
+            <view class="profile-post-copy">{{ item.source.publishStatusDesc || item.source.desc || '内容已保存。' }}</view>
+
+            <view class="profile-post-tag-row">
+              <view v-if="item.source.scene" class="profile-post-tag">{{ item.source.scene }}</view>
+              <view v-if="item.source.style" class="profile-post-tag">{{ item.source.style }}</view>
+            </view>
+
+            <view class="profile-post-meta">
+              <view class="profile-post-stat">{{ formatCount(item.source.likes) }}赞</view>
+              <view class="profile-post-stat">{{ formatCount(item.source.comments) }}评</view>
+              <view class="profile-post-stat">{{ formatCount(item.source.saves) }}藏</view>
+            </view>
+          </view>
+
+          <view class="profile-post-actions">
+            <view class="profile-post-action profile-post-action-secondary" @tap.stop="startEditPreview(item)">编辑</view>
+            <view
+              :class="['profile-post-action', 'profile-post-action-danger', previewActionLoadingId === item.id ? 'profile-post-action-disabled' : '']"
+              @tap.stop="removePostPreview(item)"
+            >
+              {{ previewActionLoadingId === item.id ? '删除中' : '删除' }}
+            </view>
+          </view>
+        </view>
       </view>
 
       <view v-else-if="currentPreviewList.length" class="profile-preview-grid">
@@ -145,6 +196,7 @@ var settingsStore = require('../../common/settings.js')
 var postDisplay = require('../../common/post-display.js')
 
 var ACTIVE_DRAFT_KEY = 'campusfit_active_draft_id'
+var ACTIVE_PROFILE_TAB_KEY = 'campusfit_profile_active_tab'
 var EDIT_POST_KEY = 'campusfit_edit_post_id'
 var DEFAULT_PROFILE_COVER = '/static/profile/default-hero.svg'
 var TAB_PAGES = {
@@ -198,9 +250,14 @@ function buildDefaultIncentiveCenter() {
 function buildPreviewTabs() {
   return [
     { key: 'posts', label: '我的发布' },
+    { key: 'likes', label: '我的点赞' },
     { key: 'favorites', label: '收藏' },
     { key: 'drafts', label: '草稿' }
   ]
+}
+
+function isValidPreviewTab(value) {
+  return value === 'posts' || value === 'likes' || value === 'favorites' || value === 'drafts'
 }
 
 function clampNumber(value) {
@@ -258,14 +315,21 @@ function getGenderLabel(value) {
 
 function normalizePreviewPosts(list, kind) {
   var source = Array.isArray(list) ? list : []
-  return source.slice(0, 6).map(function(item, index) {
+  var visibleList = kind === 'posts' ? source : source.slice(0, 6)
+  return visibleList.map(function(item, index) {
     var metricBase = item && (item.likeCount || item.likes || item.favoriteCount || item.collectCount)
+    var defaultMetricText = '我的发布'
+    if (kind === 'likes') {
+      defaultMetricText = '已点赞'
+    } else if (kind === 'favorites') {
+      defaultMetricText = '已收藏'
+    }
     return {
       id: firstText(item && item.id, kind + '-' + index),
       kind: kind,
       title: firstText(item && item.title, item && item.desc, '未命名内容'),
       coverUrl: postDisplay.getDisplayCoverUrl(item),
-      metricText: metricBase ? formatCompactCount(metricBase) + ' 赞' : (kind === 'favorites' ? '已收藏' : '我的发布'),
+      metricText: metricBase ? formatCompactCount(metricBase) + ' 赞' : defaultMetricText,
       source: item || {}
     }
   })
@@ -322,6 +386,7 @@ function mergeIncentiveCenter(remote) {
 
 function resetPreviewState(instance) {
   instance.postPreviews = []
+  instance.likedPreviews = []
   instance.favoritePreviews = []
   instance.draftPreviews = []
   instance.previewActionLoadingId = ''
@@ -342,6 +407,7 @@ export default {
       activePreviewTab: 'posts',
       previewTabs: buildPreviewTabs(),
       postPreviews: [],
+      likedPreviews: [],
       favoritePreviews: [],
       draftPreviews: []
     }
@@ -377,6 +443,9 @@ export default {
       return firstText(this.profile.coverImageUrl, DEFAULT_PROFILE_COVER)
     },
     currentPreviewList: function() {
+      if (this.activePreviewTab === 'likes') {
+        return this.likedPreviews
+      }
       if (this.activePreviewTab === 'favorites') {
         return this.favoritePreviews
       }
@@ -386,6 +455,9 @@ export default {
       return this.postPreviews
     },
     emptyPreviewTitle: function() {
+      if (this.activePreviewTab === 'likes') {
+        return '还没有点赞内容'
+      }
       if (this.activePreviewTab === 'favorites') {
         return '还没有收藏内容'
       }
@@ -395,6 +467,9 @@ export default {
       return '还没有发布内容'
     },
     emptyPreviewCopy: function() {
+      if (this.activePreviewTab === 'likes') {
+        return '看到喜欢的穿搭点一下赞，内容就会收进这里。'
+      }
       if (this.activePreviewTab === 'favorites') {
         return '看到喜欢的穿搭、测评或活动，点一下收藏，就会在这里沉淀成你的灵感库。'
       }
@@ -404,6 +479,9 @@ export default {
       return '从第一条校园穿搭开始，慢慢把你的个人主页搭建起来。'
     },
     emptyPreviewAction: function() {
+      if (this.activePreviewTab === 'likes') {
+        return '去首页看看'
+      }
       if (this.activePreviewTab === 'favorites') {
         return '去首页看看'
       }
@@ -444,11 +522,20 @@ export default {
     }
   },
   onShow: function() {
+    this.applyRequestedPreviewTab()
     this.refreshPage()
   },
   methods: {
     formatCount: function(value) {
       return formatCompactCount(value)
+    },
+    applyRequestedPreviewTab: function() {
+      var requested = uni.getStorageSync(ACTIVE_PROFILE_TAB_KEY) || ''
+      if (!isValidPreviewTab(requested)) {
+        return
+      }
+      this.activePreviewTab = requested
+      uni.removeStorageSync(ACTIVE_PROFILE_TAB_KEY)
     },
     refreshPage: function() {
       this.loggedIn = session.isLoggedIn()
@@ -497,16 +584,26 @@ export default {
     },
     loadPreviewData: function() {
       var self = this
+      function safeList(task) {
+        return task.catch(function(error) {
+          if (isAuthError(error)) {
+            throw error
+          }
+          return []
+        })
+      }
       self.previewLoading = true
       return Promise.all([
-        api.listMyPosts(),
-        api.listFavoritePosts(),
-        api.listDrafts()
+        safeList(api.listMyPosts()),
+        safeList(api.listLikedPosts()),
+        safeList(api.listFavoritePosts()),
+        safeList(api.listDrafts())
       ])
         .then(function(result) {
           self.postPreviews = normalizePreviewPosts(result[0], 'posts')
-          self.favoritePreviews = normalizePreviewPosts(result[1], 'favorites')
-          self.draftPreviews = normalizeDraftPreviews(result[2])
+          self.likedPreviews = normalizePreviewPosts(result[1], 'likes')
+          self.favoritePreviews = normalizePreviewPosts(result[2], 'favorites')
+          self.draftPreviews = normalizeDraftPreviews(result[3])
         })
         .catch(function(error) {
           self.handleRequestError(error, '个人内容加载失败')
@@ -534,7 +631,22 @@ export default {
       }
     },
     setPreviewTab: function(key) {
+      if (!isValidPreviewTab(key)) {
+        return
+      }
       this.activePreviewTab = key
+    },
+    postStatusClass: function(status) {
+      if (status === 'PUBLISHED') {
+        return 'profile-post-status-published'
+      }
+      if (status === 'REJECTED') {
+        return 'profile-post-status-rejected'
+      }
+      if (status === 'OFFLINE') {
+        return 'profile-post-status-offline'
+      }
+      return 'profile-post-status-pending'
     },
     openPreview: function(item) {
       if (!item || !item.source) {
@@ -556,7 +668,63 @@ export default {
       if (!id) {
         return
       }
+      if (item.kind === 'posts') {
+        uni.navigateTo({ url: '/pages/detail/index?id=' + encodeURIComponent(id) + '&mine=1' })
+        return
+      }
       uni.navigateTo({ url: '/pages/detail/index?id=' + encodeURIComponent(id) })
+    },
+    startEditPreview: function(item) {
+      if (!item || !item.source || !item.source.id) {
+        return
+      }
+      if (this.previewActionLoadingId) {
+        return
+      }
+      uni.setStorageSync(EDIT_POST_KEY, item.source.id)
+      uni.switchTab({ url: '/pages/publish/index' })
+    },
+    removePostPreview: function(item) {
+      var self = this
+      if (!item || item.kind !== 'posts' || !item.source || !item.source.id || self.previewActionLoadingId) {
+        return
+      }
+      uni.showModal({
+        title: '删除内容',
+        content: '确认删除《' + (item.title || '这条内容') + '》吗？删除后将无法恢复。',
+        confirmText: '确认删除',
+        cancelText: '取消',
+        success: function(result) {
+          if (!result.confirm) {
+            return
+          }
+          self.previewActionLoadingId = item.id
+          api.deletePost(item.source.id)
+            .then(function() {
+              self.postPreviews = self.postPreviews.filter(function(post) {
+                return post.id !== item.id
+              })
+              uni.showToast({ title: '已删除', icon: 'none' })
+              self.loadProfile()
+            })
+            .catch(function(error) {
+              if (isAuthError(error)) {
+                session.clearSession()
+                self.loggedIn = false
+                self.profile = buildDefaultProfile()
+                self.incentiveCenter = buildDefaultIncentiveCenter()
+                self.unreadCount = 0
+                resetPreviewState(self)
+                uni.showToast({ title: '登录状态已失效，请重新登录', icon: 'none' })
+                return
+              }
+              uni.showToast({ title: error.message || '删除内容失败', icon: 'none' })
+            })
+            .finally(function() {
+              self.previewActionLoadingId = ''
+            })
+        }
+      })
     },
     removeDraftPreview: function(item) {
       var self = this
@@ -603,6 +771,10 @@ export default {
       })
     },
     openCurrentTabPage: function() {
+      if (this.activePreviewTab === 'likes') {
+        this.go('/pages/index/index')
+        return
+      }
       if (this.activePreviewTab === 'favorites') {
         this.go('/pages/favorites/index')
         return
@@ -1104,6 +1276,200 @@ export default {
   height: 6rpx;
   border-radius: 999rpx;
   background: linear-gradient(90deg, #005e9f 0%, #44a5ff 100%);
+}
+
+.profile-post-grid {
+  margin-top: 28rpx;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20rpx;
+}
+
+.profile-post-card,
+.profile-post-skeleton {
+  border-radius: 28rpx;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 18rpx 40rpx rgba(25, 52, 87, 0.08);
+}
+
+.profile-post-skeleton {
+  min-height: 420rpx;
+  background:
+    linear-gradient(90deg, rgba(238, 243, 247, 0.88) 25%, rgba(248, 251, 255, 0.98) 37%, rgba(238, 243, 247, 0.88) 63%);
+  background-size: 300% 100%;
+  animation: profileShimmer 1.4s infinite linear;
+}
+
+.profile-post-cover {
+  position: relative;
+  height: 220rpx;
+  background: linear-gradient(135deg, #d9e6f4 0%, #f8fbff 100%);
+}
+
+.profile-post-cover-image,
+.profile-post-cover-fallback {
+  width: 100%;
+  height: 100%;
+}
+
+.profile-post-cover-fallback {
+  padding: 20rpx;
+  display: flex;
+  align-items: flex-end;
+  background: linear-gradient(135deg, rgba(224, 235, 247, 0.98), rgba(247, 251, 255, 0.98));
+}
+
+.profile-post-cover-fallback-title {
+  font-size: 28rpx;
+  font-weight: 800;
+  color: #24364a;
+  line-height: 1.3;
+}
+
+.profile-post-cover-top {
+  position: absolute;
+  left: 14rpx;
+  right: 14rpx;
+  top: 14rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10rpx;
+}
+
+.profile-post-cover-tag,
+.profile-post-cover-status {
+  max-width: 50%;
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 18rpx;
+  font-weight: 700;
+  backdrop-filter: blur(12rpx);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-post-body {
+  padding: 16rpx 18rpx 14rpx;
+}
+
+.profile-post-title {
+  min-height: 68rpx;
+  color: #24364a;
+  font-size: 30rpx;
+  font-weight: 800;
+  line-height: 1.16;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.profile-post-copy {
+  margin-top: 10rpx;
+  min-height: 68rpx;
+  color: #66768b;
+  font-size: 22rpx;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.profile-post-tag-row {
+  margin-top: 12rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  min-height: 58rpx;
+  align-content: flex-start;
+}
+
+.profile-post-tag {
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  background: rgba(68, 165, 255, 0.1);
+  color: #1f63ac;
+  font-size: 18rpx;
+  font-weight: 700;
+}
+
+.profile-post-meta {
+  margin-top: 12rpx;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.profile-post-stat {
+  color: #516274;
+  font-size: 20rpx;
+  font-weight: 700;
+}
+
+.profile-post-actions {
+  margin-top: 14rpx;
+  padding: 0 18rpx 18rpx;
+  border-top: 2rpx solid rgba(117, 119, 120, 0.1);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12rpx;
+}
+
+.profile-post-action {
+  min-height: 60rpx;
+  padding: 0 10rpx;
+  border-radius: 18rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 21rpx;
+  font-weight: 700;
+}
+
+.profile-post-action-primary {
+  background: linear-gradient(90deg, #005e9f 0%, #44a5ff 100%);
+  color: #edf3ff;
+  box-shadow: 0 12rpx 28rpx rgba(0, 94, 159, 0.16);
+}
+
+.profile-post-action-secondary {
+  background: rgba(68, 165, 255, 0.1);
+  color: #1f63ac;
+}
+
+.profile-post-action-danger {
+  background: rgba(255, 235, 237, 0.96);
+  color: #df4c63;
+}
+
+.profile-post-action-disabled {
+  opacity: 0.6;
+}
+
+.profile-post-status-published {
+  background: rgba(34, 197, 94, 0.24);
+  color: #ffffff;
+}
+
+.profile-post-status-pending {
+  background: rgba(245, 158, 11, 0.28);
+  color: #ffffff;
+}
+
+.profile-post-status-rejected {
+  background: rgba(239, 68, 68, 0.26);
+  color: #ffffff;
+}
+
+.profile-post-status-offline {
+  background: rgba(100, 116, 139, 0.28);
+  color: #ffffff;
 }
 
 .profile-preview-grid {
