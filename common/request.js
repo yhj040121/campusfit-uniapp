@@ -50,21 +50,14 @@ function clearActiveBaseUrl() {
 }
 
 function getActiveBaseUrl() {
-  return activeBaseUrl || config.getStoredBaseUrl() || config.getDefaultBaseUrl() || ''
+  return activeBaseUrl || config.getConfiguredBaseUrl() || ''
 }
 
 function getBaseUrlCandidates() {
   return config.getBaseUrlCandidates()
 }
 
-function getFallbackBaseUrl(currentBaseUrl) {
-  var normalizedCurrent = config.normalizeBaseUrl(currentBaseUrl)
-  var candidates = getBaseUrlCandidates()
-  for (var i = 0; i < candidates.length; i += 1) {
-    if (candidates[i] && candidates[i] !== normalizedCurrent) {
-      return candidates[i]
-    }
-  }
+function getFallbackBaseUrl() {
   return ''
 }
 
@@ -135,9 +128,8 @@ function resolveBaseUrl(forceRefresh) {
     return resolvingPromise
   }
 
-  var candidates = getBaseUrlCandidates()
   resolvingPromise = new Promise(function(resolve, reject) {
-    var baseUrl = candidates[0] || ''
+    var baseUrl = config.getConfiguredBaseUrl()
     if (!baseUrl) {
       reject(new Error('No backend base URL is configured'))
       return
@@ -154,19 +146,6 @@ function request(options) {
   return resolveBaseUrl(false)
     .then(function(baseUrl) {
       return rawRequest(baseUrl, options, false)
-        .catch(function(error) {
-          if (!error || !error.isNetworkError) {
-            throw error
-          }
-
-          var fallbackBaseUrl = getFallbackBaseUrl(baseUrl)
-          if (!fallbackBaseUrl) {
-            throw error
-          }
-
-          rememberBaseUrl(fallbackBaseUrl)
-          return rawRequest(fallbackBaseUrl, options, false)
-        })
     })
 }
 

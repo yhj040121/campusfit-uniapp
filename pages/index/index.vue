@@ -376,7 +376,18 @@ export default {
       var self = this
       return api.listFeaturedActivities()
         .then(function(list) {
-          self.featuredActivities = list || []
+          var featuredList = list || []
+          if (featuredList.length) {
+            self.featuredActivities = featuredList
+            return
+          }
+          return api.listActivities()
+            .then(function(allList) {
+              self.featuredActivities = (allList || []).slice(0, 2)
+            })
+            .catch(function() {
+              self.featuredActivities = []
+            })
         })
         .catch(function() {
           self.featuredActivities = []

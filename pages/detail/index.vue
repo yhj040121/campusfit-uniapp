@@ -734,7 +734,7 @@ export default {
       }
       uni.showModal({
         title: '删除确认',
-        content: '确认删除《' + (self.post.title || '这条内容') + '》吗？删除后将无法恢复。',
+        content: '确认删除《' + (self.post.title || '这条内容') + '》吗？删除后将无法恢复；若已绑定合作，仅在奖励未发放前可删除。',
         confirmText: '确认删除',
         cancelText: '取消',
         success: function(result) {

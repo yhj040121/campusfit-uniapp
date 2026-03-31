@@ -49,7 +49,7 @@
             <view class="activity-detail-meta-row">
               <view class="activity-detail-meta-item">{{ currentActivity.period || '待更新时间' }}</view>
               <view class="activity-detail-meta-item">{{ entriesText }}</view>
-              <view class="activity-detail-meta-item">{{ heatText }}</view>
+              <view class="activity-detail-meta-item">{{ '热度(点赞+评论) ' + (currentActivity && currentActivity.heat || 0) }}</view>
             </view>
             <view class="activity-detail-summary">{{ currentActivity.summary || currentActivity.theme || '暂无活动说明。' }}</view>
           </view>

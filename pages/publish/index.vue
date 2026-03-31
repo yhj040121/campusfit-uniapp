@@ -215,6 +215,29 @@
               <view class="publish-activity-clear" @click="clearActivity">取消选择</view>
             </view>
           </view>
+
+          <view class="publish-activity-section">
+            <view class="publish-activity-head">
+              <view class="publish-meta-label">绑定合作单</view>
+              <view class="publish-activity-link" @click="chooseCooperation">查看全部</view>
+            </view>
+
+            <view v-if="selectedCooperation" class="publish-activity-summary">
+              <view class="publish-activity-summary-title">{{ selectedCooperation.title }}</view>
+              <view class="publish-activity-summary-copy">{{ selectedCooperation.ruleText || selectedCooperation.progressText || '已选择当前合作单，提交后会带着合作要求一起进入审核。' }}</view>
+
+              <view class="publish-activity-summary-meta">
+                <view class="publish-activity-meta-chip">{{ selectedCooperation.merchantName || '合作品牌' }}</view>
+                <view class="publish-activity-meta-chip publish-activity-meta-chip-soft">
+                  {{ selectedCooperation.targetLikeCount > 0 ? '点赞 ' + selectedCooperation.approvedLikeCount + '/' + selectedCooperation.targetLikeCount : '无点赞门槛' }}
+                </view>
+              </view>
+
+              <view class="publish-activity-clear" @click="clearCooperation">取消绑定</view>
+            </view>
+
+            <view v-else class="publish-activity-empty-inline">可选合作单需要先在合作页确认，再回来绑定发布。</view>
+          </view>
         </view>
       </view>
     </scroll-view>
@@ -245,6 +268,7 @@
 <script>
 var api = require('../../common/api.js')
 var activityStore = require('../../common/activity.js')
+var cooperationStore = require('../../common/cooperation.js')
 var session = require('../../common/session.js')
 
 var LEGACY_DRAFT_KEY = 'campusfit_publish_draft'
@@ -414,7 +438,8 @@ function buildDraftPayload(vm) {
     tags: normalizeTagList(vm.form.tags),
     productPrice: buildProductPrice(vm.form.price),
     productLink: vm.form.link,
-    activityId: vm.selectedActivity ? vm.selectedActivity.id : ''
+    activityId: vm.selectedActivity ? vm.selectedActivity.id : '',
+    cooperationId: vm.selectedCooperation ? vm.selectedCooperation.id : ''
   }
 }
 
@@ -436,6 +461,7 @@ export default {
       images: [],
       form: defaultForm(),
       selectedActivity: null,
+      selectedCooperation: null,
       availableActivities: [],
       pageLoading: false,
       lastSavedAt: '',
@@ -568,6 +594,12 @@ export default {
       if (!this.hasBasicFields) {
         return '还差一点点：补齐标题、描述和标签即可提交审核。商品价格和链接都可以按需填写。'
       }
+      if (this.selectedActivity && this.selectedCooperation) {
+        return '信息已完整，提交后会带着活动专题和合作单一起进入审核。'
+      }
+      if (this.selectedCooperation) {
+        return '信息已完整，提交后会带着合作单一起进入审核。'
+      }
       return this.selectedActivity ? '信息已完整，提交后会带着活动专题一起进入审核。' : '信息已完整，提交后会进入内容审核。'
     },
     titlePlaceholder: function() {
@@ -587,6 +619,7 @@ export default {
     this.loggedIn = session.isLoggedIn()
     this.applyStoredTags()
     this.loadSelectedActivity()
+    this.loadSelectedCooperation()
     this.loadActivityOptions()
     this.lastSuccessText = ''
 
@@ -615,6 +648,9 @@ export default {
     },
     loadSelectedActivity: function() {
       this.selectedActivity = activityStore.getSelectedActivity()
+    },
+    loadSelectedCooperation: function() {
+      this.selectedCooperation = cooperationStore.getSelectedCooperation()
     },
     loadActivityOptions: function() {
       var self = this
@@ -646,6 +682,17 @@ export default {
       this.selectedActivity = activityStore.selectActivity(activity)
       uni.showToast({ title: '已选择活动', icon: 'none' })
     },
+    pickCooperationInline: function(cooperation) {
+      if (!cooperation || !cooperation.id) {
+        return
+      }
+      if (cooperation.canPublish === false) {
+        uni.showToast({ title: '该合作单当前不能继续绑定发布', icon: 'none' })
+        return
+      }
+      this.selectedCooperation = cooperationStore.selectCooperation(cooperation)
+      uni.showToast({ title: '已绑定合作单', icon: 'none' })
+    },
     syncActiveDraftId: function(draftId) {
       this.currentDraftId = draftId || ''
       if (draftId) {
@@ -660,11 +707,13 @@ export default {
     },
     resetRecoveredDraftComposer: function() {
       activityStore.clearSelectedActivity()
+      cooperationStore.clearSelectedCooperation()
       this.mode = 'create'
       this.editingId = ''
       this.images = []
       this.form = defaultForm()
       this.selectedActivity = null
+      this.selectedCooperation = null
       this.pageLoading = false
       this.lastSuccessText = ''
       uni.removeStorageSync(LEGACY_DRAFT_KEY)
@@ -720,10 +769,16 @@ export default {
       uni.removeStorageSync(LEGACY_DRAFT_KEY)
       if (draft.activity) {
         this.selectedActivity = activityStore.selectActivity(draft.activity)
+      } else {
+        activityStore.clearSelectedActivity()
+        this.selectedActivity = null
+      }
+      if (draft.cooperation) {
+        this.selectedCooperation = cooperationStore.selectCooperation(draft.cooperation)
         return
       }
-      activityStore.clearSelectedActivity()
-      this.selectedActivity = null
+      cooperationStore.clearSelectedCooperation()
+      this.selectedCooperation = null
     },
     restoreActiveDraft: function(forceReload) {
       var draftId = uni.getStorageSync(ACTIVE_DRAFT_KEY) || ''
@@ -779,6 +834,7 @@ export default {
       this.pageLoading = false
       this.lastSuccessText = ''
       this.selectedActivity = activityStore.getSelectedActivity()
+      this.selectedCooperation = cooperationStore.getSelectedCooperation()
       this.lastSavedAt = ''
       this.restoreActiveDraft(true)
     },
@@ -788,11 +844,13 @@ export default {
       this.resetPublishTags()
       this.clearActiveDraftState()
       activityStore.clearSelectedActivity()
+      cooperationStore.clearSelectedCooperation()
       this.mode = 'create'
       this.editingId = ''
       this.images = []
       this.form = defaultForm()
       this.selectedActivity = null
+      this.selectedCooperation = null
       this.pageLoading = false
       this.lastSuccessText = ''
     },
@@ -802,11 +860,13 @@ export default {
       this.resetPublishTags()
       this.clearActiveDraftState()
       activityStore.clearSelectedActivity()
+      cooperationStore.clearSelectedCooperation()
       this.mode = 'create'
       this.editingId = ''
       this.images = []
       this.form = defaultForm()
       this.selectedActivity = null
+      this.selectedCooperation = null
       this.pageLoading = false
       this.lastSuccessText = '草稿已保存，发布页已清空，下次保存会新建一条草稿。'
     },
@@ -832,6 +892,12 @@ export default {
             activityStore.clearSelectedActivity()
             self.selectedActivity = null
           }
+          if (post.cooperation) {
+            self.selectedCooperation = cooperationStore.selectCooperation(post.cooperation)
+          } else {
+            cooperationStore.clearSelectedCooperation()
+            self.selectedCooperation = null
+          }
         })
         .catch(function(error) {
           if (isAuthError(error)) {
@@ -853,6 +919,9 @@ export default {
     },
     chooseActivity: function() {
       uni.navigateTo({ url: '/pages/activity/index?pick=1' })
+    },
+    chooseCooperation: function() {
+      uni.navigateTo({ url: '/pages/cooperations/index?pick=1' })
     },
     chooseImages: function() {
       var self = this
@@ -1003,6 +1072,11 @@ export default {
       this.selectedActivity = null
       uni.showToast({ title: '已取消活动选择', icon: 'none' })
     },
+    clearCooperation: function() {
+      cooperationStore.clearSelectedCooperation()
+      this.selectedCooperation = null
+      uni.showToast({ title: '已取消合作单绑定', icon: 'none' })
+    },
     saveDraft: function() {
       var self = this
       if (self.savingDraft) {
@@ -1059,7 +1133,8 @@ export default {
         this.form.price ||
         this.form.link ||
         currentTags !== baseTags ||
-        this.selectedActivity
+        this.selectedActivity ||
+        this.selectedCooperation
       )
     },
     leaveComposer: function() {

@@ -446,6 +446,34 @@ function getMyIncentiveCenter() {
   })
 }
 
+function listMyCooperations() {
+  return http.request({
+    url: '/api/cooperations/mine',
+    method: 'GET'
+  })
+}
+
+function getCooperationDetail(cooperationId) {
+  return http.request({
+    url: '/api/cooperations/' + cooperationId,
+    method: 'GET'
+  })
+}
+
+function acceptCooperation(cooperationId) {
+  return http.request({
+    url: '/api/cooperations/' + cooperationId + '/accept',
+    method: 'POST'
+  })
+}
+
+function abandonCooperation(cooperationId) {
+  return http.request({
+    url: '/api/cooperations/' + cooperationId + '/abandon',
+    method: 'POST'
+  })
+}
+
 function requestIncentiveWithdraw(amount) {
   return http.request({
     url: '/api/profile/incentives/withdraw',
@@ -627,6 +655,10 @@ module.exports = {
   getMyProfile: getMyProfile,
   getMyProfileForEdit: getMyProfileForEdit,
   getMyIncentiveCenter: getMyIncentiveCenter,
+  listMyCooperations: listMyCooperations,
+  getCooperationDetail: getCooperationDetail,
+  acceptCooperation: acceptCooperation,
+  abandonCooperation: abandonCooperation,
   requestIncentiveWithdraw: requestIncentiveWithdraw,
   updateMyProfile: updateMyProfile,
   listFollows: listFollows,

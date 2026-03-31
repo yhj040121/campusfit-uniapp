@@ -53,8 +53,8 @@
 
         <view class="profile-income-grid">
           <view class="profile-income-metric">
-            <view class="profile-income-kicker">累计收益</view>
-            <view class="profile-income-value">{{ incentiveCenter.totalAmount }}</view>
+            <view class="profile-income-kicker">当前可提现</view>
+            <view class="profile-income-value">{{ incentiveCenter.availableAmount }}</view>
           </view>
           <view class="profile-income-metric">
             <view class="profile-income-kicker">品牌合作</view>
@@ -75,6 +75,10 @@
         <view class="profile-quick-item" @tap="go('/pages/edit-profile/index')">
           <view class="profile-quick-icon profile-quick-icon-profile">资</view>
           <view class="profile-quick-label">资料</view>
+        </view>
+        <view class="profile-quick-item" @tap="go('/pages/cooperations/index')">
+          <view class="profile-quick-icon profile-quick-icon-cooperation">合</view>
+          <view class="profile-quick-label">合作</view>
         </view>
         <view class="profile-quick-item" :class="{ 'profile-quick-item-alert': displayUnreadCount > 0 }" @tap="go('/pages/messages/index')">
           <view :class="['profile-quick-icon', displayUnreadCount > 0 ? 'profile-quick-icon-message-active' : 'profile-quick-icon-message']">信</view>
@@ -691,7 +695,7 @@ export default {
       }
       uni.showModal({
         title: '删除内容',
-        content: '确认删除《' + (item.title || '这条内容') + '》吗？删除后将无法恢复。',
+        content: '确认删除《' + (item.title || '这条内容') + '》吗？删除后将无法恢复；若已绑定合作，仅在奖励未发放前可删除。',
         confirmText: '确认删除',
         cancelText: '取消',
         success: function(result) {
@@ -1147,7 +1151,7 @@ export default {
 .profile-quick-grid {
   margin-top: 32rpx;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 18rpx;
 }
 
@@ -1164,8 +1168,8 @@ export default {
 }
 
 .profile-quick-icon {
-  width: 108rpx;
-  height: 108rpx;
+  width: 96rpx;
+  height: 96rpx;
   border-radius: 28rpx;
   display: flex;
   align-items: center;
@@ -1187,6 +1191,11 @@ export default {
 .profile-quick-icon-profile {
   background: linear-gradient(135deg, rgba(232, 241, 255, 0.98), rgba(247, 250, 255, 0.96));
   color: #1f63ac;
+}
+
+.profile-quick-icon-cooperation {
+  background: linear-gradient(135deg, rgba(231, 246, 255, 0.98), rgba(241, 252, 255, 0.96));
+  color: #0f6a9f;
 }
 
 .profile-quick-icon-message {

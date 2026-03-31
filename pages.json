@@ -144,6 +144,12 @@
       }
     },
     {
+      "path": "pages/cooperations/index",
+      "style": {
+        "navigationBarTitleText": "\u6211\u7684\u5408\u4f5c"
+      }
+    },
+    {
       "path": "pages/drafts/index",
       "style": {
         "navigationBarTitleText": "\u8349\u7a3f\u7bb1"

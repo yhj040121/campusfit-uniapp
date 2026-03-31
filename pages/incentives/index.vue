@@ -30,9 +30,9 @@
 
       <view v-else>
         <view class="hero-card incentive-hero">
-          <view class="hero-badge">激励总览</view>
-          <view class="hero-title">{{ center.totalAmount }}</view>
-          <view class="hero-copy">已结算金额可申请提现，待结算记录会在月结算完成后自动转入可提现余额。</view>
+          <view class="hero-badge">当前可提现</view>
+          <view class="hero-title">{{ center.availableAmount }}</view>
+          <view class="hero-copy">这里展示的是你当前可申请提现的金额；待结算记录会在结算完成后自动转入可提现余额。</view>
           <view class="hero-card-row">
             <view class="hero-card-pill">
               <text class="hero-card-pill-value">{{ center.settledCount }}</text>
@@ -74,8 +74,38 @@
           </view>
           <view class="withdraw-amount">{{ center.availableAmount }}</view>
           <view class="text-copy">{{ center.withdrawHint }}</view>
+          <view class="withdraw-input-wrap">
+            <view class="withdraw-input-label">提现金额</view>
+            <input
+              v-model="withdrawAmountInput"
+              class="withdraw-input"
+              type="digit"
+              confirm-type="done"
+              placeholder="输入想提现的金额"
+            />
+          </view>
+          <view class="request-meta">
+            <view class="mini-tag">最低 {{ withdrawMinAmountText }}</view>
+            <view class="mini-tag">手续费 {{ feeRatePercent }}%</view>
+            <view class="mini-tag">最多 {{ center.availableAmount }}</view>
+          </view>
+          <view class="status-grid three-col withdraw-preview-grid">
+            <view class="status-item">
+              <view class="status-item-label">申请金额</view>
+              <text class="status-item-value">{{ withdrawPreviewAmount }}</text>
+            </view>
+            <view class="status-item">
+              <view class="status-item-label">手续费</view>
+              <text class="status-item-value">{{ withdrawPreviewFee }}</text>
+            </view>
+            <view class="status-item">
+              <view class="status-item-label">预计到账</view>
+              <text class="status-item-value">{{ withdrawPreviewNet }}</text>
+            </view>
+          </view>
+          <view class="note-box withdraw-note withdraw-note-live">{{ withdrawValidationText }}</view>
           <view class="note-box withdraw-note">
-            本次会按当前可提现余额提交申请。若你刚收到新的结算，请先刷新页面，避免金额未同步。
+            系统会按你填写的金额提交申请；单次最低 {{ withdrawMinAmountText }}，平台收取 {{ feeRatePercent }}% 手续费。若你刚收到新的结算，请先刷新页面，避免金额未同步。
           </view>
           <view class="btn-row">
             <button class="btn-primary btn-half" :class="withdrawDisabled ? 'btn-disabled' : ''" @click="submitWithdraw">{{ withdrawButtonText }}</button>
@@ -151,6 +181,8 @@ function buildDefaultCenter() {
     settledCount: 0,
     pendingCount: 0,
     canWithdraw: false,
+    withdrawMinAmount: '¥10.00',
+    withdrawFeeRate: '0.02',
     withdrawHint: '当前暂无可提现余额，待结算记录会在月结算完成后自动转入可提现。',
     settlementRecords: [],
     withdrawRequests: []
@@ -162,6 +194,22 @@ function isAuthError(error) {
   return message.indexOf('login') > -1 || message.indexOf('401') > -1 || message.indexOf('登录') > -1
 }
 
+function parseAmount(value) {
+  var text = String(value || '').replace(/[^\d.]/g, '')
+  if (!text) {
+    return 0
+  }
+  var amount = Number(text)
+  if (!isFinite(amount) || amount < 0) {
+    return 0
+  }
+  return Number(amount.toFixed(2))
+}
+
+function formatAmountText(value) {
+  return '¥' + Number(value || 0).toFixed(2)
+}
+
 export default {
   data: function() {
     return {
@@ -169,12 +217,71 @@ export default {
       center: buildDefaultCenter(),
       pageLoading: false,
       pageError: false,
-      submitting: false
+      submitting: false,
+      withdrawAmountInput: ''
     }
   },
   computed: {
+    availableAmountValue: function() {
+      return parseAmount(this.center.availableAmountRaw || this.center.availableAmount)
+    },
+    withdrawMinAmountValue: function() {
+      return parseAmount(this.center.withdrawMinAmount || 10) || 10
+    },
+    withdrawFeeRateValue: function() {
+      var rate = Number(this.center.withdrawFeeRate || 0.02)
+      if (!isFinite(rate) || rate <= 0) {
+        return 0.02
+      }
+      return rate
+    },
+    withdrawAmountValue: function() {
+      return parseAmount(this.withdrawAmountInput)
+    },
+    withdrawMinAmountText: function() {
+      return formatAmountText(this.withdrawMinAmountValue)
+    },
+    feeRatePercent: function() {
+      return String(Number((this.withdrawFeeRateValue * 100).toFixed(2))).replace(/\.0+$/, '').replace(/(\.\d*[1-9])0$/, '$1')
+    },
+    withdrawPreviewFeeValue: function() {
+      return Number((this.withdrawAmountValue * this.withdrawFeeRateValue).toFixed(2))
+    },
+    withdrawPreviewNetValue: function() {
+      return Number(Math.max(this.withdrawAmountValue - this.withdrawPreviewFeeValue, 0).toFixed(2))
+    },
+    withdrawPreviewAmount: function() {
+      return formatAmountText(this.withdrawAmountValue)
+    },
+    withdrawPreviewFee: function() {
+      return formatAmountText(this.withdrawPreviewFeeValue)
+    },
+    withdrawPreviewNet: function() {
+      return formatAmountText(this.withdrawPreviewNetValue)
+    },
+    withdrawValidationText: function() {
+      if (!this.center.canWithdraw) {
+        return this.center.withdrawHint || ('至少满 ' + this.withdrawMinAmountText + ' 才可提现。')
+      }
+      if (!String(this.withdrawAmountInput || '').trim()) {
+        return '请输入提现金额，最低 ' + this.withdrawMinAmountText + '，平台收取 ' + this.feeRatePercent + '% 手续费。'
+      }
+      if (this.withdrawAmountValue <= 0) {
+        return '请输入正确的提现金额。'
+      }
+      if (this.withdrawAmountValue < this.withdrawMinAmountValue) {
+        return '单次提现至少 ' + this.withdrawMinAmountText + '。'
+      }
+      if (this.withdrawAmountValue > this.availableAmountValue) {
+        return '提现金额不能超过当前可提现余额。'
+      }
+      return '本次申请 ' + this.withdrawPreviewAmount + '，手续费 ' + this.withdrawPreviewFee + '，预计到账 ' + this.withdrawPreviewNet + '。'
+    },
     withdrawDisabled: function() {
-      return !this.center.canWithdraw || this.submitting
+      return !this.center.canWithdraw
+        || this.submitting
+        || this.withdrawAmountValue < this.withdrawMinAmountValue
+        || this.withdrawAmountValue > this.availableAmountValue
     },
     withdrawButtonText: function() {
       if (this.submitting) {
@@ -203,7 +310,7 @@ export default {
       self.pageError = false
       api.getMyIncentiveCenter()
         .then(function(result) {
-          self.center = result || buildDefaultCenter()
+          self.center = Object.assign({}, buildDefaultCenter(), result || {})
           self.pageError = false
           if (showToast) {
             uni.showToast({ title: '激励状态已刷新', icon: 'none' })
@@ -233,7 +340,7 @@ export default {
       }
       uni.showModal({
         title: '提交提现申请',
-        content: '将按当前可提现余额 ' + self.center.availableAmount + ' 提交申请，平台审核后会线下打款。是否继续？',
+        content: '本次申请 ' + self.withdrawPreviewAmount + '，手续费 ' + self.withdrawPreviewFee + '，预计到账 ' + self.withdrawPreviewNet + '，确认继续提现吗？',
         success: function(result) {
           if (!result.confirm) {
             return
@@ -245,8 +352,9 @@ export default {
     confirmWithdraw: function() {
       var self = this
       self.submitting = true
-      api.requestIncentiveWithdraw(self.center.availableAmountRaw)
+      api.requestIncentiveWithdraw(self.withdrawAmountValue)
         .then(function() {
+          self.withdrawAmountInput = ''
           uni.showToast({ title: '提现申请已提交', icon: 'none' })
           self.loadCenter(false)
         })
@@ -262,6 +370,9 @@ export default {
         .finally(function() {
           self.submitting = false
         })
+    },
+    fillMaxAmount: function() {
+      this.withdrawAmountInput = this.availableAmountValue > 0 ? this.availableAmountValue.toFixed(2) : ''
     },
     goMessages: function() {
       uni.navigateTo({ url: '/pages/messages/index' })
@@ -282,6 +393,28 @@ export default {
   margin-bottom: 22rpx;
 }
 
+.withdraw-input-wrap {
+  margin-top: 18rpx;
+  padding: 24rpx 26rpx;
+  border-radius: 28rpx;
+  border: 2rpx solid rgba(68, 165, 255, 0.14);
+  background: rgba(245, 248, 252, 0.96);
+}
+
+.withdraw-input-label {
+  color: #6a788a;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.withdraw-input {
+  margin-top: 14rpx;
+  color: #223247;
+  font-size: 44rpx;
+  font-weight: 700;
+  font-family: var(--campus-font-data);
+}
+
 .withdraw-amount {
   margin-top: 8rpx;
   color: var(--campus-text);
@@ -290,8 +423,17 @@ export default {
   line-height: 1.18;
 }
 
+.withdraw-preview-grid {
+  margin-top: 8rpx;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .withdraw-note {
   margin-top: 16rpx;
+}
+
+.withdraw-note-live {
+  margin-top: 12rpx;
 }
 
 .withdraw-request-item,
@@ -463,6 +605,19 @@ export default {
   font-size: 56rpx;
 }
 
+.incentive-shell .withdraw-input-wrap {
+  border-color: rgba(68, 165, 255, 0.14);
+  background: rgba(245, 248, 252, 0.96);
+}
+
+.incentive-shell .withdraw-input-label {
+  color: #6a788a;
+}
+
+.incentive-shell .withdraw-input {
+  color: #223247;
+}
+
 .incentive-shell .text-copy,
 .incentive-shell .list-copy,
 .incentive-shell .section-subtitle {
@@ -517,5 +672,11 @@ export default {
   background: rgba(245, 248, 252, 0.92);
   border-color: rgba(191, 208, 226, 0.28);
   box-shadow: none;
+}
+
+@media (max-width: 640px) {
+  .withdraw-preview-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
