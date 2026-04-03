@@ -11,7 +11,7 @@
       <view class="page-header">
         <view class="campus-ribbon">创作激励</view>
         <view class="page-title">把激励、结算和提现放到同一个工作台</view>
-        <view class="page-desc">CampusFit 采用“商家推广费 -> 平台服务费 + 奖金池 -> 创作者激励”的模式。这里展示的是平台激励结算，不是电商成交佣金。</view>
+        <view class="page-desc">青搭采用“商家推广费 -> 平台服务费 + 奖金池 -> 创作者激励”的模式。这里展示的是平台激励结算，不是电商成交佣金。</view>
       </view>
 
       <view v-if="pageLoading">

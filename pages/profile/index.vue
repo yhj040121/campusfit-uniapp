@@ -211,7 +211,7 @@ var TAB_PAGES = {
 }
 
 function buildAvatarFallback(name) {
-  var text = ((name || '').trim()) || 'CampusFit'
+  var text = ((name || '').trim()) || '青搭'
   if (text.length <= 2) {
     return text.toUpperCase()
   }
@@ -220,7 +220,7 @@ function buildAvatarFallback(name) {
 
 function buildDefaultProfile() {
   return {
-    name: 'CampusFit 用户',
+    name: '青搭用户',
     avatar: 'CF',
     avatarUrl: '',
     coverImageUrl: '',
@@ -357,7 +357,7 @@ function normalizeDraftPreviews(list) {
 function mergeProfile(remote) {
   var localUser = session.getUser() || {}
   var profile = Object.assign({}, buildDefaultProfile(), remote || {})
-  profile.name = firstText(profile.name, localUser.nickname, 'CampusFit 用户')
+  profile.name = firstText(profile.name, localUser.nickname, '青搭用户')
   profile.avatarUrl = firstText(profile.avatarUrl, localUser.avatarUrl)
   profile.coverImageUrl = firstText(profile.coverImageUrl)
   profile.avatar = firstText(profile.avatar, buildAvatarFallback(profile.name))

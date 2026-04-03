@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <view class="page-shell product-shell">
     <view class="hero-card product-hero">
       <view class="product-hero-top">
@@ -166,7 +166,7 @@ function markTrackedJump(postId, url) {
 
 function fallbackPost() {
   return {
-    product: 'CampusFit 推荐单品',
+    product: '青搭推荐单品',
     platform: '外部电商平台',
     price: '￥39',
     guideTip: '请结合预算、使用频率和场景需求理性选购。',

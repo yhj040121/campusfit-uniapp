@@ -188,7 +188,7 @@
                       <view v-if="selectedActivity && selectedActivity.id === item.id" class="publish-activity-check">✓</view>
                     </view>
 
-                    <view class="publish-activity-cover-scene">{{ item.scene || item.theme || 'Campus Activity' }}</view>
+                    <view class="publish-activity-cover-scene">{{ item.scene || item.theme || '青搭活动' }}</view>
                   </view>
 
                   <view class="publish-activity-card-body">

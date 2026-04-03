@@ -1,9 +1,9 @@
-﻿<template>
+<template>
   <view class="page-shell splash-shell splash-center">
     <view class="splash-stage">
       <view class="hero-card splash-hero">
         <view class="hero-badge">校园穿搭导购</view>
-        <view class="hero-title">CampusFit</view>
+        <view class="hero-title">青搭</view>
         <view class="hero-copy">把校园穿搭灵感、场景标签、社交互动和商品导购整理成一套轻盈的移动端闭环原型。</view>
         <view class="hero-card-row">
           <view class="hero-card-pill">

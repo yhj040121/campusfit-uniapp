@@ -1,4 +1,4 @@
-# CampusFit 校搭 Uni-App
+# 青搭 Uni-App
 
 这是根据毕业设计原型重新生成的 `uni-app` 移动端工程，目标是：
 

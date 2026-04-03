@@ -1,5 +1,5 @@
-// var PRIMARY_DEPLOYED_BASE_URL = 'https://yuhaojie.cn'
-var APP_DEBUG_BASE_URL = 'http://10.205.109.117:8080'
+var PRIMARY_DEPLOYED_BASE_URL = 'https://yuhaojie.cn'
+// var APP_DEBUG_BASE_URL = 'http://10.205.109.117:8080'
 
 var ACTIVE_BASE_URL_KEY = 'campusfit_base_url'
 

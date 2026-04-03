@@ -42,7 +42,7 @@
 
             <view class="activity-detail-hero-badge">{{ currentActivity.badge || '校园活动' }}</view>
             <view class="activity-detail-hero-title">{{ currentActivity.title || '未命名活动' }}</view>
-            <view class="activity-detail-hero-scene">{{ currentActivity.scene || currentActivity.theme || 'Campus Activity' }}</view>
+            <view class="activity-detail-hero-scene">{{ currentActivity.scene || currentActivity.theme || '青搭活动' }}</view>
           </view>
 
           <view class="activity-detail-panel">

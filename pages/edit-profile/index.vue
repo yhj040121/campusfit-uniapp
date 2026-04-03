@@ -6,7 +6,7 @@
     </view>
 
     <view v-if="!loggedIn" class="edit-guest-card">
-      <view class="edit-guest-badge">CampusFit</view>
+      <view class="edit-guest-badge">青搭</view>
       <view class="edit-guest-title">登录后再编辑你的资料</view>
       <view class="edit-guest-copy">头像、主页背景图和个人信息都会同步到你的个人主页，先登录后再继续。</view>
       <button class="action-button primary-button" hover-class="none" @tap="goLogin">去登录</button>
